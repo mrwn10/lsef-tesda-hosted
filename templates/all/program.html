@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programs - TESDA LSEF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all/program.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav">
+            <div class="container">
+                <div class="social-links">
+                    <a href="https://www.facebook.com/lsef.tesda" target="_blank" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" target="_blank" aria-label="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" target="_blank" aria-label="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                </div>
+                <div class="utility-links">
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Navigation Bar -->
+        <nav class="main-nav">
+            <div class="container">
+                <div class="brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="TESDA Logo" class="logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo" class="logo">
+                    <span>TESDA LSEF</span>
+                </div>
+                <div class="nav-menu" id="navMenu">
+                    <button class="close-menu" id="closeMenu" aria-label="Close menu">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="nav-links">
+                        <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
+                        <a href="{{ url_for('program') }}" class="{% if request.endpoint == 'program' %}active{% endif %}">Programs</a>
+                        <a href="{{ url_for('verify_cert') }}" class="{% if request.endpoint == 'verify_cert' %}active{% endif %}">Certificate Verification</a>
+                        <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+                        <a href="{{ url_for('login.login') }}" class="{% if request.endpoint == 'login.login' %}active{% endif %}">Login</a>
+                    </div>
+                </div>
+                <div class="hamburger" id="hamburger" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <header class="programs-header">
+                    <h1>Our Training Programs</h1>
+                    <p class="subtitle">Quality technical education for your future career</p>
+                </header>
+                
+                <!-- Programs Carousel -->
+                <section class="carousel-section">
+                    <div class="carousel-container">
+                        <div class="carousel-track" id="carouselTrack">
+                            <!-- Program 1 - Bookkeeping -->
+                            <div class="carousel-slide current-slide">
+                                <div class="program-card">
+                                    <div class="program-image">
+                                        <img src="{{ url_for('static', filename='img/bookkeeping.jpg') }}" alt="Bookkeeping">
+                                    </div>
+                                    <div class="program-info">
+                                        <h3>Bookkeeping NC III</h3>
+                                        <p>This program covers the basic and common competencies in maintaining books of accounts, preparing financial reports, and reviewing internal control system.</p>
+                                        <ul class="program-details">
+                                            <li><i class="fas fa-clock"></i> 300 hours</li>
+                                            <li><i class="fas fa-certificate"></i> NC III Certification</li>
+                                            <li><i class="fas fa-users"></i> Max: 25 students</li>
+                                        </ul>
+                                        <button class="btn btn-primary" onclick="openModal('bookkeeping-modal')">Learn More</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Program 2 - Food and Beverages -->
+                            <div class="carousel-slide">
+                                <div class="program-card">
+                                    <div class="program-image">
+                                        <img src="{{ url_for('static', filename='img/food_beverages.jpg') }}" alt="Food and Beverage Services">
+                                    </div>
+                                    <div class="program-info">
+                                        <h3>Food and Beverage Services NC II</h3>
+                                        <p>This qualification prepares individuals to provide food and beverage service to guests in various food service facilities like hotels, restaurants, and resorts.</p>
+                                        <ul class="program-details">
+                                            <li><i class="fas fa-clock"></i> 256 hours</li>
+                                            <li><i class="fas fa-certificate"></i> NC II Certification</li>
+                                            <li><i class="fas fa-users"></i> Max: 20 students</li>
+                                        </ul>
+                                        <button class="btn btn-primary" onclick="openModal('food-beverage-modal')">Learn More</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Program 3 - Housekeeping -->
+                            <div class="carousel-slide">
+                                <div class="program-card">
+                                    <div class="program-image">
+                                        <img src="{{ url_for('static', filename='img/housekeeping.jpg') }}" alt="Housekeeping">
+                                    </div>
+                                    <div class="program-info">
+                                        <h3>Housekeeping NC II</h3>
+                                        <p>This program trains individuals to clean and maintain premises of hotels, motels, resorts, and other accommodation establishments.</p>
+                                        <ul class="program-details">
+                                            <li><i class="fas fa-clock"></i> 280 hours</li>
+                                            <li><i class="fas fa-certificate"></i> NC II Certification</li>
+                                            <li><i class="fas fa-users"></i> Max: 20 students</li>
+                                        </ul>
+                                        <button class="btn btn-primary" onclick="openModal('housekeeping-modal')">Learn More</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Program 4 - Bread and Pastry Production -->
+                            <div class="carousel-slide">
+                                <div class="program-card">
+                                    <div class="program-image">
+                                        <img src="{{ url_for('static', filename='img/bread.jpg') }}" alt="Bread and Pastry Production">
+                                    </div>
+                                    <div class="program-info">
+                                        <h3>Bread and Pastry Production NC II</h3>
+                                        <p>This qualification prepares individuals to prepare and produce bakery and pastry products, cakes, and desserts in commercial food establishments.</p>
+                                        <ul class="program-details">
+                                            <li><i class="fas fa-clock"></i> 240 hours</li>
+                                            <li><i class="fas fa-certificate"></i> NC II Certification</li>
+                                            <li><i class="fas fa-users"></i> Max: 25 students</li>
+                                        </ul>
+                                        <button class="btn btn-primary" onclick="openModal('bread-pastry-modal')">Learn More</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Carousel Controls -->
+                        <button class="carousel-btn carousel-btn-prev" id="prevBtn" aria-label="Previous program">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-btn carousel-btn-next" id="nextBtn" aria-label="Next program">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <!-- Carousel Indicators -->
+                        <div class="carousel-indicators" id="carouselIndicators">
+                            <button class="indicator active" data-slide="0" aria-label="Go to slide 1"></button>
+                            <button class="indicator" data-slide="1" aria-label="Go to slide 2"></button>
+                            <button class="indicator" data-slide="2" aria-label="Go to slide 3"></button>
+                            <button class="indicator" data-slide="3" aria-label="Go to slide 4"></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Additional Info Section -->
+                <section class="info-section">
+                    <div class="container">
+                        <h2 class="info-title">Why Choose Our Programs?</h2>
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <h3>Expert Instructors</h3>
+                                <p>Learn from industry professionals with years of experience in their respective fields.</p>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-icon">
+                                    <i class="fas fa-hands-helping"></i>
+                                </div>
+                                <h3>Hands-on Training</h3>
+                                <p>Gain practical experience with modern equipment and real-world scenarios.</p>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-icon">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <h3>Employment Assistance</h3>
+                                <p>Get help finding employment opportunities after program completion.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Bookkeeping Modal -->
+        <div id="bookkeeping-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('bookkeeping-modal')">&times;</span>
+                <h2>Bookkeeping NC III Program Details</h2>
+                <div class="modal-section">
+                    <h3><i class="fas fa-book-open"></i> Course Description</h3>
+                    <p>This program covers the competencies required to maintain books of accounts, prepare financial reports, and review internal control systems in various business environments.</p>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-bullseye"></i> Learning Outcomes</h3>
+                    <ul>
+                        <li>Post transactions to the general ledger</li>
+                        <li>Prepare trial balance and basic financial statements</li>
+                        <li>Review internal control systems</li>
+                        <li>Process payroll and tax documents</li>
+                        <li>Use accounting software applications</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-clipboard-list"></i> Requirements</h3>
+                    <ul>
+                        <li>High school diploma or ALS equivalent</li>
+                        <li>Birth certificate (NSO/PSA authenticated)</li>
+                        <li>2x2 ID pictures (white background)</li>
+                        <li>Barangay clearance</li>
+                        <li>Medical certificate</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-chart-line"></i> Career Opportunities</h3>
+                    <ul>
+                        <li>Bookkeeper</li>
+                        <li>Accounting Assistant</li>
+                        <li>Accounts Payable/Receivable Clerk</li>
+                        <li>Payroll Clerk</li>
+                        <li>Auditing Clerk</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
+                    <p><strong>Duration:</strong> 300 hours (10 weeks full-time)</p>
+                    <p><strong>Assessment:</strong> Written test and practical demonstration</p>
+                    <p><strong>Certification:</strong> National Certificate III (NC III) upon completion</p>
+                </div>
+                <button class="btn btn-secondary" onclick="closeModal('bookkeeping-modal')">Close</button>
+            </div>
+        </div>
+
+        <!-- Food and Beverage Modal -->
+        <div id="food-beverage-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('food-beverage-modal')">&times;</span>
+                <h2>Food and Beverage Services NC II Program Details</h2>
+                <div class="modal-section">
+                    <h3><i class="fas fa-book-open"></i> Course Description</h3>
+                    <p>This program provides the knowledge and skills needed to deliver professional food and beverage service in restaurants, hotels, resorts, and other hospitality establishments.</p>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-bullseye"></i> Learning Outcomes</h3>
+                    <ul>
+                        <li>Prepare dining areas for service</li>
+                        <li>Welcome guests and take food/beverage orders</li>
+                        <li>Serve food and beverages professionally</li>
+                        <li>Provide room service</li>
+                        <li>Handle guest complaints</li>
+                        <li>Process payments</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-clipboard-list"></i> Requirements</h3>
+                    <ul>
+                        <li>High school diploma or ALS equivalent</li>
+                        <li>Birth certificate (NSO/PSA authenticated)</li>
+                        <li>2x2 ID pictures (white background)</li>
+                        <li>Barangay clearance</li>
+                        <li>Medical certificate (fit to work)</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-chart-line"></i> Career Opportunities</h3>
+                    <ul>
+                        <li>Food and Beverage Server</li>
+                        <li>Restaurant Crew</li>
+                        <li>Barista</li>
+                        <li>Room Service Attendant</li>
+                        <li>Banquet Server</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
+                    <p><strong>Duration:</strong> 256 hours (8 weeks full-time)</p>
+                    <p><strong>Assessment:</strong> Written test and practical demonstration</p>
+                    <p><strong>Certification:</strong> National Certificate II (NC II) upon completion</p>
+                </div>
+                <button class="btn btn-secondary" onclick="closeModal('food-beverage-modal')">Close</button>
+            </div>
+        </div>
+
+        <!-- Housekeeping Modal -->
+        <div id="housekeeping-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('housekeeping-modal')">&times;</span>
+                <h2>Housekeeping NC II Program Details</h2>
+                <div class="modal-section">
+                    <h3><i class="fas fa-book-open"></i> Course Description</h3>
+                    <p>This program provides the competencies needed to perform housekeeping services in various accommodation establishments including hotels, resorts, and hospitals.</p>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-bullseye"></i> Learning Outcomes</h3>
+                    <ul>
+                        <li>Clean and prepare rooms for guests</li>
+                        <li>Make up beds and change linens</li>
+                        <li>Clean public areas and facilities</li>
+                        <li>Provide valet/laundry services</li>
+                        <li>Handle housekeeping equipment</li>
+                        <li>Deal with guest requests</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-clipboard-list"></i> Requirements</h3>
+                    <ul>
+                        <li>High school diploma or ALS equivalent</li>
+                        <li>Birth certificate (NSO/PSA authenticated)</li>
+                        <li>2x2 ID pictures (white background)</li>
+                        <li>Barangay clearance</li>
+                        <li>Medical certificate (fit to work)</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-chart-line"></i> Career Opportunities</h3>
+                    <ul>
+                        <li>Room Attendant</li>
+                        <li>Housekeeping Aide</li>
+                        <li>Public Area Cleaner</li>
+                        <li>Laundry Attendant</li>
+                        <li>Housekeeping Supervisor</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
+                    <p><strong>Duration:</strong> 280 hours (9 weeks full-time)</p>
+                    <p><strong>Assessment:</strong> Written test and practical demonstration</p>
+                    <p><strong>Certification:</strong> National Certificate II (NC II) upon completion</p>
+                </div>
+                <button class="btn btn-secondary" onclick="closeModal('housekeeping-modal')">Close</button>
+            </div>
+        </div>
+
+        <!-- Bread and Pastry Production Modal -->
+        <div id="bread-pastry-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('bread-pastry-modal')">&times;</span>
+                <h2>Bread and Pastry Production NC II Program Details</h2>
+                <div class="modal-section">
+                    <h3><i class="fas fa-book-open"></i> Course Description</h3>
+                    <p>This program provides the competencies needed to prepare and produce bakery and pastry products, cakes, and desserts in commercial food establishments.</p>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-bullseye"></i> Learning Outcomes</h3>
+                    <ul>
+                        <li>Prepare and produce bakery products</li>
+                        <li>Prepare and produce pastry products</li>
+                        <li>Prepare and present gateaux, tortes, and cakes</li>
+                        <li>Prepare and display petits fours</li>
+                        <li>Prepare and present desserts</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-clipboard-list"></i> Requirements</h3>
+                    <ul>
+                        <li>High school diploma or ALS equivalent</li>
+                        <li>Birth certificate (NSO/PSA authenticated)</li>
+                        <li>2x2 ID pictures (white background)</li>
+                        <li>Barangay clearance</li>
+                        <li>Medical certificate (fit to handle food)</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-chart-line"></i> Career Opportunities</h3>
+                    <ul>
+                        <li>Baker</li>
+                        <li>Pastry Cook</li>
+                        <li>Cake Decorator</li>
+                        <li>Dessert Chef</li>
+                        <li>Bakery Shop Owner</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
+                    <p><strong>Duration:</strong> 240 hours (8 weeks full-time)</p>
+                    <p><strong>Assessment:</strong> Written test and practical demonstration</p>
+                    <p><strong>Certification:</strong> National Certificate II (NC II) upon completion</p>
+                </div>
+                <button class="btn btn-secondary" onclick="closeModal('bread-pastry-modal')">Close</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-about">
+                        <div class="footer-brand">
+                            <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo" class="footer-logo">
+                            <span>TESDA LSEF</span>
+                        </div>
+                        <p>Empowering individuals through quality technical education and skills development.</p>
+                        <div class="footer-social">
+                            <a href="https://www.facebook.com/lsef.tesda" target="_blank" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" target="_blank" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" target="_blank" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" target="_blank" aria-label="YouTube">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="footer-links">
+                        <h3>Programs</h3>
+                        <ul>
+                            <li><a href="#" onclick="openModal('bookkeeping-modal')">Bookkeeping NC III</a></li>
+                            <li><a href="#" onclick="openModal('food-beverage-modal')">Food and Beverage Services NC II</a></li>
+                            <li><a href="#" onclick="openModal('housekeeping-modal')">Housekeeping NC II</a></li>
+                            <li><a href="#" onclick="openModal('bread-pastry-modal')">Bread and Pastry Production NC II</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-links">
+                        <h3>FAQs</h3>
+                        <ul>
+                            <li><a href="#">How to enroll?</a></li>
+                            <li><a href="#">What are the requirements?</a></li>
+                            <li><a href="#">How long are the programs?</a></li>
+                            <li><a href="#">Is financial aid available?</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-contact">
+                        <h3>Contact Us</h3>
+                        <ul>
+                            <li>
+                                <i class="fas fa-phone-alt"></i>
+                                <span>0942 808 5733</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-envelope"></i>
+                                <a href="mailto:lseftesda@gmail.com">lseftesda@gmail.com</a>
+                            </li>
+                            <li>
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>A. Mabini St. Poblacion II Sta. Cruz, Laguna</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="container">
+                    <p>&copy; 2025 TESDA LSEF. All rights reserved.</p>
+                    <div class="legal-links">
+                        <a href="#">Privacy Policy</a>
+                        <span>•</span>
+                        <a href="#">Terms of Service</a>
+                        <span>•</span>
+                        <a href="#">Sitemap</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/all/program.js') }}"></script>
+</body>
+</html>

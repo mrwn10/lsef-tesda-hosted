@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification - TESDA LSEF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all/verify_cert.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav">
+            <div class="container">
+                <div class="social-links">
+                    <a href="https://www.facebook.com/lsef.tesda" target="_blank" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" target="_blank" aria-label="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" target="_blank" aria-label="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                </div>
+                <div class="utility-links">
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Navigation Bar -->
+        <nav class="main-nav">
+            <div class="container">
+                <div class="brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="TESDA Logo" class="logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo" class="logo">
+                    <span>TESDA LSEF</span>
+                </div>
+                <div class="nav-menu" id="navMenu">
+                    <button class="close-menu" id="closeMenu" aria-label="Close menu">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="nav-links">
+                        <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
+                        <a href="{{ url_for('program') }}" class="{% if request.endpoint == 'program' %}active{% endif %}">Programs</a>
+                        <a href="{{ url_for('verify_cert') }}" class="{% if request.endpoint == 'verify_cert' %}active{% endif %}">Certificate Verification</a>
+                        <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+                        <a href="{{ url_for('login.login') }}" class="{% if request.endpoint == 'login.login' %}active{% endif %}">Login</a>
+                    </div>
+                </div>
+                <div class="hamburger" id="hamburger" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+
+        
+</body>
+</html>

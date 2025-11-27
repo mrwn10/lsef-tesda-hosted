@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration - TESDA LSEF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all/register.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="registration-wrapper">
+        <div class="registration-container">
+            <div class="registration-header">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo" class="logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo" class="logo">
+                </div>
+                <h1>Create Your Account</h1>
+                <p>Join TESDA LSEF today</p>
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Personal Info</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Contact Details</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Account Info</span>
+                </div>
+                <div class="step" data-step="4">
+                    <span class="step-number">4</span>
+                    <span class="step-label">Review</span>
+                </div>
+            </div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                <span class="flash-icon">
+                                    {% if category == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% endif %}
+                                </span>
+                                <span class="flash-text">{{ message }}</span>
+                                <button class="flash-close" aria-label="Close message">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form id="registrationForm" method="POST" action="{{ url_for('register.register_user') }}" class="registration-form">
+                <!-- Step 1: Personal Information -->
+                <div class="form-step active" data-step="1">
+                    <h3 class="step-title">Personal Information</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name">
+                                <i class="fas fa-id-card"></i> First Name
+                            </label>
+                            <input type="text" id="first_name" name="first_name" placeholder="Enter first name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="middle_name">
+                                <i class="fas fa-id-card"></i> Middle Name
+                            </label>
+                            <input type="text" id="middle_name" name="middle_name" placeholder="Enter middle name (optional)">
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">
+                                <i class="fas fa-id-card"></i> Last Name
+                            </label>
+                            <input type="text" id="last_name" name="last_name" placeholder="Enter last name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date_of_birth">
+                                <i class="fas fa-birthday-cake"></i> Date of Birth
+                            </label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" max="{{ date.today().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">
+                                <i class="fas fa-venus-mars"></i> Gender
+                            </label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer_not_to_say">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="step-buttons">
+                        <button type="button" class="btn-next">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Contact Details -->
+                <div class="form-step" data-step="2">
+                    <h3 class="step-title">Contact Details</h3>
+                    
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                        </div>
+                        <span id="email-availability" class="availability-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_number">
+                            <i class="fas fa-phone"></i> Contact Number
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="tel" id="contact_number" name="contact_number" pattern="[0-9]{11}" placeholder="09XXXXXXXXX" required>
+                            <i class="fas fa-phone input-icon"></i>
+                        </div>
+                        <small class="form-hint">Format: 09XXXXXXXXX (11 digits)</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="province">
+                                <i class="fas fa-map-marker-alt"></i> Province
+                            </label>
+                            <select id="province" name="province" required>
+                                <option value="">Select Province</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="municipal">
+                                <i class="fas fa-map-marker-alt"></i> Municipality/City
+                            </label>
+                            <select id="municipal" name="municipal" required disabled>
+                                <option value="">Select Municipality/City</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="barangay">
+                                <i class="fas fa-map-marker-alt"></i> Barangay
+                            </label>
+                            <select id="barangay" name="barangay" required disabled>
+                                <option value="">Select Barangay</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="step-buttons">
+                        <button type="button" class="btn-prev"><i class="fas fa-arrow-left"></i> Previous</button>
+                        <button type="button" class="btn-next">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Account Information -->
+                <div class="form-step" data-step="3">
+                    <h3 class="step-title">Account Information</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="username">
+                                <i class="fas fa-user"></i> Username
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="username" name="username" placeholder="Enter your username" required minlength="3">
+                                <i class="fas fa-user input-icon"></i>
+                            </div>
+                            <!-- Username Suggestions -->
+                            <div id="username-suggestions" class="username-suggestions">
+                                <div class="suggestions-header">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span>Suggested usernames based on your name:</span>
+                                </div>
+                                <div id="suggestions-list" class="suggestions-list"></div>
+                            </div>
+                            <span id="username-availability" class="availability-message"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role">
+                                <i class="fas fa-user-tag"></i> Account Type
+                            </label>
+                            <select id="role" name="role" required>
+                                <option value="student">Student</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">
+                                <i class="fas fa-lock"></i> Password
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="password" id="password" name="password" placeholder="Create password" required minlength="8">
+                                <i class="fas fa-lock input-icon"></i>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-requirements">
+                                <p>Password Requirements:</p>
+                                <ul>
+                                    <li id="req-length"><i class="fas fa-circle"></i> At least 8 characters</li>
+                                    <li id="req-upper"><i class="fas fa-circle"></i> One uppercase letter</li>
+                                    <li id="req-lower"><i class="fas fa-circle"></i> One lowercase letter</li>
+                                    <li id="req-number"><i class="fas fa-circle"></i> One number</li>
+                                    <li id="req-special"><i class="fas fa-circle"></i> One special character</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">
+                                <i class="fas fa-lock"></i> Confirm Password
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required minlength="8">
+                                <i class="fas fa-lock input-icon"></i>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span id="password-match" class="validation-message"></span>
+                        </div>
+                    </div>
+
+                    <div class="step-buttons">
+                        <button type="button" class="btn-prev"><i class="fas fa-arrow-left"></i> Previous</button>
+                        <button type="button" class="btn-next">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review and Submit -->
+                <div class="form-step" data-step="4">
+                    <h3 class="step-title">Review Your Information</h3>
+                    
+                    <div class="review-section">
+                        <h4>Personal Information</h4>
+                        <div class="review-item">
+                            <span class="review-label">Full Name:</span>
+                            <span id="review-fullname"></span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Date of Birth:</span>
+                            <span id="review-dob"></span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Gender:</span>
+                            <span id="review-gender"></span>
+                        </div>
+                    </div>
+
+                    <div class="review-section">
+                        <h4>Contact Details</h4>
+                        <div class="review-item">
+                            <span class="review-label">Email:</span>
+                            <span id="review-email"></span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Contact Number:</span>
+                            <span id="review-contact"></span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Address:</span>
+                            <span id="review-address"></span>
+                        </div>
+                    </div>
+
+                    <div class="review-section">
+                        <h4>Account Information</h4>
+                        <div class="review-item">
+                            <span class="review-label">Username:</span>
+                            <span id="review-username"></span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Account Type:</span>
+                            <span id="review-role"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group terms-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">
+                            I agree to the <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            <small class="terms-note">(Click the checkbox to read Terms and Conditions)</small>
+                        </label>
+                    </div>
+
+                    <div class="step-buttons">
+                        <button type="button" class="btn-prev"><i class="fas fa-arrow-left"></i> Previous</button>
+                        <button type="submit" class="submit-btn" disabled>
+                            <span class="btn-text">Create Account</span>
+                            <span class="btn-loader">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="auth-links">
+                <div class="auth-link">
+                    Already have an account? <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login here</a>
+                </div>
+                <div class="auth-link">
+                    <a href="{{ url_for('landing') }}"><i class="fas fa-arrow-left"></i> Back to Landing page</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">
+                        <i class="fas fa-file-contract me-2"></i>Terms and Conditions
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-section">
+                        <h6><i class="fas fa-graduation-cap me-2"></i>Enrollment and Training</h6>
+                        <ol>
+                            <li>All applicants must meet the specific requirements for their chosen program.</li>
+                            <li>Training schedules are fixed and must be strictly followed.</li>
+                            <li>Regular attendance is mandatory (minimum 80% attendance required).</li>
+                            <li>Students must complete all required competencies to receive certification.</li>
+                        </ol>
+                    </div>
+
+                    <div class="terms-section">
+                        <h6><i class="fas fa-user me-2"></i>Student Conduct</h6>
+                        <ol>
+                            <li>Maintain proper decorum and respect towards instructors and fellow students.</li>
+                            <li>Proper uniform must be worn during training sessions.</li>
+                            <li>Use of training equipment must follow safety protocols.</li>
+                            <li>Any form of harassment or misconduct will result in disciplinary action.</li>
+                        </ol>
+                    </div>
+
+                    <div class="terms-section">
+                        <h6><i class="fas fa-lock me-2"></i>Data Privacy</h6>
+                        <ol>
+                            <li>Personal information will be used solely for training and employment purposes.</li>
+                            <li>Data will be protected in accordance with the Data Privacy Act.</li>
+                            <li>Photos and videos may be taken for training and promotional purposes.</li>
+                            <li>Students have the right to access and correct their personal information.</li>
+                        </ol>
+                    </div>
+
+                    <div class="terms-section">
+                        <h6><i class="fas fa-money-bill-wave me-2"></i>Fees and Payments</h6>
+                        <ol>
+                            <li>Training fees must be paid according to the scheduled payment plan.</li>
+                            <li>Refunds are subject to TESDA's refund policy.</li>
+                            <li>Additional fees may apply for replacement of IDs or certificates.</li>
+                            <li>Scholarship grants have specific maintenance requirements.</li>
+                        </ol>
+                    </div>
+
+                    <div class="terms-section">
+                        <h6><i class="fas fa-certificate me-2"></i>Certification</h6>
+                        <ol>
+                            <li>Certification is awarded upon successful completion of all requirements.</li>
+                            <li>National Certificates (NC) are valid for 5 years.</li>
+                            <li>Certificates can be verified through the TESDA online system.</li>
+                            <li>Replacement certificates require proper documentation and fees.</li>
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> By checking the agreement box, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="understandBtn">
+                        <i class="fas fa-check me-2"></i>I Understand and Agree
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/all/location.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/all/register.js') }}"></script>
+</body>
+</html>

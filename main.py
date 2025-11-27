@@ -1,17 +1,16 @@
 from flask import Flask, render_template, session, redirect, url_for, flash
 import os
-from database import init_app, get_db  # Updated import
+from database import close_connection
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this-in-production'
 
-# Initialize database with app
-init_app(app)
-
 #General BP
+from register import register
 from login import login_bp
 
 #General BP
+app.register_blueprint(register)
 app.register_blueprint(login_bp)
 
 #Admin BP
@@ -52,21 +51,6 @@ def admin_homepage():
         flash('You need to login as admin first', 'error')
         return redirect(url_for('login'))  # Fixed redirect
     return render_template("admin/admin_homepage.html")  # Added return statement
-
-# Database Test Route
-@app.route("/test-db")
-def test_db():
-    try:
-        db = get_db()
-        if db.is_connected():
-            return "Database connected successfully!"
-    except Exception as e:
-        return f"Database connection failed: {str(e)}"
-
-# Health Check Route
-@app.route("/health")
-def health_check():
-    return "Application is running successfully!"
 
 if __name__ == "__main__":
     app.run(debug=True)

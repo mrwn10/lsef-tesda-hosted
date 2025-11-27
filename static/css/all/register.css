@@ -1,0 +1,907 @@
+/* register.css - Modern Enhanced Version with Multi-step Form */
+:root {
+    --primary-color: #003366; /* TESDA Blue */
+    --primary-hover: #002244; /* Darker TESDA Blue */
+    --secondary-color: #FFD700; /* TESDA Gold */
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning-color: #fd7e14;
+    --info-color: #17a2b8;
+    --text-color: #2d3748;
+    --light-text: #718096;
+    --border-color: #e2e8f0;
+    --bg-color: #f8fafc;
+    --white: #ffffff;
+    --gray-light: #f7fafc;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.2s ease-in-out;
+    --radius: 8px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-image: url('../../img/register_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    position: relative;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    z-index: -1;
+}
+
+.registration-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.registration-container {
+    width: 100%;
+    max-width: 900px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+    border: 1px solid var(--border-color);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.registration-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.registration-header .logo-container {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.registration-header .logo {
+    height: 80px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.registration-header .logo:hover {
+    transform: scale(1.05);
+}
+
+.registration-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+}
+
+.registration-header p {
+    color: var(--light-text);
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+}
+
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--border-color);
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--white);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--light-text);
+    margin-bottom: 0.5rem;
+    transition: var(--transition);
+    font-family: 'Poppins', sans-serif;
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: var(--light-text);
+    text-align: center;
+    transition: var(--transition);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+.step.active .step-number {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--white);
+}
+
+.step.active .step-label {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Form Steps */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.step-title {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: 1.5rem;
+}
+
+.flash-message {
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    animation: slideIn 0.3s ease;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    font-family: 'Poppins', sans-serif;
+}
+
+.flash-icon {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+    min-width: 24px;
+}
+
+.flash-text {
+    flex: 1;
+    padding-right: 1.5rem;
+    font-weight: 500;
+}
+
+.flash-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem;
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+    transition: var(--transition);
+}
+
+.flash-close:hover {
+    opacity: 1;
+}
+
+.flash-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: var(--success-color);
+    border-left: 4px solid var(--success-color);
+}
+
+.flash-error {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--error-color);
+    border-left: 4px solid var(--error-color);
+}
+
+/* Form styles */
+.registration-form {
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    transition: var(--transition);
+    background-color: var(--gray-light);
+    color: var(--text-color);
+    font-family: 'Poppins', sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+    background-color: var(--white);
+}
+
+input.error,
+select.error {
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--light-text);
+    font-size: 1rem;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--light-text);
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: var(--transition);
+}
+
+.toggle-password:hover {
+    color: var(--primary-color);
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+
+/* Password requirements */
+.password-requirements {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--gray-light);
+    border-radius: var(--radius);
+}
+
+.password-requirements p {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.password-requirements li {
+    font-size: 0.85rem;
+    color: var(--light-text);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.password-requirements li i {
+    font-size: 0.5rem;
+}
+
+.password-requirements li.valid {
+    color: var(--success-color);
+}
+
+.password-requirements li.valid i {
+    color: var(--success-color);
+}
+
+/* Username Suggestions */
+.username-suggestions {
+    display: none;
+    margin-top: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background-color: var(--white);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    z-index: 1000;
+    position: relative;
+}
+
+.suggestions-header {
+    padding: 0.75rem 1rem;
+    background-color: var(--gray-light);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--light-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+.suggestions-header i {
+    color: var(--secondary-color);
+}
+
+.suggestions-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background-color: var(--gray-light);
+}
+
+.suggestion-text {
+    font-family: 'Poppins', monospace;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.suggestion-use-btn {
+    background: var(--primary-color);
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+}
+
+.suggestion-use-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.suggestion-loading,
+.suggestion-error,
+.suggestion-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--light-text);
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.suggestion-loading {
+    color: var(--info-color);
+}
+
+.suggestion-error {
+    color: var(--error-color);
+}
+
+.suggestion-empty {
+    color: var(--light-text);
+}
+
+/* Availability indicators */
+.availability-message,
+.validation-message {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.available {
+    color: var(--success-color);
+}
+
+.taken, .error {
+    color: var(--error-color);
+}
+
+/* Form hints */
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--light-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Review Section */
+.review-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: var(--gray-light);
+    border-radius: var(--radius);
+}
+
+.review-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.review-item {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+.review-label {
+    font-weight: 600;
+    min-width: 120px;
+    color: var(--text-color);
+    font-family: 'Poppins', sans-serif;
+}
+
+.review-item span:last-child {
+    color: var(--light-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Terms checkbox */
+.terms-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    background-color: var(--gray-light);
+    border-radius: var(--radius);
+}
+
+.terms-group input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    margin-top: 0.25rem;
+}
+
+.terms-group label {
+    margin: 0;
+    font-weight: normal;
+    line-height: 1.5;
+    font-family: 'Poppins', sans-serif;
+}
+
+.terms-group a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.terms-group a:hover {
+    text-decoration: underline;
+}
+
+.terms-note {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--light-text);
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* Step buttons */
+.step-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.btn-prev, .btn-next {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-prev {
+    background-color: var(--gray-light);
+    color: var(--text-color);
+}
+
+.btn-prev:hover {
+    background-color: var(--border-color);
+}
+
+.btn-next {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-next:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Button styles */
+.submit-btn {
+    width: auto;
+    padding: 0.85rem 2rem;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 48px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.submit-btn:disabled {
+    background-color: var(--light-text);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-text {
+    display: inline-block;
+    transition: var(--transition);
+}
+
+.btn-loader {
+    position: absolute;
+    opacity: 0;
+    transition: var(--transition);
+    color: var(--white);
+}
+
+.submit-btn.loading .btn-text {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.submit-btn.loading .btn-loader {
+    opacity: 1;
+}
+
+/* Auth links */
+.auth-links {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.auth-link {
+    color: var(--light-text);
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.auth-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+    color: var(--primary-hover);
+}
+
+/* Terms Modal Styles */
+.terms-section {
+    margin-bottom: 1.5rem;
+}
+
+.terms-section h6 {
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.terms-section ol,
+.terms-section ul {
+    padding-left: 1.5rem;
+}
+
+.terms-section li {
+    margin-bottom: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .registration-container {
+        padding: 1.75rem;
+    }
+    
+    .registration-header .logo {
+        height: 60px;
+    }
+    
+    .registration-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .step-label {
+        display: none;
+    }
+    
+    .step-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-prev, .btn-next {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .review-item {
+        flex-direction: column;
+    }
+    
+    .review-label {
+        min-width: auto;
+        margin-bottom: 0.25rem;
+    }
+    
+    .suggestion-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .suggestion-use-btn {
+        align-self: flex-end;
+    }
+    
+    .auth-links {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* Modal responsive adjustments */
+    .modal-dialog {
+        margin: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .registration-container {
+        padding: 1.5rem;
+        margin: 0.5rem;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="date"],
+    select {
+        padding: 0.75rem 1rem 0.75rem 2.25rem;
+    }
+    
+    .progress-steps {
+        margin-bottom: 1.5rem;
+    }
+    
+    .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .username-suggestions {
+        margin-top: 1rem;
+    }
+    
+    .terms-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .terms-group label {
+        margin-left: 0;
+    }
+
+    /* Modal mobile adjustments */
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-header, .modal-footer {
+        padding: 1rem;
+    }
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 360px) {
+    .registration-container {
+        padding: 1rem;
+    }
+    
+    .registration-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .registration-header p {
+        font-size: 1rem;
+    }
+    
+    .step-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
