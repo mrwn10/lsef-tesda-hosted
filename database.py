@@ -8,7 +8,7 @@ def get_db():
             g.db = mysql.connector.connect(
                 host=os.environ.get('DB_HOST', 'marwindalin.mysql.pythonanywhere-services.com'),
                 user=os.environ.get('DB_USER', 'marwindalin'),
-                password=os.environ.get('DB_PASSWORD', 'your-mysql-password-here'),
+                password=os.environ.get('DB_PASSWORD', 'Database09'),
                 database=os.environ.get('DB_NAME', 'marwindalin$lsef_tesda'),
                 port=3306
             )
