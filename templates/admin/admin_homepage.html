@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_homepage.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <title>Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Define URLs for JavaScript -->
+    <script>
+        window.appUrls = {
+            dashboardData: "{{ url_for('admin_homepage') }}",
+            logoutUrl: "{{ url_for('login.logout') }}"
+        };
+    </script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation Container -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <div class="nav-left">
+                    <a href="{{ url_for('admin_homepage') }}" class="active"><i class="fas fa-home"></i> Home</a>
+                    <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
+                    <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
+                    <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
+                    <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                    <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                    <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                </div>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+       <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('admin_homepage') }}" class="active"><i class="fas fa-home"></i> Home</a>
+                
+                <!-- Users Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="users">
+                        <span><i class="fas fa-users-cog"></i> Users</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="users-submenu">
+                        <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-user-check"></i> User Acceptance</a>
+                        <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
+                        <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
+                        <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
+                        <a href="{{ url_for('admin_user_archive') }}"><i class="fas fa-archive"></i> User Archive</a>
+                    </div>
+                </div>
+                
+                <!-- Classes Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="classes">
+                        <span><i class="fas fa-users"></i> Classes</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="classes-submenu">
+                        <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Class Management</a>
+                        <a href="{{ url_for('admin_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                        <a href="{{ url_for('admin_edit_class.view_editable_classes') }}"><i class="fas fa-edit"></i> Edit Class</a>
+                        <a href="{{ url_for('admin_class_approval.view_pending_classes') }}"><i class="fas fa-check-circle"></i> Class Approval</a>
+                        <a href="{{ url_for('admin_class_edit_req.view_class_edit_requests') }}"><i class="fas fa-pencil-alt"></i> Class Edit Request</a>
+                    </div>
+                </div>
+                
+                <!-- Courses Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="courses">
+                        <span><i class="fas fa-book"></i> Courses</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="courses-submenu">
+                        <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-clipboard-check"></i> Courses Approval</a>
+                        <a href="{{ url_for('admin_create_course.create_course') }}"><i class="fas fa-plus-circle"></i> Create Course</a>
+                        <a href="{{ url_for('admin_edit_course.view_editable_courses') }}"><i class="fas fa-edit"></i> Edit Course</a>
+                        <a href="{{ url_for('admin_courses_avail.view_available_courses') }}"><i class="fas fa-list"></i> Courses Available</a>
+                        <a href="{{ url_for('admin_courses_edit_req.view_edit_requests') }}"><i class="fas fa-pen-fancy"></i> Courses Edit Request</a>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                <p class="subtitle">Welcome back! Here's what's happening with your training system today.</p>
+            </div>
+
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <span>Loading dashboard data...</span>
+            </div>
+            
+            <div class="stats-grid" style="display: none;">
+                <!-- Total Courses Card -->
+                <div class="stat-card courses-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-courses">0</div>
+                        <div class="stat-label">Total Courses</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                </div>
+                
+                <!-- Active Classes Card -->
+                <div class="stat-card classes-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-classes">0</div>
+                        <div class="stat-label">Active Classes</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                </div>
+                
+                <!-- Total Students Card -->
+                <div class="stat-card student-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-students">0</div>
+                        <div class="stat-label">Total Students</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                </div>
+                
+                <!-- Total Staff Card -->
+                <div class="stat-card staff-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-staff">0</div>
+                        <div class="stat-label">Total Staff</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                
+                <!-- Total Enrollments Card -->
+                <div class="stat-card enrollment-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-enrollments">0</div>
+                        <div class="stat-label">Active Enrollments</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                </div>
+                
+                <!-- Completion Rate Card -->
+                <div class="stat-card completion-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="completion-rate">0%</div>
+                        <div class="stat-label">Class Completion Rate</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-content" style="display: none;">
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3><i class="fas fa-chart-bar"></i> Course Enrollment Distribution</h3>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="enrollmentBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3><i class="fas fa-chart-pie"></i> User Distribution</h3>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="userPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-grid">
+                    <!-- Left Column -->
+                    <div class="content-left">
+                        <!-- Pending Approvals -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-clock"></i> Pending Approvals</h3>
+                                <span class="badge pending-badge" id="pending-courses-badge">0</span>
+                            </div>
+                            <div class="card-body">
+                                <p>Courses waiting for approval</p>
+                                <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}" class="action-link">
+                                    Review Now <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Certificates -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-certificate"></i> Recent Certificates</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="recent-certificates">0</span>
+                                    <span class="stat-desc">Issued in last 7 days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="content-right">
+                        <!-- Recent Enrollments -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-user-plus"></i> Recent Enrollments</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="recent-enrollments-list">
+                                    <!-- Dynamic content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Popular Courses -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-star"></i> Popular Courses</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="popular-courses-list">
+                                    <!-- Dynamic content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/admin/admin_homepage.js') }}"></script>
+</body>
+</html>

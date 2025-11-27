@@ -8,12 +8,17 @@ app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this-in-
 # Initialize database with app
 init_app(app)
 
-# Import blueprints with error handling
-try:
-    from login import login_bp
-    app.register_blueprint(login_bp)
-except ImportError as e:
-    print(f"Warning: Could not import login_bp: {e}")
+#General BP
+from login import login_bp
+
+#General BP
+app.register_blueprint(login_bp)
+
+#Admin BP
+from admin_homepage import admin_homepage_bp
+
+#Admin BP
+app.register_blueprint(admin_homepage_bp)
 
 # General Routes
 @app.route("/")
