@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for, flash
 import os
-from database import close_connection
+from database import close_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this-in-production'
