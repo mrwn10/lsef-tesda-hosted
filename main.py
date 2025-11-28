@@ -79,6 +79,26 @@ app.register_blueprint(admin_verified_req_bp)
 app.register_blueprint(admin_create_staff_bp)
 app.register_blueprint(admin_materials_bp)
 
+#Student BP
+from student_profile import student_profile_bp
+from student_enrollment import student_enrollment_bp
+from student_view_class import student_view_class_bp
+from student_view_certificates import student_view_certificates_bp
+from student_view_grades import student_view_grades_bp
+from student_homepage import student_homepage_bp
+from student_resources import student_resources_bp
+from student_requirements import student_requirements_bp
+
+#Student BP
+app.register_blueprint(student_profile_bp, url_prefix='/student')
+app.register_blueprint(student_enrollment_bp)
+app.register_blueprint(student_view_class_bp)
+app.register_blueprint(student_view_certificates_bp)
+app.register_blueprint(student_view_grades_bp)
+app.register_blueprint(student_homepage_bp)
+app.register_blueprint(student_resources_bp)
+app.register_blueprint(student_requirements_bp)
+
 # General Routes
 @app.route("/")
 def landing():
@@ -236,6 +256,104 @@ def admin_class_approval():
 @app.route("/admin_class_edit_req")
 def admin_class_edit_req():
     return render_template("admin/admin_class_edit_req.html")
+
+#Students
+@app.route("/student_homepage")
+def student_homepage():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT profile_picture
+                FROM personal_information
+                WHERE user_id = %s
+            """, (user_id,))
+            user = cursor.fetchone()
+            if user and user.get('profile_picture'):
+                profile_picture = user['profile_picture']
+        finally:
+            cursor.close()
+
+    return render_template("students/student_homepage.html", profile_picture=profile_picture)
+
+@app.route("/student_profile")
+def student_profile():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT profile_picture
+                FROM personal_information
+                WHERE user_id = %s
+            """, (user_id,))
+            user = cursor.fetchone()
+            if user and user.get('profile_picture'):
+                profile_picture = user['profile_picture']
+        finally:
+            cursor.close()
+
+    return render_template("students/student_profile.html", profile_picture=profile_picture)
+
+@app.route("/student_enrollment")
+def student_enrollment():
+    
+    return render_template("students/student_enrollment.html")
+
+@app.route("/student_view_class")
+def student_view_class():
+    
+    return render_template("students/student_view_class.html")
+
+@app.route("/student_view_certificates")
+def student_view_certificates():
+    return render_template("students/student_view_certificates.html")
+
+@app.route("/student_view_grades")
+def student_view_grades():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT profile_picture
+                FROM personal_information
+                WHERE user_id = %s
+            """, (user_id,))
+            user = cursor.fetchone()
+            if user and user.get('profile_picture'):
+                profile_picture = user['profile_picture']
+        finally:
+            cursor.close()
+    return render_template("students/student_view_grades.html", profile_picture=profile_picture)
+
+@app.route("/student_resources")
+def student_resources():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("students/student_resources.html", profile_picture=profile_picture)
 
 if __name__ == "__main__":
     app.run(debug=True)

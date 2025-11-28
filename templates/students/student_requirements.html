@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Requirements</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_requirements.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}" data-user-id="{{ user_id }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}" class="active"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}" class="active"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <div class="page-header">
+            <h1><i class="fas fa-file-upload"></i> TESDA Enrollment Requirements</h1>
+            <div class="breadcrumb">
+                Home > <span>Requirements</span>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert-message alert-{{ 'error' if category == 'error' else 'success' }}">
+                        <div class="alert-content">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            <span>{{ message }}</span>
+                            <button class="alert-close">&times;</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Requirements Form -->
+        <div class="requirements-container">
+            <div class="requirements-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list-check"></i> Upload Your Requirements</h2>
+                    <p>Please upload all required documents for your TESDA enrollment. <span class="required-note">* Required fields</span></p>
+                </div>
+
+                <form id="requirementsForm" method="POST" enctype="multipart/form-data" class="requirements-form">
+                    <!-- Marital Status Field -->
+                    <div class="form-field full-width marital-status-field">
+                        <label class="field-label">
+                            <i class="fas fa-heart"></i>
+                            Marital Status
+                            <span class="required-star">*</span>
+                        </label>
+                        <div class="marital-status-container">
+                            <select name="marital_status" id="maritalStatus" class="marital-status-select" required>
+                                <option value="">Select your marital status</option>
+                                <option value="single">Single</option>
+                                <option value="married">Married</option>
+                                <option value="widowed">Widowed</option>
+                                <option value="separated">Separated</option>
+                            </select>
+                            <div class="marital-status-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Marriage certificate is only required if you are married</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <!-- Required Fields -->
+                        {% set required_fields = [
+                            ("birth_certificate", "Birth Certificate (PSA/NSO Copy)", "fa-certificate", true),
+                            ("educational_credentials", "Educational Credentials (Diploma / TOR / Form 137)", "fa-graduation-cap", true),
+                            ("id_photos", "ID Photos (1x1 or Passport Size)", "fa-id-card", true),
+                            ("barangay_clearance", "Barangay Clearance", "fa-building", true),
+                            ("medical_certificate", "Medical Certificate", "fa-file-medical", true),
+                            ("valid_id", "Proof of Identity / Valid ID", "fa-id-badge", true),
+                            ("transcript_form", "Transcript / Form 137/138", "fa-file-alt", true),
+                            ("good_moral_certificate", "Good Moral Character Certificate", "fa-award", true),
+                            ("brown_envelope", "Brown Envelope", "fa-envelope", true)
+                        ] %}
+                        
+                        <!-- Render Required Fields -->
+                        {% for field, label, icon, required in required_fields %}
+                        <div class="form-field">
+                            <label class="field-label">
+                                <i class="fas {{ icon }}"></i>
+                                {{ label }}
+                                {% if required %}<span class="required-star">*</span>{% endif %}
+                            </label>
+
+                            {% if existing and existing[field] %}
+                            <div class="upload-status">
+                                <div class="status-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Uploaded: 
+                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing[field]) }}" 
+                                           target="_blank" class="file-link">
+                                            {{ existing[field] }}
+                                        </a>
+                                    </span>
+                                </div>
+                                <button type="button" class="preview-btn" 
+                                        data-filename="{{ existing[field] }}" 
+                                        data-label="{{ label }}">
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            </div>
+                            {% else %}
+                            <div class="upload-status">
+                                <div class="status-pending">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Not uploaded yet</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="file-input-container">
+                                <input type="file" class="file-input" name="{{ field }}" 
+                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" {% if required %}required{% endif %}>
+                                <div class="file-input-overlay">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Choose file</span>
+                                </div>
+                                {% if required %}
+                                <div class="field-required">Required</div>
+                                {% else %}
+                                <div class="field-optional">Optional</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Marriage Certificate Field (Conditional) -->
+                        <div class="form-field marriage-certificate-field" id="marriageCertificateField" style="display: none;">
+                            <label class="field-label">
+                                <i class="fas fa-ring"></i>
+                                Marriage Certificate
+                                <span class="required-star">*</span>
+                            </label>
+
+                            {% if existing and existing.marriage_certificate %}
+                            <div class="upload-status">
+                                <div class="status-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Uploaded: 
+                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing.marriage_certificate) }}" 
+                                           target="_blank" class="file-link">
+                                            {{ existing.marriage_certificate }}
+                                        </a>
+                                    </span>
+                                </div>
+                                <button type="button" class="preview-btn" 
+                                        data-filename="{{ existing.marriage_certificate }}" 
+                                        data-label="Marriage Certificate">
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            </div>
+                            {% else %}
+                            <div class="upload-status">
+                                <div class="status-pending">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Required for married applicants</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="file-input-container">
+                                <input type="file" class="file-input" name="marriage_certificate" 
+                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" id="marriageCertificateInput">
+                                <div class="file-input-overlay">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Choose marriage certificate</span>
+                                </div>
+                                <div class="field-required">Required if married</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div class="form-field full-width">
+                        <label class="field-label">
+                            <i class="fas fa-sticky-note"></i>
+                            Additional Notes (Optional)
+                        </label>
+                        <textarea name="additional_notes" class="notes-textarea" 
+                                  placeholder="Add any remarks or missing requirement info...">{{ existing.additional_notes if existing else "" }}</textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Requirements
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Document Preview</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-container">
+                    <!-- Dynamic preview content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/student/student_requirements.js') }}"></script>
+</body>
+</html>

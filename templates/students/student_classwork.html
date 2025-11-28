@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ classwork.title }} - LSEF TESDA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_classwork.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}" data-user-id="{{ user_id }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <div class="page-header">
+            <h1><i class="fas fa-book-open"></i> Classwork Submission</h1>
+            <div class="breadcrumb">
+                <a href="{{ url_for('student_resources.resources') }}">Resources</a> > <span>{{ classwork.title }}</span>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="classwork-container">
+            <!-- Classwork Details Card -->
+            <div class="classwork-card">
+                <div class="card-header">
+                    <h2>{{ classwork.title }}</h2>
+                    <div class="card-meta">
+                        <span class="instructor"><i class="fas fa-chalkboard-teacher"></i> {{ classwork.instructor_name }}</span>
+                        <span class="class"><i class="fas fa-users"></i> {{ classwork.class_title }}</span>
+                        <span class="date"><i class="far fa-calendar"></i> {{ classwork.date_uploaded.strftime('%Y-%m-%d %H:%M') if classwork.date_uploaded else 'No date' }}</span>
+                    </div>
+                </div>
+                
+                {% if classwork.description %}
+                    <div class="card-description">
+                        <h3>Description</h3>
+                        <p>{{ classwork.description }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- Submission Period Information -->
+                {% if classwork.submission_start and classwork.submission_end %}
+                <div class="submission-period">
+                    <h3><i class="fas fa-calendar-alt"></i> Submission Period</h3>
+                    <div class="period-dates">
+                        <div class="date-range">
+                            <span class="date-label">Starts:</span>
+                            <span class="date-value">{{ classwork.submission_start_formatted }}</span>
+                        </div>
+                        <div class="date-range">
+                            <span class="date-label">Ends:</span>
+                            <span class="date-value">{{ classwork.submission_end_formatted }}</span>
+                        </div>
+                    </div>
+                    <div class="submission-status-badge">
+                        {% if submission_status == "not_started" %}
+                            <span class="badge badge-warning"><i class="fas fa-clock"></i> Not Started</span>
+                        {% elif submission_status == "open" %}
+                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Submission Open</span>
+                        {% else %}
+                            <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Submission Closed</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if classwork.stored_filename %}
+                    {% set file_url = url_for('static', filename='uploads/materials/' + classwork.stored_filename) %}
+                    <div class="file-section">
+                        <h3>Classwork File</h3>
+                        <div class="file-actions">
+                            <a href="{{ file_url }}" download class="download-btn">
+                                <i class="fas fa-download"></i> Download File
+                            </a>
+                            <button class="preview-btn" data-file-url="{{ file_url }}" data-file-type="{{ classwork.stored_filename.split('.')[-1].lower() }}" data-file-name="{{ classwork.stored_filename }}">
+                                <i class="fas fa-eye"></i> Preview File
+                            </button>
+                        </div>
+                        
+                        <div class="file-preview">
+                            {% if classwork.stored_filename.lower().endswith('.pdf') %}
+                                <iframe src="{{ file_url }}#toolbar=0" width="100%" height="500px" class="file-iframe" frameborder="0"></iframe>
+                            {% elif classwork.stored_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                                <img src="{{ file_url }}" alt="Preview" class="file-image">
+                            {% elif classwork.stored_filename.lower().endswith(('.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx')) %}
+                                <div class="file-placeholder">
+                                    <i class="fas fa-file"></i>
+                                    <p>Preview not available for {{ classwork.stored_filename.split('.')[-1].upper() }} files</p>
+                                    <a href="{{ file_url }}" download class="download-btn-small">
+                                        <i class="fas fa-download"></i> Download to view
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="file-placeholder">
+                                    <i class="fas fa-file"></i>
+                                    <p>File preview not available</p>
+                                    <a href="{{ file_url }}" download class="download-btn-small">
+                                        <i class="fas fa-download"></i> Download File
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Submission Form -->
+            <div class="submission-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-paper-plane"></i> Hand In Your Work</h2>
+                    <p>Upload your completed assignment file</p>
+                </div>
+                
+                {% if submission_allowed %}
+                <form method="POST" enctype="multipart/form-data" class="submission-form" id="submissionForm">
+                    <div class="form-group">
+                        <label for="submission" class="form-label">
+                            <i class="fas fa-file-upload"></i> Upload File
+                        </label>
+                        <input type="file" name="submission" id="submission" required class="file-input" accept=".pdf,.doc,.docx,.jpg,.png,.jpeg">
+                        <div class="file-types">
+                            <small>Accepted formats: PDF, DOC, DOCX, JPG, PNG, JPEG</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <i class="fas fa-paper-plane"></i> Hand In
+                    </button>
+                </form>
+                {% else %}
+                <div class="submission-disabled">
+                    <div class="disabled-message">
+                        {% if submission_status == "not_started" %}
+                            <i class="fas fa-clock fa-2x"></i>
+                            <h3>Submission Not Started</h3>
+                            <p>You can submit your work starting from <strong>{{ classwork.submission_start_formatted }}</strong></p>
+                        {% else %}
+                            <i class="fas fa-times-circle fa-2x"></i>
+                            <h3>Submission Closed</h3>
+                            <p>The submission deadline has passed. You can no longer submit your work.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Submission History -->
+            <div class="submissions-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Your Submissions</h2>
+                    <p>Previous submissions for this assignment</p>
+                </div>
+                
+                {% if submissions %}
+                    <div class="submission-status">
+                        <span class="status-badge submitted">
+                            <i class="fas fa-check-circle"></i> Submitted
+                        </span>
+                    </div>
+                    <div class="submissions-list">
+                        {% for s in submissions %}
+                            <div class="submission-item">
+                                <div class="submission-info">
+                                    <h4>{{ s.original_filename }}</h4>
+                                    <div class="submission-meta">
+                                        <span class="date"><i class="far fa-calendar"></i> {{ s.date_submitted_formatted }}</span>
+                                        <span class="status submitted"><i class="fas fa-check-circle"></i> Submitted</span>
+                                    </div>
+                                </div>
+                                <div class="submission-actions">
+                                    <a href="{{ url_for('static', filename='uploads/student_submissions/' + s.stored_filename) }}" download class="download-btn-small">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                    <button class="preview-btn-small" 
+                                            data-file-url="{{ url_for('static', filename='uploads/student_submissions/' + s.stored_filename) }}" 
+                                            data-file-type="{{ s.stored_filename.split('.')[-1].lower() }}" 
+                                            data-file-name="{{ s.original_filename }}">
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Submissions Yet</h3>
+                        <p>You haven't submitted anything for this assignment yet.</p>
+                        {% if not submission_allowed and submission_status == "closed" %}
+                            <p class="text-warning"><strong>Note:</strong> The submission period has ended.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- File Preview Modal -->
+    <div class="modal" id="preview-modal">
+        <div class="modal-content preview-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> File Preview</h3>
+                <button class="close-modal" id="close-preview-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body preview-modal-body">
+                <div id="preview-content">
+                    <!-- Preview content will be dynamically inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="download-preview-btn" class="btn btn-yes">
+                    <i class="fas fa-download"></i>&nbsp;Download
+                </a>
+                <button class="btn btn-no" id="close-preview-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/student/student_classwork.js') }}"></script>
+</body>
+</html>

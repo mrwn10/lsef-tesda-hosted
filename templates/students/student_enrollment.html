@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Enrollment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_enrollment.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}" class="active"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}" class="active"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal - PERFECTLY MATCHED -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-user-plus"></i> Course Enrollment</h1>
+            <div class="breadcrumb">
+                <span>Home</span> / <span>Enrollment</span>
+            </div>
+        </div>
+
+        <div class="enrollment-content">
+            {% if verified != 'verified' %}
+            <div class="verification-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="warning-content">
+                    <h4>Account Verification Required</h4>
+                    <p>Your account is not verified. Please upload your requirements before enrolling.</p>
+                </div>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-upload"></i> Upload Requirements
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %} flash-icon"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Enrollment Card -->
+            <div class="enrollment-card">
+                <form id="enrollment-form">
+                    <div class="form-group">
+                        <label for="class_id">Select a Class:</label>
+                        <div class="select-wrapper">
+                            <select name="class_id" id="class_id" required>
+                                <option value="">-- Select Class --</option>
+                                {% if classes %}
+                                    {% for cls in classes %}
+                                        {% if cls.class_id not in enrolled_classes %}
+                                            <option value="{{ cls.class_id }}" data-available-slots="{{ cls.available_slots }}">
+                                                {{ cls.course_title }} - {{ cls.class_title }} 
+                                                (Starts: {{ cls.start_date }} | Slots: {{ cls.available_slots }})
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>No active classes available</option>
+                                {% endif %}
+                            </select>
+                            <i class="fas fa-chevron-down select-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Class Details Section -->
+                    <div id="classDetails" class="class-details">
+                        <div class="details-placeholder">
+                            <img src="{{ url_for('static', filename='img/select_course.svg') }}" alt="Select course" class="placeholder-img">
+                            <h3>No class selected</h3>
+                            <p>Choose a class from the dropdown above to view details</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        {% if has_current_enrollment %}
+                            <div class="current-enrollment-warning">
+                                <i class="fas fa-exclamation-circle warning-icon"></i>
+                                <div class="warning-content">
+                                    <h4>Currently Enrolled in Another Course</h4>
+                                    <p>You must complete your current course before enrolling in a new one.</p>
+                                    <a href="{{ url_for('student_view_class.view_enrolled_classes') }}" class="btn btn-view-current">
+                                        <i class="fas fa-eye"></i> View Current Enrollment
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <button 
+                                type="button" 
+                                class="btn btn-primary {% if verified != 'verified' %}disabled-tooltip{% endif %}" 
+                                id="submit-btn"
+                                {% if verified != 'verified' %}disabled title="You must upload requirements first"{% endif %}
+                            >
+                                <i class="fas fa-paper-plane btn-icon"></i>
+                                Submit Enrollment Request
+                            </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- Available Classes Summary -->
+            {% if classes %}
+            <div class="classes-summary">
+                <div class="section-header">
+                    <h2><i class="fas fa-list-alt"></i> Available Classes ({{ classes|length }})</h2>
+                </div>
+                <div class="summary-grid">
+                    {% for cls in classes %}
+                    {% if cls.class_id not in enrolled_classes %}
+                    <div class="summary-card" data-class-id="{{ cls.class_id }}">
+                        <div class="summary-header">
+                            <h4>{{ cls.course_title }}</h4>
+                            <span class="class-badge">{{ cls.class_title }}</span>
+                        </div>
+                        <p class="class-title">{{ cls.instructor_name }}</p>
+                        <div class="summary-meta">
+                            <span class="meta-item"><i class="fas fa-calendar"></i> {{ cls.start_date }}</span>
+                            <span class="meta-item"><i class="fas fa-clock"></i> {{ cls.duration_hours }} hours</span>
+                            <span class="slots-badge {% if cls.available_slots > 5 %}slots-available{% else %}slots-low{% endif %}">
+                                <i class="fas fa-users"></i> {{ cls.available_slots }} slots left
+                            </span>
+                        </div>
+                        <div class="summary-footer">
+                            <span class="venue"><i class="fas fa-map-marker-alt"></i> {{ cls.venue }}</span>
+                            <span class="fee">₱{{ "%.2f"|format(cls.course_fee|float) if cls.course_fee else "0.00" }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="no-classes-message">
+                <i class="fas fa-info-circle"></i>
+                <h3>No Active Classes Available</h3>
+                <p>There are currently no active classes available for enrollment. Please check back later.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processing your enrollment...</p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/student/student_enrollment.js') }}"></script>
+</body>
+</html>

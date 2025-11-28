@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student View Grades</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_view_grades.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}" class="active"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}" class="active"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-graduation-cap"></i> My Grades</h1>
+            <div class="breadcrumb">
+                <span>Home</span> / <span>Grades</span>
+            </div>
+        </div>
+
+        <div class="grades-content">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="card-value">{{ completed_courses or 0 }}</div>
+                    <div class="card-label">Completed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon"><i class="fas fa-spinner"></i></div>
+                    <div class="card-value">{{ ongoing_courses or 0 }}</div>
+                    <div class="card-label">Ongoing</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon"><i class="fas fa-calculator"></i></div>
+                    <div class="card-value">{{ average_grade or 'N/A' }}</div>
+                    <div class="card-label">Average</div>
+                </div>
+            </div>
+
+            {% if grades %}
+            <div class="grades-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list-alt"></i> Course Grades</h2>
+                    <div class="table-actions">
+                        <span class="table-info">Showing {{ grades|length }} course{{ 's' if grades|length != 1 }}</span>
+                    </div>
+                </div>
+                
+                <div class="grades-table-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-book"></i> Course</th>
+                                <th><i class="fas fa-star"></i> Grades</th>
+                                <th><i class="fas fa-info-circle"></i> Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in grades %}
+                            <tr>
+                                <!-- Course Column -->
+                                <td class="course-info">
+                                    <div class="course-code">{{ grade.course_code }}</div>
+                                    <div class="course-title">{{ grade.course_title }}</div>
+                                </td>
+                                
+                                <!-- Grades Column -->
+                                <td class="grades-info">
+                                    <div class="grades-grid">
+                                        <div class="grade-item">
+                                            <span class="grade-label">Prelim:</span>
+                                            <span class="grade-value {{ 'grade-available' if grade.prelim_grade else 'grade-missing' }}">
+                                                {{ grade.prelim_grade or 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <div class="grade-item">
+                                            <span class="grade-label">Midterm:</span>
+                                            <span class="grade-value {{ 'grade-available' if grade.midterm_grade else 'grade-missing' }}">
+                                                {{ grade.midterm_grade or 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <div class="grade-item">
+                                            <span class="grade-label">Final:</span>
+                                            <span class="grade-value {{ 'grade-available' if grade.final_grade else 'grade-missing' }}">
+                                                {{ grade.final_grade or 'N/A' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <!-- Status Column -->
+                                <td class="status-info">
+                                    <span class="status-badge {{ 'status-completed' if grade.remarks == 'Completed' else 'status-ongoing' }}">
+                                        {{ grade.remarks or 'Ongoing' }}
+                                    </span>
+                                    {% if grade.remarks and grade.remarks != 'Completed' %}
+                                    <div class="remarks">{{ grade.remarks }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-grades">
+                <div class="empty-state">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>No Grades Available</h3>
+                    <p>{{ message or "No grades available at this time. Your grades will appear here once they are posted by your instructors." }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/student/student_view_grades.js') }}"></script>
+</body>
+</html>

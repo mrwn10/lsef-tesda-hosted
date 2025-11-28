@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Homepage</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_homepage.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body data-user-id="{{ user_id }}" data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage.student_home') }}" class="active"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage.student_home') }}" class="active"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Success Notification -->
+    {% if is_verified and not notification_seen and not is_enrolled %}
+    <div class="verification-notification" id="verificationNotification">
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="notification-text">
+                <h3>Account Verified Successfully! 🎉</h3>
+                <p>Congratulations! Your account has been verified. You can now enroll in courses and start your learning journey.</p>
+                <div class="notification-actions">
+                    <a href="{{ url_for('student_enrollment.enrollment_page') }}" class="enroll-btn">
+                        <i class="fas fa-user-plus"></i> Enroll Now
+                    </a>
+                    <button class="close-notification" id="closeNotification">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1><i class="fas fa-home"></i> Welcome to Your Student Portal</h1>
+            <p>Here you can manage your classes, view your schedule, check your grades, and access important resources.</p>
+        </div>
+
+        <!-- Quick Stats Cards -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-icon enrolled-courses">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="enrolledCount">0</h3>
+                    <p>Enrolled Courses</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pending-courses">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="pendingCount">0</h3>
+                    <p>Pending Courses</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon completed-courses">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="completedCount">0</h3>
+                    <p>Completed Courses</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon verification-status">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ 'Verified' if is_verified else 'Pending' }}</h3>
+                    <p>Account Status</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Schedule -->
+        <div class="schedule-container">
+            <div class="section-header">
+                <h2><i class="far fa-calendar-alt"></i> Weekly Schedule (6AM - 6PM)</h2>
+                <div class="schedule-mobile-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Scroll horizontally to view full schedule</span>
+                </div>
+            </div>
+            <div class="schedule-wrapper">
+                <div class="schedule-grid">
+                    <!-- Header row -->
+                    <div class="schedule-header">Time</div>
+                    <div class="schedule-header">Monday</div>
+                    <div class="schedule-header">Tuesday</div>
+                    <div class="schedule-header">Wednesday</div>
+                    <div class="schedule-header">Thursday</div>
+                    <div class="schedule-header">Friday</div>
+                    <div class="schedule-header">Saturday</div>
+                    <div class="schedule-header">Sunday</div>
+                    
+                    <!-- Time slots (6AM-11AM) -->
+                    {% for hour in range(6, 12) %}
+                        <div class="schedule-time">
+                            {{ hour }}:00 {% if hour < 12 %}AM{% else %}PM{% endif %}
+                        </div>
+                        
+                        <!-- Days of week columns -->
+                        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                            <div class="schedule-cell" id="cell-{{ day }}-{{ hour }}" data-day="{{ day }}" data-hour="{{ hour }}">
+                                <div class="empty">—</div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                    
+                    <!-- 12 PM (Noon) - Single Lunch Break Box -->
+                    <div class="lunch-time">
+                        12:00 PM
+                    </div>
+                    <div class="lunch-break">
+                        <i class="fas fa-utensils"></i> Lunch Break
+                    </div>
+                    
+                    <!-- Time slots (1PM-6PM) -->
+                    {% for hour in range(1, 7) %}
+                        {% set display_hour = hour + 12 %}
+                        <div class="schedule-time">
+                            {{ hour }}:00 PM
+                        </div>
+                        
+                        <!-- Days of week columns -->
+                        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                            <div class="schedule-cell" id="cell-{{ day }}-{{ display_hour }}" data-day="{{ day }}" data-hour="{{ display_hour }}">
+                                <div class="empty">—</div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Mobile Schedule Alternative -->
+            <div class="mobile-schedule">
+                <div class="mobile-schedule-day" id="mobileMonday">
+                    <div class="mobile-day-header">
+                        <h4>Monday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileTuesday">
+                    <div class="mobile-day-header">
+                        <h4>Tuesday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileWednesday">
+                    <div class="mobile-day-header">
+                        <h4>Wednesday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileThursday">
+                    <div class="mobile-day-header">
+                        <h4>Thursday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileFriday">
+                    <div class="mobile-day-header">
+                        <h4>Friday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileSaturday">
+                    <div class="mobile-day-header">
+                        <h4>Saturday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="mobile-schedule-day" id="mobileSunday">
+                    <div class="mobile-day-header">
+                        <h4>Sunday</h4>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="mobile-day-schedule">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="{{ url_for('static', filename='js/student/student_homepage.js') }}"></script>
+</body>
+</html>

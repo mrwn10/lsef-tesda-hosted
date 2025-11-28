@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Class View</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student/student_view_class.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}" class="active"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('student_homepage.student_home') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('student_enrollment.enrollment_page') }}"><i class="fas fa-user-plus"></i> Enrollment</a>
+                <a href="{{ url_for('student_view_class.view_enrolled_classes') }}" class="active"><i class="fas fa-users"></i> Class</a>
+                <a href="{{ url_for('student_view_certificates.student_view_certificates') }}"><i class="fas fa-certificate"></i> Certificates</a>
+                <a href="{{ url_for('student_view_grades.view_grades') }}"><i class="fas fa-star"></i> Grades</a>
+                <a href="{{ url_for('student_resources.resources') }}"><i class="fas fa-tools"></i> Resources</a>
+                <a href="{{ url_for('student_requirements.upload_requirements') }}"><i class="fas fa-file-upload"></i> Requirements</a>
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Sub Navigation -->
+        <div class="sub-nav">
+            <div class="brand-section">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('student_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-chalkboard-teacher"></i> My Enrolled Classes</h1>
+            <div class="breadcrumb">
+                <span>Home</span> / <span>Classes</span>
+            </div>
+        </div>
+
+        <div class="classes-content">
+            <div class="classes-header">
+                <div class="classes-summary">
+                    <span class="count">{{ classes|length if classes else 0 }}</span>
+                    <span class="label">Active Classes</span>
+                </div>
+            </div>
+
+            {% if classes %}
+                {% for cls in classes %}
+                <div class="class-details">
+                    <h3><i class="fas fa-book-open"></i> {{ cls.course_code }} - {{ cls.course_title }}</h3>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-heading"></i> Class Title:</div>
+                        <div class="detail-value">{{ cls.class_title }}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="far fa-calendar-alt"></i> Schedule:</div>
+                        <div class="detail-value">
+                            {{ cls.schedule }}
+                            {% if cls.days_of_week %}
+                                <div class="days-container">
+                                    {% for day in cls.days_of_week %}
+                                        <span class="days-badge"><i class="far fa-clock"></i> {{ day }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-map-marker-alt"></i> Venue:</div>
+                        <div class="detail-value">{{ cls.venue }}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-user-tie"></i> Instructor:</div>
+                        <div class="detail-value">{{ cls.instructor_name }}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="far fa-calendar-check"></i> Class Duration:</div>
+                        <div class="detail-value">
+                            <i class="far fa-calendar"></i> {{ cls.start_date }} to {{ cls.end_date }}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-info-circle"></i> Status:</div>
+                        <div class="detail-value">
+                            <span class="status-badge status-{{ cls.status|lower }}">{{ cls.status }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-align-left"></i> Course Description:</div>
+                        <div class="detail-value">
+                            <div class="course-description">{{ cls.course_description }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-classes">
+                <div class="empty-state">
+                    <i class="fas fa-book-open"></i>
+                    <h3>No Enrolled Classes</h3>
+                    <p>You are not currently enrolled in any classes. Visit the enrollment page to register for courses and start your learning journey with TESDA.</p>
+                    <a href="{{ url_for('student_enrollment.enrollment_page') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Enroll Now
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/student/student_view_class.js') }}"></script>
+</body>
+</html>
