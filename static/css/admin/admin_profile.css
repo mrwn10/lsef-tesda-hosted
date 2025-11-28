@@ -10,6 +10,9 @@
     --tesda-border: #e2e8f0;
     --tesda-text: #333;
     --tesda-text-light: #64748b;
+    --success-green: #15803d;
+    --error-red: #b91c1c;
+    --info-blue: #1d4ed8;
 }
 
 * {
@@ -438,18 +441,11 @@ body.modal-open {
     color: var(--tesda-maroon) !important;
 }
 
-/* ===== Dashboard Content Styles ===== */
-.content {
+/* ===== Profile Content Styles ===== */
+main {
     padding: 30px 5%;
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
-}
-
-.container {
-    background: white;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .page-header {
@@ -469,339 +465,362 @@ body.modal-open {
     font-weight: 700;
 }
 
-.page-header .subtitle {
+.breadcrumb {
     color: #64748b;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.breadcrumb span {
+    color: var(--tesda-blue);
+    font-weight: 500;
+}
+
+.profile-form {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.profile-form.loading::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    border-radius: 8px;
+}
+
+.profile-form.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 51, 160, 0.2);
+    border-top-color: var(--tesda-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.form-columns {
+    display: flex;
+    gap: 2rem;
+}
+
+.form-column {
+    flex: 1;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: #f9fafc;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.form-section h2 {
+    color: var(--tesda-blue);
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+/* Style for left-side icons (lock, user, etc) */
+.input-with-icon i:not(.toggle-password) {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 16px;
+    z-index: 1;
+}
+
+/* Specific style for the eye icon */
+.input-with-icon i.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 2;
+}
+
+.input-with-icon input, 
+.input-with-icon select {
+    padding-left: 40px !important;
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Fix for password fields */
+.input-with-icon input[type="password"] {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Fix for select element */
+select {
+    padding-right: 2.5rem !important;
+    background-position: right 0.75rem center;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: white;
+    font-family: 'Poppins', sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.1);
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.save-btn {
+    background-color: var(--tesda-blue);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
 }
 
-/* Loading Spinner */
-.loading-spinner {
+.save-btn:hover {
+    background-color: var(--tesda-dark-blue);
+}
+
+/* Profile Picture Section */
+.profile-picture-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-picture-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    text-align: center;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
 }
 
-.loading-spinner .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(0, 51, 160, 0.1);
-    border-top-color: var(--tesda-blue);
+.profile-frame {
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    overflow: hidden;
+    border: 4px solid #e2e8f0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+#profile-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.profile-frame:hover #profile-preview {
+    transform: scale(1.05);
+}
+
+.profile-picture-controls {
+    display: flex;
+    gap: 1rem;
     margin-bottom: 1rem;
 }
 
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
 }
 
-.stat-card {
-    background: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-}
-
-.courses-card {
-    border-left-color: #3b82f6;
-}
-
-.classes-card {
-    border-left-color: #8b5cf6;
-}
-
-.student-card {
-    border-left-color: #10b981;
-}
-
-.staff-card {
-    border-left-color: #f59e0b;
-}
-
-.enrollment-card {
-    border-left-color: #ef4444;
-}
-
-.completion-card {
-    border-left-color: #06b6d4;
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    color: #64748b;
+.upload-btn, .remove-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
+    font-size: 0.9rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-}
-
-.courses-card .stat-icon {
-    background-color: #dbeafe;
-    color: #3b82f6;
-}
-
-.classes-card .stat-icon {
-    background-color: #ede9fe;
-    color: #8b5cf6;
-}
-
-.student-card .stat-icon {
-    background-color: #d1fae5;
-    color: #10b981;
-}
-
-.staff-card .stat-icon {
-    background-color: #fef3c7;
-    color: #f59e0b;
-}
-
-.enrollment-card .stat-icon {
-    background-color: #fee2e2;
-    color: #ef4444;
-}
-
-.completion-card .stat-icon {
-    background-color: #cffafe;
-    color: #06b6d4;
-}
-
-/* Dashboard Content */
-.dashboard-content {
-    animation: fadeIn 0.5s ease;
-}
-
-.charts-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
-
-.chart-card {
-    height: 100%;
-}
-
-.chart-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
-}
-
-.chart-header h3 {
-    margin: 0;
-    color: var(--tesda-blue);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.chart-body {
-    padding: 1.5rem;
-    height: 300px;
-}
-
-/* Content Grid */
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.content-left, .content-right {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.info-card {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.card-header h3 {
-    margin: 0;
-    color: var(--tesda-blue);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.badge {
-    background-color: #fef3c7;
-    color: #92400e;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-}
-
-.pending-badge {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.card-body p {
-    margin: 0 0 1rem 0;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
-}
-
-.action-link {
-    display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--tesda-blue);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s;
+    transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
 }
 
-.action-link:hover {
-    color: var(--tesda-dark-blue);
+.upload-btn {
+    background-color: var(--tesda-blue);
+    color: white;
 }
 
-.stat-item {
-    text-align: center;
+.upload-btn:hover {
+    background-color: var(--tesda-dark-blue);
 }
 
-.stat-number {
-    display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--tesda-blue);
-    margin-bottom: 0.5rem;
-    font-family: 'Poppins', sans-serif;
+.remove-btn {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 
-.stat-desc {
+.remove-btn:hover {
+    background-color: #e2e8f0;
+}
+
+#profile_picture {
+    display: none;
+}
+
+.file-info {
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 300px;
+    margin-top: 0.5rem;
     font-family: 'Poppins', sans-serif;
 }
 
-/* Recent Enrollments and Popular Courses Lists */
-#recent-enrollments-list,
-#popular-courses-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+/* Password section */
+.password-change-section {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid #e2e8f0;
 }
 
-.enrollment-item,
-.course-item {
+.password-change-section h3 {
+    margin-top: 0;
+    color: var(--tesda-blue);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    background-color: #f8fafc;
-    border-radius: 6px;
-    border-left: 3px solid var(--tesda-blue);
-}
-
-.enrollment-info,
-.course-info {
-    flex: 1;
-}
-
-.enrollment-name,
-.course-name {
+    gap: 8px;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    color: #334155;
-    margin-bottom: 0.25rem;
+}
+
+.form-note {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+    font-style: italic;
     font-family: 'Poppins', sans-serif;
 }
 
-.enrollment-details,
-.course-details {
-    font-size: 0.8rem;
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.strength-meter {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.strength-bar {
+    flex: 1;
+    height: 4px;
+    background-color: #e2e8f0;
+    border-radius: 2px;
+    transition: background-color 0.3s ease;
+}
+
+.strength-bar.active:nth-child(1) { background-color: #ef4444; }
+.strength-bar.active:nth-child(2) { background-color: #f97316; }
+.strength-bar.active:nth-child(3) { background-color: #eab308; }
+.strength-bar.active:nth-child(4) { background-color: #22c55e; }
+
+.strength-text {
+    font-size: 0.85rem;
     color: #64748b;
     font-family: 'Poppins', sans-serif;
 }
 
-.enrollment-date,
-.course-count {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    font-weight: 500;
-    font-family: 'Poppins', sans-serif;
-}
-
-.no-data {
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    padding: 1rem;
-    font-family: 'Poppins', sans-serif;
+.strength-text span {
+    font-weight: 600;
 }
 
 /* ===== MODAL STYLES ===== */
@@ -907,12 +926,12 @@ body.modal-open {
 }
 
 .btn-yes {
-    background-color: var(--tesda-maroon);
+    background-color: var(--tesda-blue);
     color: white;
 }
 
 .btn-yes:hover {
-    background-color: #6b0000;
+    background-color: var(--tesda-dark-blue);
 }
 
 .btn-no {
@@ -925,7 +944,83 @@ body.modal-open {
     background-color: #e2e8f0;
 }
 
-/* Animations */
+/* Success Modal Specific Styles */
+#success-modal .modal-header {
+    background-color: var(--success-green);
+}
+
+#success-modal .modal-header i {
+    color: #bbf7d0;
+}
+
+#success-modal .btn-yes {
+    background-color: var(--success-green);
+}
+
+#success-modal .btn-yes:hover {
+    background-color: #166534;
+}
+
+/* Error Modal Specific Styles */
+#error-modal .modal-header {
+    background-color: var(--error-red);
+}
+
+#error-modal .modal-header i {
+    color: #fecaca;
+}
+
+#error-modal .btn-yes {
+    background-color: var(--error-red);
+}
+
+#error-modal .btn-yes:hover {
+    background-color: #991b1b;
+}
+
+/* Info Modal Specific Styles */
+#info-modal .modal-header {
+    background-color: var(--info-blue);
+}
+
+#info-modal .modal-header i {
+    color: #bfdbfe;
+}
+
+#info-modal .btn-yes {
+    background-color: var(--info-blue);
+}
+
+#info-modal .btn-yes:hover {
+    background-color: #1e40af;
+}
+
+/* Logout Modal Specific Styles */
+#logout-modal .modal-header {
+    background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
+}
+
+#logout-modal .btn-yes {
+    background-color: var(--tesda-maroon);
+    color: white;
+    border: none;
+}
+
+#logout-modal .btn-yes:hover {
+    background-color: #6b0000;
+}
+
+#logout-modal .btn-no {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+#logout-modal .btn-no:hover {
+    background-color: #e2e8f0;
+}
+
+/* Modal Animation */
 @keyframes modalFadeIn {
     from {
         opacity: 0;
@@ -935,16 +1030,6 @@ body.modal-open {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 /* ===== Responsive Design ===== */
@@ -964,10 +1049,6 @@ body.modal-open {
     
     .logo-container {
         gap: 15px;
-    }
-    
-    .charts-section {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -1040,47 +1121,50 @@ body.modal-open {
         height: 36px;
     }
     
-    .content {
+    main {
         padding: 20px 3%;
     }
     
-    .container {
+    .profile-form {
         padding: 20px;
     }
     
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .form-columns {
+        flex-direction: column;
     }
     
-    .charts-section {
-        grid-template-columns: 1fr;
+    .profile-picture-controls {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
     }
     
-    .chart-container {
-        min-width: 100%;
+    .upload-btn, .remove-btn {
+        width: 100%;
+        justify-content: center;
     }
     
-    .content-grid {
-        grid-template-columns: 1fr;
+    .form-actions {
+        flex-direction: column;
     }
     
-    .stat-card {
-        padding: 1rem;
+    .save-btn {
+        width: 100%;
     }
     
-    .stat-value {
-        font-size: 1.5rem;
+    /* Mobile modal adjustments */
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
     }
     
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
+    .modal-footer {
+        flex-direction: column;
     }
     
-    .chart-body {
-        padding: 1rem;
-        height: 250px;
+    .modal-footer .btn {
+        width: 100%;
+        margin-bottom: 5px;
     }
 }
 
@@ -1118,11 +1202,11 @@ body.modal-open {
         height: 32px;
     }
     
-    .content {
+    main {
         padding: 15px 2%;
     }
     
-    .container {
+    .profile-form {
         padding: 15px;
     }
     
@@ -1153,15 +1237,6 @@ body.modal-open {
     .modal-footer {
         padding: 15px;
     }
-    
-    .user-detail-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .user-detail-section {
-        padding: 1rem;
-    }
 }
 
 /* Extra small devices */
@@ -1190,4 +1265,33 @@ body.modal-open {
     .btn {
         padding: 12px 20px;
     }
+}
+
+/* New Error Handler Styles */
+.form-group.error input,
+.form-group.error select {
+    border-color: var(--error-red);
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+.form-group.error .error-message {
+    color: var(--error-red);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-group .error-message {
+    display: none;
+}
+
+/* Loading state improvements */
+.save-btn:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.save-btn:disabled:hover {
+    background-color: #94a3b8;
 }

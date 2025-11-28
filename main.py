@@ -20,6 +20,9 @@ app.config['MAIL_PASSWORD'] = 'xctm qtyg trwc cjxq'
 
 mail = Mail(app)
 
+#Blockchain BP
+from database import get_db
+
 #General BP
 from register import register
 from login import login_bp
@@ -101,13 +104,138 @@ def program():
 def verify_cert():
     return render_template("all/verify_cert.html")
 
-# Admin Routes
+#Admin
 @app.route("/admin_homepage")
 def admin_homepage():
     if 'user_id' not in session or session.get('role') != 'admin':
         flash('You need to login as admin first', 'error')
-        return redirect(url_for('login'))  # Fixed redirect
-    return render_template("admin/admin_homepage.html")  # Added return statement
+        return redirect(url_for('login.login_page'))
+
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback default
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+        cursor.close()
+    return render_template("admin/admin_homepage.html", profile_picture=profile_picture)
+
+@app.route("/admin_user_management")
+def admin_user_management():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback if user has no profile picture
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("admin/admin_user_management.html", profile_picture=profile_picture)
+
+@app.route("/admin_user_update")
+def admin_user_update():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("admin/admin_user_update.html", profile_picture=profile_picture)
+
+@app.route("/admin_user_deletion")
+def admin_user_deletion():
+    return render_template("admin/admin_user_deletion.html")
+
+@app.route("/admin_user_archive")
+def admin_user_archive():
+    return render_template("admin/admin_user_archive.html")
+
+@app.route("/admin_courses_approval")
+def admin_courses_approval():
+    return render_template("admin/admin_courses_approval.html")
+
+@app.route("/admin_courses_avail")
+def admin_courses_avail():
+    return render_template("admin/admin_courses_avail.html")
+
+@app.route("/admin_courses_edit_req")
+def admin_courses_edit_req():
+    return render_template("admin/admin_courses_edit_req.html")
+
+@app.route("/admin_profile")
+def admin_profile():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("admin/admin_profile.html", profile_picture=profile_picture)
+
+@app.route("/admin_class_management")
+def admin_class_management():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('You need to login as admin first', 'error')
+        return redirect(url_for('login.login_page'))
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    # --- Fetch admin profile picture ---
+    profile_picture = 'default.png'
+    try:
+        cursor.execute("""
+            SELECT profile_picture 
+            FROM personal_information 
+            WHERE user_id = %s
+        """, (session['user_id'],))
+        result = cursor.fetchone()
+        if result and result.get('profile_picture'):
+            profile_picture = result['profile_picture']
+    except Exception as e:
+        profile_picture = 'default.png'
+    finally:
+        cursor.close()
+
+    return render_template("admin/admin_class_management.html", profile_picture=profile_picture)
+
+@app.route("/admin_class_approval")
+def admin_class_approval():
+    return render_template("admin/admin_class_approval.html")
+
+@app.route("/admin_class_edit_req")
+def admin_class_edit_req():
+    return render_template("admin/admin_class_edit_req.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

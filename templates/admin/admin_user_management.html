@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_user_management.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <title>User Acceptance</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Define URLs for JavaScript -->
+    <script>
+        window.appUrls = {
+            pendingUsers: "{{ url_for('admin_user_management.get_pending_users') }}",
+            userDetails: "{{ url_for('admin_user_management.get_user_details', user_id=0) }}",
+            updateStatus: "{{ url_for('admin_user_management.update_user_status') }}",
+            logoutUrl: "{{ url_for('login.logout') }}"
+        };
+        
+        // Store current user ID globally for modal actions
+        window.currentUserId = null;
+    </script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation Container -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <div class="nav-left">
+                    <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                    <a href="{{ url_for('admin_user_management') }}" class="active"><i class="fas fa-users-cog"></i> Users</a>
+                    <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
+                    <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
+                    <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                    <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                    <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                </div>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                
+                <!-- Users Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="users">
+                        <span><i class="fas fa-users-cog"></i> Users</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="users-submenu">
+                        <a href="{{ url_for('admin_user_management') }}" class="active"><i class="fas fa-user-check"></i> User Acceptance</a>
+                        <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
+                        <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
+                        <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
+                        <a href="{{ url_for('admin_user_archive') }}"><i class="fas fa-archive"></i> User Archive</a>
+                    </div>
+                </div>
+                
+                <!-- Classes Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="classes">
+                        <span><i class="fas fa-users"></i> Classes</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="classes-submenu">
+                        <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Class Management</a>
+                        <a href="{{ url_for('admin_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                        <a href="{{ url_for('admin_edit_class.view_editable_classes') }}"><i class="fas fa-edit"></i> Edit Class</a>
+                        <a href="{{ url_for('admin_class_approval.view_pending_classes') }}"><i class="fas fa-check-circle"></i> Class Approval</a>
+                        <a href="{{ url_for('admin_class_edit_req.view_class_edit_requests') }}"><i class="fas fa-pencil-alt"></i> Class Edit Request</a>
+                    </div>
+                </div>
+                
+                <!-- Courses Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="courses">
+                        <span><i class="fas fa-book"></i> Courses</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="courses-submenu">
+                        <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-clipboard-check"></i> Courses Approval</a>
+                        <a href="{{ url_for('admin_create_course.create_course') }}"><i class="fas fa-plus-circle"></i> Create Course</a>
+                        <a href="{{ url_for('admin_edit_course.view_editable_courses') }}"><i class="fas fa-edit"></i> Edit Course</a>
+                        <a href="{{ url_for('admin_courses_avail.view_available_courses') }}"><i class="fas fa-list"></i> Courses Available</a>
+                        <a href="{{ url_for('admin_courses_edit_req.view_edit_requests') }}"><i class="fas fa-pen-fancy"></i> Courses Edit Request</a>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Subnav - Desktop Only -->
+        <nav class="subnav">
+            <div class="subnav-right">
+                <a href="{{ url_for('admin_user_management') }}" class="active"><i class="fas fa-user-check"></i> User Acceptance</a>
+                <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
+                <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
+                <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
+                <a href="{{ url_for('admin_user_archive') }}"><i class="fas fa-archive"></i> User Archive</a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-user-check"></i> User Acceptance</h1>
+                <p class="subtitle">Review and approve pending user registrations</p>
+            </div>
+
+            <div class="search-filter-container">
+                <div class="filter-dropdown">
+                    <select id="role-filter">
+                        <option value="all">All Roles</option>
+                        <option value="staff">Staff</option>
+                        <option value="student">Student</option>
+                    </select>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </div>
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search by name, email, or username">
+                </div>
+            </div>
+
+            <div class="alert" id="status-message" style="display: none;">
+                <span id="message-text"></span>
+                <button type="button" class="close-alert" onclick="document.getElementById('status-message').style.display='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="user-table-container">
+                <table id="userTable" class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Date Registered</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-container">
+                        <!-- Table rows will be inserted here by JavaScript -->
+                        <tr class="loading-row">
+                            <td colspan="7">
+                                <div class="loading-spinner">
+                                    <div class="spinner"></div>
+                                    <span>Loading users...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- Pagination Controls -->
+                <div class="pagination-container" id="pagination-container" style="display: none;">
+                    <div class="pagination-info">
+                        Showing <span id="pagination-start">0</span>-<span id="pagination-end">0</span> of <span id="pagination-total">0</span> users
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="first-page" disabled>
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <button class="pagination-btn" id="prev-page" disabled>
+                            <i class="fas fa-angle-left"></i>
+                        </button>
+                        <div class="pagination-pages" id="pagination-pages">
+                            <!-- Page numbers will be inserted here -->
+                        </div>
+                        <button class="pagination-btn" id="next-page" disabled>
+                            <i class="fas fa-angle-right"></i>
+                        </button>
+                        <button class="pagination-btn" id="last-page" disabled>
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </div>
+                    <div class="pagination-page-size">
+                        <label for="page-size">Show:</label>
+                        <select id="page-size">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile User Cards (for small screens) -->
+            <div class="mobile-users-container" id="mobile-users-container">
+                <!-- Mobile user cards will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" class="modal">
+        <div class="modal-content user-details-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> User Details</h3>
+                <button class="close-modal" id="close-details-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="user-details-content" id="userDetailsContent">
+                    <!-- User details will be inserted here by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="approveUserBtn">Approve User</button>
+                <button class="btn btn-danger" id="rejectUserBtn">Reject User</button>
+                <button class="btn btn-secondary" id="closeDetailsModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Confirmation Modal -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle"></i> Confirm Approval</h3>
+                <button class="close-modal" id="close-approval-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to approve this user? They will gain access to the system.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="confirmApproval">Yes</button>
+                <button class="btn btn-secondary" id="cancelApproval">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Confirmation Modal -->
+    <div id="rejectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-times-circle"></i> Confirm Rejection</h3>
+                <button class="close-modal" id="close-rejection-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reject this user? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirmRejection">Yes</button>
+                <button class="btn btn-secondary" id="cancelRejection">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle"></i> Success</h3>
+                <button class="close-modal" id="close-success-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="successMessage">User has been approved successfully and can now access the system.</p>
+                <div class="email-notification">
+                    <i class="fas fa-check-circle"></i> Notification email sent successfully
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="closeSuccessModal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Success Modal -->
+    <div id="rejectionSuccessModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-times-circle"></i> User Rejected</h3>
+                <button class="close-modal" id="close-rejection-success-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="rejectionSuccessMessage">User has been rejected successfully.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeRejectionSuccessModal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin/admin_user_management.js') }}"></script>
+</body>
+</html>

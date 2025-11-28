@@ -438,7 +438,59 @@ body.modal-open {
     color: var(--tesda-maroon) !important;
 }
 
-/* ===== Dashboard Content Styles ===== */
+/* ===== Sub Navigation ===== */
+.subnav {
+    background: var(--tesda-white);
+    padding: 15px 5%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.subnav .subnav-right {
+    display: flex;
+    gap: 15px;
+}
+
+.subnav .subnav-right a {
+    color: #475569;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 15px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.subnav .subnav-right a i {
+    font-size: 0.9rem;
+}
+
+.subnav .subnav-right a:hover {
+    color: var(--tesda-blue);
+    background-color: #f1f5f9;
+}
+
+.subnav .subnav-right a.active {
+    color: var(--tesda-blue);
+    background-color: #e0f2fe;
+}
+
+.subnav .subnav-right a.active:after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--tesda-blue);
+    border-radius: 3px 3px 0 0;
+}
+
+/* ===== Course Creation Content Styles ===== */
 .content {
     padding: 30px 5%;
     max-width: 1400px;
@@ -475,333 +527,182 @@ body.modal-open {
     font-family: 'Poppins', sans-serif;
 }
 
-/* Loading Spinner */
-.loading-spinner {
-    display: flex;
-    flex-direction: column;
+.admin-note {
+    color: var(--tesda-blue);
+    background-color: #eef2ff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 15px;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    text-align: center;
-    color: #64748b;
+    gap: 10px;
+    border-left: 4px solid var(--tesda-blue);
     font-family: 'Poppins', sans-serif;
 }
 
-.loading-spinner .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(0, 51, 160, 0.1);
-    border-top-color: var(--tesda-blue);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
+.admin-note i {
+    color: var(--tesda-blue);
 }
 
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
+/* Form Styles */
+.course-form {
     background: white;
     border-radius: 8px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 25px;
 }
 
-.courses-card {
-    border-left-color: #3b82f6;
+.form-group {
+    margin-bottom: 20px;
 }
 
-.classes-card {
-    border-left-color: #8b5cf6;
+.form-group.span-2 {
+    grid-column: span 2;
 }
 
-.student-card {
-    border-left-color: #10b981;
-}
-
-.staff-card {
-    border-left-color: #f59e0b;
-}
-
-.enrollment-card {
-    border-left-color: #ef4444;
-}
-
-.completion-card {
-    border-left-color: #06b6d4;
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334155;
+    font-size: 14px;
     font-family: 'Poppins', sans-serif;
 }
 
-.stat-label {
-    font-size: 0.9rem;
+.required {
+    color: #dc2626;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    font-family: 'Poppins', sans-serif;
+    background-color: white;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 1em;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     color: #64748b;
+    z-index: 1;
+}
+
+.input-with-icon input {
+    padding-left: 35px;
+}
+
+.input-hint {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+    font-style: italic;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Readonly field styles */
+.readonly-field {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+}
+
+.readonly-field:focus {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+}
+
+.field-note {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+    font-style: italic;
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
     font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 1rem;
     font-family: 'Poppins', sans-serif;
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-}
-
-.courses-card .stat-icon {
-    background-color: #dbeafe;
-    color: #3b82f6;
-}
-
-.classes-card .stat-icon {
-    background-color: #ede9fe;
-    color: #8b5cf6;
-}
-
-.student-card .stat-icon {
-    background-color: #d1fae5;
-    color: #10b981;
-}
-
-.staff-card .stat-icon {
-    background-color: #fef3c7;
-    color: #f59e0b;
-}
-
-.enrollment-card .stat-icon {
-    background-color: #fee2e2;
-    color: #ef4444;
-}
-
-.completion-card .stat-icon {
-    background-color: #cffafe;
-    color: #06b6d4;
-}
-
-/* Dashboard Content */
-.dashboard-content {
-    animation: fadeIn 0.5s ease;
-}
-
-.charts-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
-
-.chart-card {
-    height: 100%;
-}
-
-.chart-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
-}
-
-.chart-header h3 {
-    margin: 0;
-    color: var(--tesda-blue);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.chart-body {
-    padding: 1.5rem;
-    height: 300px;
-}
-
-/* Content Grid */
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.content-left, .content-right {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.info-card {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.card-header h3 {
-    margin: 0;
-    color: var(--tesda-blue);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.badge {
-    background-color: #fef3c7;
-    color: #92400e;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-}
-
-.pending-badge {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.card-body p {
-    margin: 0 0 1rem 0;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
-}
-
-.action-link {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--tesda-blue);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s;
-    font-family: 'Poppins', sans-serif;
 }
 
-.action-link:hover {
-    color: var(--tesda-dark-blue);
+.btn-success {
+    background-color: #065f46;
+    color: white;
+    border: none;
 }
 
-.stat-item {
-    text-align: center;
+.btn-success:hover {
+    background-color: #064e3b;
 }
 
-.stat-number {
-    display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--tesda-blue);
-    margin-bottom: 0.5rem;
-    font-family: 'Poppins', sans-serif;
+.btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 
-.stat-desc {
-    color: #64748b;
-    font-size: 0.9rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-/* Recent Enrollments and Popular Courses Lists */
-#recent-enrollments-list,
-#popular-courses-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.enrollment-item,
-.course-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    background-color: #f8fafc;
-    border-radius: 6px;
-    border-left: 3px solid var(--tesda-blue);
-}
-
-.enrollment-info,
-.course-info {
-    flex: 1;
-}
-
-.enrollment-name,
-.course-name {
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 0.25rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-.enrollment-details,
-.course-details {
-    font-size: 0.8rem;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
-}
-
-.enrollment-date,
-.course-count {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    font-weight: 500;
-    font-family: 'Poppins', sans-serif;
-}
-
-.no-data {
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    padding: 1rem;
-    font-family: 'Poppins', sans-serif;
+.btn-secondary:hover {
+    background-color: #e2e8f0;
 }
 
 /* ===== MODAL STYLES ===== */
@@ -816,7 +717,7 @@ body.modal-open {
     z-index: 2000;
     justify-content: center;
     align-items: center;
-    overflow: auto;
+    overflow-y: auto;
     padding: 20px;
 }
 
@@ -828,9 +729,16 @@ body.modal-open {
     max-width: 100%;
     max-height: 90vh;
     border-radius: 8px;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     animation: modalFadeIn 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+/* FIXED: Logout modal specific styles */
+#logout-modal .modal-content {
+    width: 400px;
 }
 
 .modal-header {
@@ -841,6 +749,7 @@ body.modal-open {
     justify-content: space-between;
     align-items: center;
     border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -867,6 +776,7 @@ body.modal-open {
     justify-content: center;
     border-radius: 50%;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .close-modal:hover {
@@ -875,7 +785,9 @@ body.modal-open {
 
 .modal-body {
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(90vh - 140px);
 }
 
 .modal-body p {
@@ -886,24 +798,25 @@ body.modal-open {
     text-align: center;
 }
 
-.modal-footer {
+/* FIXED: Logout modal specific footer styles */
+#logout-modal .modal-footer {
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     gap: 15px;
+    flex-shrink: 0;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
 }
 
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
+/* FIXED: Logout modal buttons - equal width with centered content */
+#logout-modal .btn {
     flex: 1;
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .btn-yes {
@@ -937,14 +850,44 @@ body.modal-open {
     }
 }
 
+/* Loading spinner for buttons */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* Disabled button styles */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Custom scrollbar for modal */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 /* ===== Responsive Design ===== */
@@ -964,10 +907,6 @@ body.modal-open {
     
     .logo-container {
         gap: 15px;
-    }
-    
-    .charts-section {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -1040,6 +979,11 @@ body.modal-open {
         height: 36px;
     }
     
+    /* Hide desktop subnav on mobile */
+    .subnav {
+        display: none;
+    }
+    
     .content {
         padding: 20px 3%;
     }
@@ -1048,39 +992,40 @@ body.modal-open {
         padding: 20px;
     }
     
-    .stats-grid {
+    .form-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
-    .charts-section {
-        grid-template-columns: 1fr;
+    .form-group.span-2 {
+        grid-column: span 1;
     }
     
-    .chart-container {
-        min-width: 100%;
+    .form-actions {
+        flex-direction: column;
     }
     
-    .content-grid {
-        grid-template-columns: 1fr;
+    .btn {
+        width: 100%;
     }
     
-    .stat-card {
-        padding: 1rem;
+    /* Mobile modal adjustments */
+    .modal {
+        padding: 10px;
     }
     
-    .stat-value {
-        font-size: 1.5rem;
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
     }
     
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
+    #logout-modal .modal-content {
+        width: 95%;
     }
     
-    .chart-body {
-        padding: 1rem;
-        height: 250px;
+    /* Mobile modal footer adjustments */
+    #logout-modal .modal-footer {
+        flex-direction: column;
     }
 }
 
@@ -1152,15 +1097,6 @@ body.modal-open {
     .modal-body,
     .modal-footer {
         padding: 15px;
-    }
-    
-    .user-detail-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .user-detail-section {
-        padding: 1rem;
     }
 }
 
