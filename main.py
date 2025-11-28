@@ -1,7 +1,12 @@
-from flask import Flask, render_template, session, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for
 import os
-from database import close_db
+#import hashlib  
+#from datetime import datetime, timedelta
+
+from flask import Flask, render_template
+#from flask_cors import CORS
 from flask_mail import Mail
+from database import close_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this-in-production'
@@ -29,9 +34,47 @@ app.register_blueprint(verify_cert_bp)
 
 #Admin BP
 from admin_homepage import admin_homepage_bp
+from admin_user_management import admin_user_management_bp
+from admin_user_update import admin_user_update_bp
+from admin_user_deletion import admin_user_deletion_bp
+from admin_user_archive import admin_user_archive_bp
+from admin_profile import admin_profile_bp
+from admin_courses_approval import admin_courses_approval_bp
+from admin_courses_avail import admin_courses_avail_bp
+from admin_courses_edit_req import admin_courses_edit_req_bp
+from admin_class_management import admin_class_management_bp
+from admin_class_approval import admin_class_approval_bp
+from admin_class_edit_req import admin_class_edit_req_bp
+from admin_create_course import admin_create_course_bp
+from admin_edit_course import admin_edit_course_bp
+from admin_class_creation import admin_class_creation_bp
+from admin_edit_class import admin_edit_class_bp
+from admin_enrollment import admin_enrollment_bp
+from admin_verified_req import admin_verified_req_bp
+from admin_create_staff import admin_create_staff_bp
+from admin_materials import admin_materials_bp
 
 #Admin BP
 app.register_blueprint(admin_homepage_bp)
+app.register_blueprint(admin_user_management_bp, url_prefix='/admin/user-management')
+app.register_blueprint(admin_user_update_bp)
+app.register_blueprint(admin_user_deletion_bp)
+app.register_blueprint(admin_user_archive_bp)
+app.register_blueprint(admin_profile_bp, url_prefix='/admin')
+app.register_blueprint(admin_courses_approval_bp)
+app.register_blueprint(admin_courses_avail_bp)
+app.register_blueprint(admin_courses_edit_req_bp)
+app.register_blueprint(admin_class_management_bp)
+app.register_blueprint(admin_class_approval_bp)
+app.register_blueprint(admin_class_edit_req_bp)
+app.register_blueprint(admin_create_course_bp)
+app.register_blueprint(admin_edit_course_bp)
+app.register_blueprint(admin_class_creation_bp)
+app.register_blueprint(admin_edit_class_bp)
+app.register_blueprint(admin_enrollment_bp)
+app.register_blueprint(admin_verified_req_bp)
+app.register_blueprint(admin_create_staff_bp)
+app.register_blueprint(admin_materials_bp)
 
 # General Routes
 @app.route("/")

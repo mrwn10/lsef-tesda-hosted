@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Class Creation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_class_creation.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Define URLs for JavaScript -->
+    <script>
+        window.appUrls = {
+            logoutUrl: "{{ url_for('login.logout') }}"
+        };
+    </script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation Container -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <div class="nav-left">
+                    <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                    <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
+                    <a href="{{ url_for('admin_class_management.view_active_classes') }}" class="active"><i class="fas fa-users"></i> Classes</a>
+                    <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
+                    <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                    <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                    <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                </div>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                
+                <!-- Users Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="users">
+                        <span><i class="fas fa-users-cog"></i> Users</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="users-submenu">
+                        <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-user-check"></i> User Acceptance</a>
+                        <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
+                        <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
+                        <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
+                        <a href="{{ url_for('admin_user_archive') }}"><i class="fas fa-archive"></i> User Archive</a>
+                    </div>
+                </div>
+                
+                <!-- Classes Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="classes">
+                        <span><i class="fas fa-users"></i> Classes</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="classes-submenu">
+                        <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Class Management</a>
+                        <a href="{{ url_for('admin_class_creation.create_class') }}" class="active"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                        <a href="{{ url_for('admin_edit_class.view_editable_classes') }}"><i class="fas fa-edit"></i> Edit Class</a>
+                        <a href="{{ url_for('admin_class_approval.view_pending_classes') }}"><i class="fas fa-check-circle"></i> Class Approval</a>
+                        <a href="{{ url_for('admin_class_edit_req.view_class_edit_requests') }}"><i class="fas fa-pencil-alt"></i> Class Edit Request</a>
+                    </div>
+                </div>
+                
+                <!-- Courses Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="courses">
+                        <span><i class="fas fa-book"></i> Courses</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="courses-submenu">
+                        <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-clipboard-check"></i> Courses Approval</a>
+                        <a href="{{ url_for('admin_create_course.create_course') }}"><i class="fas fa-plus-circle"></i> Create Course</a>
+                        <a href="{{ url_for('admin_edit_course.view_editable_courses') }}"><i class="fas fa-edit"></i> Edit Course</a>
+                        <a href="{{ url_for('admin_courses_avail.view_available_courses') }}"><i class="fas fa-list"></i> Courses Available</a>
+                        <a href="{{ url_for('admin_courses_edit_req.view_edit_requests') }}"><i class="fas fa-pen-fancy"></i> Courses Edit Request</a>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
+                
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Management Subnav - Desktop Only -->
+        <nav class="subnav">
+            <div class="subnav-right">
+                <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Class Management</a>
+                <a href="{{ url_for('admin_class_creation.create_class') }}" class="active"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                <a href="{{ url_for('admin_edit_class.view_editable_classes') }}"><i class="fas fa-edit"></i> Edit Class</a>
+                <a href="{{ url_for('admin_class_approval.view_pending_classes') }}"><i class="fas fa-check-circle"></i> Class Approval</a>
+                <a href="{{ url_for('admin_class_edit_req.view_class_edit_requests') }}"><i class="fas fa-pencil-alt"></i> Class Edit Request</a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-chalkboard-teacher"></i> Create New Class</h1>
+                <div class="breadcrumb">
+                    <span>Class Management</span> / <span>Class Creation</span>
+                </div>
+                <p class="admin-note"><i class="fas fa-shield-alt"></i> Note: Classes created by admins are activated immediately.</p>
+            </div>
+            
+            <div id="message-container">
+                <div id="message-content" class="message"></div>
+            </div>
+
+            <form id="classCreationForm" class="class-creation-form" enctype="multipart/form-data">
+                <div class="form-columns">
+                    <!-- Left Column -->
+                    <div class="form-column">
+                        <!-- Course Information -->
+                        <div class="form-section">
+                            <h2><i class="fas fa-book"></i> Course Information</h2>
+                            
+                            <div class="form-group">
+                                <label for="course_id">Course <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <select id="course_id" name="course_id" required>
+                                        <option value="" selected disabled>Select Course</option>
+                                        {% if courses %}
+                                            {% for course in courses %}
+                                                <option value="{{ course.course_id }}">{{ course.course_title }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                            <option value="" disabled>No active courses available</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="class_title">Class Title <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-heading"></i>
+                                    <input type="text" id="class_title" name="class_title" placeholder="Enter class title" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="school_year">School Year <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <input type="text" id="school_year" name="school_year" placeholder="e.g. 2023-2024" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="batch">Batch</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                    <input type="text" id="batch" name="batch" placeholder="e.g. Batch 2023">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instructor Information -->
+                        <div class="form-section">
+                            <h2><i class="fas fa-user-tie"></i> Instructor Information</h2>
+                            
+                            <div class="form-group">
+                                <label for="instructor_name">Instructor Name <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="instructor_name" name="instructor_name" placeholder="Enter instructor name" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="venue">Venue <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <input type="text" id="venue" name="venue" placeholder="Enter venue" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="max_students">Maximum Students</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-users"></i>
+                                    <input type="number" id="max_students" name="max_students" value="25" readonly style="background-color: #f8f9fa; color: #666;">
+                                </div>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">Fixed at 25 students per class</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="form-column">
+                        <!-- Schedule Information -->
+                        <div class="form-section">
+                            <h2><i class="fas fa-calendar-check"></i> Schedule Information</h2>
+                            
+                            <div class="form-group">
+                                <label>Select Days <span class="required">*</span></label>
+                                <div class="day-checkboxes">
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="monday" name="days" value="Monday" class="d-none day-selector">
+                                        <label for="monday"><i class="fas fa-calendar-day"></i> Mon</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="tuesday" name="days" value="Tuesday" class="d-none day-selector">
+                                        <label for="tuesday"><i class="fas fa-calendar-day"></i> Tue</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="wednesday" name="days" value="Wednesday" class="d-none day-selector">
+                                        <label for="wednesday"><i class="fas fa-calendar-day"></i> Wed</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="thursday" name="days" value="Thursday" class="d-none day-selector">
+                                        <label for="thursday"><i class="fas fa-calendar-day"></i> Thu</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="friday" name="days" value="Friday" class="d-none day-selector">
+                                        <label for="friday"><i class="fas fa-calendar-day"></i> Fri</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="saturday" name="days" value="Saturday" class="d-none day-selector">
+                                        <label for="saturday"><i class="fas fa-calendar-day"></i> Sat</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="sunday" name="days" value="Sunday" class="d-none day-selector">
+                                        <label for="sunday"><i class="fas fa-calendar-day"></i> Sun</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="day-time-slots" id="dayTimeSlots">
+                                <div class="no-days-selected">
+                                    <i class="far fa-calendar-plus"></i>
+                                    <p>Select days above to add time slots</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group date-range-group">
+                                <label>Class Date Range <span class="required">*</span></label>
+                                <div class="date-inputs">
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <input type="date" id="start_date" name="start_date" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end_date">End Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-minus"></i>
+                                            <input type="date" id="end_date" name="end_date" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="form-section">
+                            <h2><i class="fas fa-info-circle"></i> Additional Information</h2>
+                            
+                            <div class="form-group">
+                                <label for="prerequisites">Prerequisites</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Optional prerequisites"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden fields -->
+                <input type="hidden" id="days_of_week" name="days_of_week">
+                <input type="hidden" id="schedule" name="schedule">
+
+                <div class="form-actions">
+                    <button type="reset" class="reset-btn">
+                        <i class="fas fa-undo"></i> Reset Form
+                    </button>
+                    <button type="submit" class="save-btn">
+                        <i class="fas fa-save"></i> Create Class
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/admin/admin_class_creation.js') }}"></script>
+</body>
+</html>
