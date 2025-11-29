@@ -431,37 +431,53 @@ function openProfileModal(userId) {
                 row.insertCell(7).textContent = cls.instructor_name || 'N/A';
             });
 
-            // Certificates Information
+            // Certificates Information - FIXED TABLE STRUCTURE
             const certsTable = document.getElementById('profileCertificatesTable').getElementsByTagName('tbody')[0];
             certsTable.innerHTML = '';
             
             data.certificates.forEach(cert => {
                 const row = certsTable.insertRow();
-                row.insertCell(0).textContent = cert.course || cert.class_title;
-                row.insertCell(1).textContent = cert.date;
-                row.insertCell(2).textContent = new Date(cert.created_at).toLocaleDateString();
                 
-                // View Certificate Link
-                const viewLink = document.createElement('a');
-                viewLink.href = cert.file_path;
-                viewLink.textContent = 'View';
-                viewLink.target = '_blank';
-                viewLink.className = 'cert-action-link';
-                row.insertCell(3).appendChild(viewLink);
-
-                // Download Certificate Button
-                const downloadBtn = document.createElement('button');
-                downloadBtn.textContent = 'Download';
-                downloadBtn.className = 'cert-action-btn';
-                downloadBtn.onclick = () => {
-                    const link = document.createElement('a');
-                    link.href = cert.file_path;
-                    link.download = `certificate_${cert.id}_${cert.date}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-                row.insertCell(4).appendChild(downloadBtn);
+                // Course name
+                row.insertCell(0).textContent = cert.course || cert.class_title || 'N/A';
+                
+                // Date completed
+                row.insertCell(1).textContent = cert.date || 'N/A';
+                
+                // Date issued
+                row.insertCell(2).textContent = new Date(cert.created_at).toLocaleDateString() || 'N/A';
+                
+                // View Certificate Link - in dedicated column
+                const viewCell = row.insertCell(3);
+                if (cert.file_path) {
+                    const viewLink = document.createElement('a');
+                    viewLink.href = cert.file_path;
+                    viewLink.textContent = 'View';
+                    viewLink.target = '_blank';
+                    viewLink.className = 'cert-action-link';
+                    viewCell.appendChild(viewLink);
+                } else {
+                    viewCell.textContent = 'N/A';
+                }
+                
+                // Download Certificate Button - in dedicated column
+                const downloadCell = row.insertCell(4);
+                if (cert.file_path) {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.className = 'cert-action-btn';
+                    downloadBtn.onclick = () => {
+                        const link = document.createElement('a');
+                        link.href = cert.file_path;
+                        link.download = `certificate_${cert.id}_${cert.date}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    };
+                    downloadCell.appendChild(downloadBtn);
+                } else {
+                    downloadCell.textContent = 'N/A';
+                }
             });
 
             document.getElementById('viewProfileModal').style.display = 'flex';
@@ -485,7 +501,8 @@ function closeModal(modalId) {
     document.body.classList.remove('modal-open');
 }
 
-function confirmGenerateCertificate(enrollmentId, studentName, remarks) {
+// ===================== PRIVATE COMPLETION CERTIFICATE =====================
+function generatePrivateCompletion(enrollmentId, studentName, remarks) {
     if (remarks !== 'Completed') {
         Swal.fire({
             icon: 'warning',
@@ -496,28 +513,28 @@ function confirmGenerateCertificate(enrollmentId, studentName, remarks) {
     }
     
     Swal.fire({
-        title: 'Generate Certificate',
-        text: `Generate certificate for ${studentName}?`,
+        title: 'Generate Certificate of Completion',
+        text: `Generate private completion certificate for ${studentName}?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Generate',
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            generateCertificate(enrollmentId);
+            generatePrivateCompletionCertificate(enrollmentId, studentName);
         }
     });
 }
 
-function generateCertificate(enrollmentId) {
-    showLoadingScreen('Generating certificate...');
+function generatePrivateCompletionCertificate(enrollmentId, studentName) {
+    showLoadingScreen('Generating private completion certificate...');
     
-    fetch('/generate', {
+    const formData = new FormData();
+    formData.append('enrollment_id', enrollmentId);
+    
+    fetch('/generate_private_completion', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `enrollment_id=${enrollmentId}`
+        body: formData
     })
     .then(response => {
         if (!response.ok) {
@@ -528,14 +545,20 @@ function generateCertificate(enrollmentId) {
     .then(data => {
         hideLoadingScreen();
         if (data.success) {
+            // Show success message but don't automatically open the file
             Swal.fire({
                 icon: 'success',
                 title: 'Success!',
-                text: data.message,
-                timer: 3000,
-                showConfirmButton: false
+                html: `
+                    <p>Private Completion Certificate generated successfully!</p>
+                    <p><small>Certificate ID: ${data.cert_hash ? data.cert_hash.substring(0, 16) + '...' : 'N/A'}</small></p>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: 'OK'
             }).then(() => {
-                location.reload();
+                // Don't try to open the file automatically - let the user download it manually
+                // This prevents the "URL not found" error
+                console.log('Certificate generated successfully:', data);
             });
         } else {
             throw new Error(data.message || 'Unknown error occurred');
@@ -548,74 +571,6 @@ function generateCertificate(enrollmentId) {
             icon: 'error',
             title: 'Error',
             text: `Error: ${error.message || 'Failed to generate certificate'}`
-        });
-    });
-}
-
-function confirmGenerateCompletion(enrollment_id, student_name, remarks) {
-    if (remarks !== 'Completed') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cannot Generate Certificate',
-            text: 'Student has not completed the course yet'
-        });
-        return;
-    }
-    
-    Swal.fire({
-        title: 'Generate Completion Certificate',
-        text: `Generate Completion Certificate for ${student_name}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, Generate',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            generateCompletionCertificate(enrollment_id);
-        }
-    });
-}
-
-function generateCompletionCertificate(enrollment_id) {
-    showLoadingScreen('Generating completion certificate...');
-    
-    fetch('/generate-completion', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `enrollment_id=${enrollment_id}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoadingScreen();
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: 'Completion Certificate generated successfully!',
-                timer: 3000,
-                showConfirmButton: false
-            }).then(() => {
-                // Open the certificate in a new tab
-                window.open(`/${data.file_path}`, '_blank');
-                location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error: ' + data.message
-            });
-        }
-    })
-    .catch(error => {
-        hideLoadingScreen();
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to generate certificate'
         });
     });
 }

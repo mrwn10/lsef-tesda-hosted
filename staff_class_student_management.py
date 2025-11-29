@@ -4,6 +4,13 @@ from database import get_db
 import io
 import pandas as pd
 import numpy as np
+import os
+import hashlib
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 
 staff_class_student_management_bp = Blueprint('staff_class_student_management', __name__)
 
@@ -33,6 +40,132 @@ def calculate_remarks(prelim, midterm, final):
             return "Failed"
     except (ValueError, TypeError):
         return "Incomplete"
+
+# ===================== CERTIFICATE FUNCTIONS =====================
+def generate_private_certificate_hash(content):
+    """Generate a unique hash for certificate verification"""
+    return hashlib.sha256(content.encode()).hexdigest()
+
+def save_private_certificate(enrollment_id, name, course, date, cert_hash, file_path):
+    """Save certificate record to database including name"""
+    db = get_db()
+    cursor = db.cursor()
+    
+    # First check if the certificate already exists for this enrollment
+    cursor.execute("""
+        SELECT id FROM certificates 
+        WHERE enrollment_id = %s AND course = %s
+    """, (enrollment_id, course))
+    
+    existing_cert = cursor.fetchone()
+    
+    if existing_cert:
+        # Update existing certificate - INCLUDING NAME
+        cursor.execute("""
+            UPDATE certificates 
+            SET name = %s, cert_hash = %s, file_path = %s, date = %s, created_at = NOW()
+            WHERE id = %s
+        """, (name, cert_hash, file_path, date, existing_cert[0]))
+    else:
+        # Insert new certificate - INCLUDING NAME
+        cursor.execute("""
+            INSERT INTO certificates (enrollment_id, name, course, date, cert_hash, file_path, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        """, (enrollment_id, name, course, date, cert_hash, file_path))
+    
+    db.commit()
+
+def create_private_completion_certificate(recipient_name, course_title, output_filename, cert_hash=None):
+    """Create a private completion certificate PDF"""
+    page_width, page_height = landscape(letter)
+    c = canvas.Canvas(output_filename, pagesize=landscape(letter))
+    margin = 0.5 * inch
+    border_width = page_width - 2 * margin
+    border_height = page_height - 2 * margin
+
+    def draw_centered_text(text, fontname, fontsize, x, y, color=colors.black):
+        c.setFont(fontname, fontsize)
+        c.setFillColor(color)
+        c.drawCentredString(x, y, text)
+        c.setFillColor(colors.black)
+
+    center_x = page_width / 2
+
+    # -------- PAGE 1: Certificate --------
+    # Outer bulky border
+    c.setStrokeColor(colors.red)
+    c.setLineWidth(25)
+    c.rect(margin, margin, border_width, border_height)
+
+    # Inner thin border
+    inset = 20
+    c.setLineWidth(2)
+    c.setStrokeColor(colors.red)
+    c.rect(margin + inset, margin + inset, border_width - 2*inset, border_height - 2*inset)
+
+    # Logo with white ellipse background
+    logo_path = "static/img/lsef_logo.png"
+    if os.path.exists(logo_path):
+        logo_width = 120
+        logo_height = 100
+        bg_width = 100
+        bg_height = 90
+
+        logo_x = center_x - (logo_width / 2)
+        logo_y = page_height - margin - 67
+
+        bg_x = center_x
+        bg_y = logo_y + (logo_height / 2)
+
+        c.setFillColor(colors.white)
+        c.setStrokeColor(colors.white)
+        c.ellipse(
+            bg_x - (bg_width / 2), bg_y - (bg_height / 2),
+            bg_x + (bg_width / 2), bg_y + (bg_height / 2),
+            fill=1, stroke=0
+        )
+
+        logo = ImageReader(logo_path)
+        c.drawImage(logo, logo_x, logo_y, width=logo_width, height=logo_height, mask='auto')
+
+    # Header
+    draw_centered_text("Laguna Sino-Filipino Educational Foundation Inc.", "Helvetica-Bold", 25, center_x, page_height - margin - 120)
+    draw_centered_text("F. Sario St. Santa Cruz, Laguna", "Helvetica", 18, center_x, page_height - margin - 148)
+
+    c.setLineWidth(1)
+    c.setStrokeColor(colors.black)
+
+    # Title
+    draw_centered_text("Certificate of Completion", "Helvetica-Bold", 40, center_x, page_height - margin - 220)
+
+    # Course Title
+    draw_centered_text(course_title, "Helvetica-Bold", 24, center_x, page_height - margin - 260)
+
+    # Subtitle & Recipient
+    draw_centered_text("This certificate is proudly awarded to", "Helvetica", 18, center_x, page_height - margin - 295)
+    draw_centered_text(recipient_name, "Helvetica-Bold", 36, center_x, page_height - margin - 340)
+    c.line(center_x - 200, page_height - margin - 345, center_x + 200, page_height - margin - 345)
+
+    draw_centered_text("In recognition of your dedication,", "Helvetica", 18, center_x, page_height - margin - 380)
+    draw_centered_text("passion and hardwork during your training.", "Helvetica", 18, center_x, page_height - margin - 400)
+
+    # Signatories
+    sign_y = page_height - margin - 480
+    c.line(margin + 85, sign_y + 20, margin + 265, sign_y + 20)
+    draw_centered_text("Nenica G. Avenido", "Helvetica-Bold", 18, margin + 175, sign_y + 25)
+    draw_centered_text("Trainor", "Helvetica", 15, margin + 175, sign_y + 3)
+
+    c.line(page_width - margin - 265, sign_y + 20, page_width - margin - 85, sign_y + 20)
+    draw_centered_text("Enrico Ariel T. Ting", "Helvetica-Bold", 18, page_width - margin - 175, sign_y + 25)
+    draw_centered_text("Chairman, BOT", "Helvetica", 15, page_width - margin - 175, sign_y + 3)
+
+    # Hash with label on same line
+    if cert_hash:
+        c.setFont("Helvetica", 9)
+        c.setFillColor(colors.gray)
+        draw_centered_text(f"Verification Hash: {cert_hash}", "Helvetica", 9, center_x, margin + 35)
+
+    c.save()
 
 # ===================== VIEW CLASS STUDENTS =====================
 @staff_class_student_management_bp.route('/staff_class/<int:class_id>/students', methods=['GET'])
@@ -199,10 +332,10 @@ def get_student_profile(user_id):
                 except:
                     cls['days_of_week'] = None
 
-        # Certificates
+        # Certificates - NOW INCLUDING NAME
         cursor.execute("""
             SELECT 
-                cert.id, cert.course, cert.date, cert.cert_hash, cert.tx_hash, cert.file_path,
+                cert.id, cert.name, cert.course, cert.date, cert.cert_hash, cert.file_path,
                 cert.created_at, c.class_title, c.schedule
             FROM certificates cert
             JOIN enrollment e ON cert.enrollment_id = e.enrollment_id
@@ -230,6 +363,81 @@ def get_student_profile(user_id):
         return jsonify({
             'error': 'Server Error',
             'message': f'Failed to fetch student profile: {str(e)}'
+        }), 500
+
+# ===================== GENERATE PRIVATE COMPLETION CERTIFICATE =====================
+@staff_class_student_management_bp.route('/generate_private_completion', methods=['POST'])
+def generate_private_completion():
+    if 'user_id' not in session or session.get('role') != 'staff':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        enrollment_id = request.form['enrollment_id']
+        
+        # Get student details
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT pi.first_name, pi.last_name, c.class_title, sg.remarks 
+            FROM enrollment e 
+            JOIN personal_information pi ON e.user_id = pi.user_id 
+            JOIN classes c ON e.class_id = c.class_id 
+            JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id 
+            WHERE e.enrollment_id = %s
+        """, (enrollment_id,))
+        student = cursor.fetchone()
+        
+        if not student or student['remarks'] != 'Completed':
+            return jsonify({'error': 'Bad Request', 'message': 'Student has not completed the course'}), 400
+        
+        recipient_name = f"{student['first_name']} {student['last_name']}"
+        course_title = student['class_title']
+        date_completed = datetime.now().strftime('%Y-%m-%d')
+        
+        # Create certificate directory
+        CERT_DIR = os.path.join('static', 'certs')
+        os.makedirs(CERT_DIR, exist_ok=True)
+        
+        # Generate filename
+        sanitized_name = "".join(c for c in recipient_name if c.isalnum() or c in (' ', '_')).rstrip()
+        sanitized_course = "".join(c for c in course_title if c.isalnum() or c in (' ', '_')).rstrip()
+        cert_filename = f"Private_Completion_{sanitized_name.replace(' ', '_')}_{sanitized_course.replace(' ', '_')}.pdf"
+        cert_path = os.path.join(CERT_DIR, cert_filename)
+        
+        # Generate certificate content for hash
+        certificate_content = f"{recipient_name}{course_title}{date_completed}{enrollment_id}"
+        cert_hash = generate_private_certificate_hash(certificate_content)
+        
+        # Create the certificate PDF
+        create_private_completion_certificate(
+            recipient_name=recipient_name,
+            course_title=course_title,
+            output_filename=cert_path,
+            cert_hash=cert_hash
+        )
+        
+        # Save to database - NOW INCLUDING NAME IN BOTH INSERT AND UPDATE
+        file_path = os.path.join("certs", cert_filename).replace('\\', '/')
+        save_private_certificate(
+            enrollment_id=enrollment_id,
+            name=recipient_name,
+            course=course_title,
+            date=date_completed,
+            cert_hash=cert_hash,
+            file_path=file_path
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Private Completion Certificate generated successfully!',
+            'file_path': os.path.join('static', file_path).replace('\\', '/'),
+            'cert_hash': cert_hash
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': 'Server Error', 
+            'message': f'Error generating private certificate: {str(e)}'
         }), 500
 
 # ===================== DOWNLOAD GRADE SHEET =====================

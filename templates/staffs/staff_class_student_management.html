@@ -179,13 +179,9 @@
                                 <button class="profile-btn" onclick="openProfileModal('{{ student.user_id }}')">
                                     <i class="fas fa-user"></i> Profile
                                 </button>
-                                <button class="certificate-btn" onclick="confirmGenerateCertificate('{{ student.enrollment_id }}', '{{ student.first_name }} {{ student.last_name }}', '{{ student.remarks }}')" 
+                                <button class="completion-btn" onclick="generatePrivateCompletion('{{ student.enrollment_id }}', '{{ student.first_name }} {{ student.last_name }}', '{{ student.remarks }}')" 
                                         {% if student.remarks != 'Completed' %}disabled{% endif %}>
-                                    <i class="fas fa-certificate"></i> Accreditation Cert
-                                </button>
-                                <button class="completion-btn" onclick="confirmGenerateCompletion('{{ student.enrollment_id }}', '{{ student.first_name }} {{ student.last_name }}', '{{ student.remarks }}')" 
-                                        {% if student.remarks != 'Completed' %}disabled{% endif %}>
-                                    <i class="fas fa-file-alt"></i> Completion Cert
+                                    <i class="fas fa-file-certificate"></i> Certificate of Completion
                                 </button>
                             </td>
                         </tr>
@@ -357,7 +353,8 @@
                                     <th>Course</th>
                                     <th>Date Completed</th>
                                     <th>Date Issued</th>
-                                    <th>Actions</th>
+                                    <th>View</th>
+                                    <th>Download</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
