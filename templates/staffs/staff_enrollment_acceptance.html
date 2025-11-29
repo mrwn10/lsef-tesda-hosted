@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollment Acceptance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff/staff_enrollment_acceptance.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Define URLs for JavaScript -->
+    <script>
+        window.appUrls = {
+            logoutUrl: "{{ url_for('login.logout') }}",
+            studentDetailsUrl: "/staff/enrollment_acceptance/details/",
+            handleEnrollmentActionUrl: "{{ url_for('staff_enrollment_acceptance.handle_enrollment_action') }}"
+        };
+    </script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation Container -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-users"></i> Class Management</a>
+                <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book-open"></i> Courses</a>
+                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                
+                <!-- Class Management Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="classes">
+                        <span><i class="fas fa-users"></i> Class Management</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="classes-submenu">
+                        <a href="{{ url_for('staff_class_management') }}"><i class="fas fa-users-cog"></i> Class Management</a>
+                        <a href="{{ url_for('staff_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                        <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
+                        <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}" class="active"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
+                        <a href="{{ url_for('staff_class_student_management') }}"><i class="fas fa-user-graduate"></i> Student Management</a>
+                    </div>
+                </div>
+                
+                <!-- Courses Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="courses">
+                        <span><i class="fas fa-book-open"></i> Courses</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="courses-submenu">
+                        <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book"></i> Courses Creation</a>
+                        <a href="{{ url_for('staff_courses_edit_req.view_active_courses') }}"><i class="fas fa-edit"></i> Courses Edit Request</a>
+                        <a href="{{ url_for('staff_courses_view.view_staff_active_courses') }}"><i class="fas fa-eye"></i> Courses View</a>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
+                
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Management Subnav -->
+    <nav class="courses-subnav">
+        <div class="subnav-right">
+            <a href="{{ url_for('staff_class_management') }}">Class Management</a>
+            <a href="{{ url_for('staff_class_creation.create_class') }}">Class Creation</a>
+            <a href="{{ url_for('staff_class_edit_req') }}">Class Edit Request</a>
+            <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}" class="active">Enrollment Acceptance</a>
+            <a href="{{ url_for('staff_class_student_management') }}">Student Management</a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal - UPDATED WITH ID -->
+    <div class="modal logout-modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-user-graduate"></i> Enrollment Acceptance</h1>
+                <p class="subtitle">Manage and review student enrollment requests</p>
+            </div>
+
+            <div class="search-filter-container">
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search students...">
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alert-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                                <span>{{ message }}</span>
+                                <button type="button" class="close-alert">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="alert" id="status-message" style="display: none;">
+                <span id="message-text"></span>
+                <button type="button" class="close-alert">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            {% if enrollments %}
+            <div class="user-table-container">
+                <table id="enrollmentTable" class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Email</th>
+                            <th>Course</th>
+                            <th>Class</th>
+                            <th>Schedule</th>
+                            <th>Requirements</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="enrollments-container">
+                        {% for enroll in enrollments %}
+                        <tr data-enrollment-id="{{ enroll.enrollment_id }}">
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="student-details">
+                                        <div class="student-name">{{ enroll.first_name }} {% if enroll.middle_name %}{{ enroll.middle_name }}{% endif %} {{ enroll.last_name }}</div>
+                                        <div class="student-contact">{{ enroll.contact_number or 'N/A' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="email-cell">{{ enroll.email }}</td>
+                            <td class="course-cell">{{ enroll.course_title }}</td>
+                            <td class="class-cell">{{ enroll.class_title }}</td>
+                            <td class="schedule-cell">
+                                <div class="schedule-info">
+                                    <div class="schedule-days">{{ enroll.schedule }}</div>
+                                    <div class="schedule-venue">{{ enroll.venue }}</div>
+                                    <div class="schedule-date">{{ enroll.start_date.strftime('%b %d, %Y') if enroll.start_date else 'TBA' }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if enroll.birth_certificate and enroll.educational_credentials and enroll.id_photos %}
+                                    <span class="status-badge status-completed"><i class="fas fa-check-circle"></i> Complete</span>
+                                {% else %}
+                                    <span class="status-badge status-incomplete"><i class="fas fa-exclamation-circle"></i> Incomplete</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-details-btn" data-enrollment-id="{{ enroll.enrollment_id }}">
+                                        <i class="fas fa-eye"></i>
+                                        <span>Review</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Pagination Controls -->
+                <div class="pagination-container" id="pagination-container" style="display: none;">
+                    <div class="pagination-info">
+                        Showing <span id="pagination-start">0</span>-<span id="pagination-end">0</span> of <span id="pagination-total">0</span> enrollments
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="first-page" disabled>
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <button class="pagination-btn" id="prev-page" disabled>
+                            <i class="fas fa-angle-left"></i>
+                        </button>
+                        <div class="pagination-pages" id="pagination-pages">
+                            <!-- Page numbers will be inserted here -->
+                        </div>
+                        <button class="pagination-btn" id="next-page" disabled>
+                            <i class="fas fa-angle-right"></i>
+                        </button>
+                        <button class="pagination-btn" id="last-page" disabled>
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </div>
+                    <div class="pagination-page-size">
+                        <label for="page-size">Show:</label>
+                        <select id="page-size">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Enrollment Cards (for small screens) -->
+            <div class="mobile-users-container" id="mobile-enrollments-container">
+                <!-- Mobile enrollment cards will be inserted here by JavaScript -->
+            </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No pending enrollment requests</h3>
+                    <p>There are currently no enrollment requests to review.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Student Details Modal -->
+    <div id="studentDetailsModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-graduate"></i> Student Enrollment Review</h3>
+                <button class="close-modal" id="close-student-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="student-details-content">
+                    <!-- Student details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-actions">
+                    <button class="btn btn-accept" id="accept-enrollment">
+                        <i class="fas fa-check"></i> Accept
+                    </button>
+                    <button class="btn btn-reject" id="reject-enrollment">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                </div>
+                <button class="btn btn-no" id="close-student-details">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header success">
+                <h3><i class="fas fa-check-circle"></i> Success</h3>
+                <button class="close-modal" id="close-success-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="successMessage">Operation completed successfully.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="closeSuccessModal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen Modal -->
+    <div id="loading-screen" class="modal" style="display: none; z-index: 3000;">
+        <div class="modal-content" style="width: 300px; text-align: center;">
+            <div class="modal-body">
+                <div class="loading-spinner" style="margin-bottom: 15px;">
+                    <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto;"></div>
+                </div>
+                <p id="loading-message" style="margin: 0; font-size: 16px; color: #333;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/staff/staff_enrollment_acceptance.js') }}"></script>
+</body>
+</html>

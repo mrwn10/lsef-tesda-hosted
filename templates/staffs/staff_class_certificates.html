@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff/staff_class_certificates.css') }}" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/tesda_logo.png') }}" />
+</head>
+<body>
+    <!-- Main Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <div class="social-icons"></div>
+        </div>
+        <div class="navbar-right nav-links">
+            <a href="{{ url_for('staff_homepage') }}">Home</a>
+            <a href="{{ url_for('staff_class_management') }}">Class Management</a>
+            <a href="{{ url_for('staff_courses_creation') }}">Courses</a>
+            <a href="{{ url_for('staff_profile') }}">Profile</a>
+            <a href="{{ url_for('login.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Sub Navbar -->
+    <nav class="subnav">
+        <div class="navbar-left">
+            <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo" class="logo" />
+            <span class="brand">LSEF TESDA</span>
+        </div>
+        <div class="subnav-right">
+            <a href="{{ url_for('staff_homepage') }}">Homepage</a>
+            <a href="{{ url_for('staff_class_certificates') }}" class="active">Certifications</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Issue TESDA Accreditation Certificate</h2>
+        <form method="POST" action="/generate">
+            <label>Enrollment:</label>
+            <select name="enrollment_id" required>
+                {% for enrollment in enrollments %}
+                    <option value="{{ enrollment.enrollment_id }}">
+                        {{ enrollment.user_fullname }} - {{ enrollment.class_title }}
+                    </option>
+                {% endfor %}
+            </select><br>
+
+            <label>Organization Name:</label>
+            <input name="name" required><br>
+
+            <label>Competency (Course):</label>
+            <input name="course" required><br>
+
+            <label>Date Accredited:</label>
+            <input name="date" type="date" required><br>
+
+            <button type="submit">Generate & Register</button>
+        </form>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for msg in messages %}
+                        <li>{{ msg }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Other Options -->
+        <a href="/verify">Verify Certificate</a><br>
+        
+        <form action="/search" method="GET" style="display:inline;">
+            <button type="submit">Search Certificate</button>
+        </form>
+    </div>
+
+</body>
+</html>

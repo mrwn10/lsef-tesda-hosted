@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff/staff_class_management.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Define URLs for JavaScript -->
+    <script>
+        window.appUrls = {
+            logoutUrl: "{{ url_for('login.logout') }}",
+            manageStudentsBaseUrl: "{{ url_for('staff_class_student_management.view_class_students', class_id=0) }}".replace('/0', '/')
+        };
+    </script>
+</head>
+<body data-logout-url="{{ url_for('login.logout') }}">
+    <!-- Navigation Container -->
+    <div class="nav-container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-users"></i> Class Management</a>
+                <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book-open"></i> Courses</a>
+                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
+            </div>
+            <div class="nav-right"></div>
+            
+            <!-- Mobile Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="mobile-brand">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <span>LSEF TESDA</span>
+                </div>
+                <button class="close-mobile-nav" id="closeMobileNav">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                
+                <!-- Class Management Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="classes">
+                        <span><i class="fas fa-users"></i> Class Management</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="classes-submenu">
+                        <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-users-cog"></i> Class Management</a>
+                        <a href="{{ url_for('staff_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                        <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
+                        <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
+                        <a href="{{ url_for('staff_class_student_management') }}"><i class="fas fa-user-graduate"></i> Student Management</a>
+                    </div>
+                </div>
+                
+                <!-- Courses Expandable Section -->
+                <div class="mobile-nav-section">
+                    <div class="mobile-nav-header-link" data-section="courses">
+                        <span><i class="fas fa-book-open"></i> Courses</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="mobile-nav-submenu" id="courses-submenu">
+                        <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book"></i> Courses Creation</a>
+                        <a href="{{ url_for('staff_courses_edit_req.view_active_courses') }}"><i class="fas fa-edit"></i> Courses Edit Request</a>
+                        <a href="{{ url_for('staff_courses_view.view_staff_active_courses') }}"><i class="fas fa-eye"></i> Courses View</a>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
+                
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="brand-name">LSEF TESDA</div>
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/lsef_logo.png') }}" alt="LSEF Logo">
+                    <img src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="TESDA Logo">
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-dropdown">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Management Subnav -->
+    <nav class="courses-subnav">
+        <div class="subnav-right">
+            <a href="{{ url_for('staff_class_management') }}" class="active">Class Management</a>
+            <a href="{{ url_for('staff_class_creation.create_class') }}">Class Creation</a>
+            <a href="{{ url_for('staff_class_edit_req') }}">Class Edit Request</a>
+            <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}">Enrollment Acceptance</a>
+            <a href="{{ url_for('staff_class_student_management') }}">Student Management</a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logout-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+                <button class="close-modal" id="close-logout-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-yes" id="confirm-logout">Yes</button>
+                <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-users"></i> Class Management</h1>
+                <p class="subtitle">Manage and monitor all class activities and student enrollments</p>
+            </div>
+
+            <div class="search-filter-container">
+                <div class="filter-dropdown">
+                    <select id="status-filter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </div>
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search classes...">
+                </div>
+            </div>
+
+            <div class="alert" id="status-message" style="display: none;">
+                <span id="message-text"></span>
+                <button type="button" class="close-alert">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="user-table-container">
+                <table id="classTable" class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Class ID</th>
+                            <th>Class Title</th>
+                            <th>Course Title</th>
+                            <th>Schedule</th>
+                            <th>Venue</th>
+                            <th>Students</th>
+                            <th>Status</th>
+                            <th>Dates</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classes-container">
+                        {% if classes %}
+                            {% for cls in classes %}
+                            <tr data-class-id="{{ cls.class_id }}">
+                                <td>{{ cls.class_id }}</td>
+                                <td class="class-title">{{ cls.class_title }}</td>
+                                <td>{{ cls.course_title }}</td>
+                                <td>{{ cls.schedule }}</td>
+                                <td>{{ cls.venue }}</td>
+                                <td>
+                                    <div class="student-count">
+                                        <span class="current">{{ cls.current_students|default(0) }}</span>
+                                        <span class="separator">/</span>
+                                        <span class="max">{{ cls.max_students }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ cls.status|lower }}">{{ cls.status }}</span>
+                                </td>
+                                <td>
+                                    <div class="date-range">
+                                        <div class="start-date">{{ cls.start_date }}</div>
+                                        <div class="end-date">{{ cls.end_date }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('staff_class_student_management.view_class_students', class_id=cls.class_id) }}" class="action-btn view-btn" title="Manage Students">
+                                            <i class="fas fa-users"></i> Manage
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr class="loading-row">
+                                <td colspan="9">
+                                    <div class="loading-spinner">
+                                        <div class="spinner"></div>
+                                        <span>Loading classes...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+                
+                <!-- Pagination Controls -->
+                <div class="pagination-container" id="pagination-container" style="display: none;">
+                    <div class="pagination-info">
+                        Showing <span id="pagination-start">0</span>-<span id="pagination-end">0</span> of <span id="pagination-total">0</span> classes
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="first-page" disabled>
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <button class="pagination-btn" id="prev-page" disabled>
+                            <i class="fas fa-angle-left"></i>
+                        </button>
+                        <div class="pagination-pages" id="pagination-pages">
+                            <!-- Page numbers will be inserted here -->
+                        </div>
+                        <button class="pagination-btn" id="next-page" disabled>
+                            <i class="fas fa-angle-right"></i>
+                        </button>
+                        <button class="pagination-btn" id="last-page" disabled>
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </div>
+                    <div class="pagination-page-size">
+                        <label for="page-size">Show:</label>
+                        <select id="page-size">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Class Cards (for small screens) -->
+            <div class="mobile-users-container" id="mobile-classes-container">
+                <!-- Mobile class cards will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header success">
+                <h3><i class="fas fa-check-circle"></i> Success</h3>
+                <button class="close-modal" id="close-success-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="successMessage">Operation completed successfully.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="closeSuccessModal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen Modal -->
+    <div id="loading-screen" class="modal" style="display: none; z-index: 3000;">
+        <div class="modal-content" style="width: 300px; text-align: center;">
+            <div class="modal-body">
+                <div class="loading-spinner" style="margin-bottom: 15px;">
+                    <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto;"></div>
+                </div>
+                <p id="loading-message" style="margin: 0; font-size: 16px; color: #333;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/staff/staff_class_management.js') }}"></script>
+</body>
+</html>

@@ -79,6 +79,34 @@ app.register_blueprint(admin_verified_req_bp)
 app.register_blueprint(admin_create_staff_bp)
 app.register_blueprint(admin_materials_bp)
 
+#Staff BP
+from staff_profile import staff_profile_bp
+from staff_courses_creation import staff_courses_creation_bp
+from staff_courses_edit_req import staff_courses_edit_req_bp
+from staff_courses_view import staff_courses_view_bp
+from staff_class_management import staff_class_management_bp
+from staff_class_creation import staff_class_creation_bp
+from staff_class_edit_req import staff_class_edit_req_bp
+from staff_class_student_management import staff_class_student_management_bp
+from staff_enrollment_acceptance import staff_enrollment_acceptance_bp
+from staff_class_certificates import staff_class_certificates_bp
+from staff_homepage import staff_homepage_bp
+from staff_materials import staff_materials_bp
+
+#Staff BP
+app.register_blueprint(staff_profile_bp, url_prefix='/staff')
+app.register_blueprint(staff_courses_creation_bp)
+app.register_blueprint(staff_courses_edit_req_bp)
+app.register_blueprint(staff_courses_view_bp)
+app.register_blueprint(staff_class_management_bp)
+app.register_blueprint(staff_class_creation_bp)
+app.register_blueprint(staff_class_edit_req_bp)
+app.register_blueprint(staff_class_student_management_bp)
+app.register_blueprint(staff_enrollment_acceptance_bp)
+app.register_blueprint(staff_class_certificates_bp)
+app.register_blueprint(staff_homepage_bp)
+app.register_blueprint(staff_materials_bp)
+
 #Student BP
 from student_profile import student_profile_bp
 from student_enrollment import student_enrollment_bp
@@ -354,6 +382,166 @@ def student_resources():
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
     return render_template("students/student_resources.html", profile_picture=profile_picture)
+
+    # Staffs
+@app.route("/staff_homepage")
+def staff_homepage():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback if user has no profile picture
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+
+    return render_template("staffs/staff_homepage.html", profile_picture=profile_picture)
+
+@app.route("/staff_profile")
+def staff_profile():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback if user has no profile picture
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+
+    return render_template("staffs/staff_profile.html", profile_picture=profile_picture)
+
+
+@app.route("/staff_courses_creation")
+def staff_courses_creation():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'  # fallback if user has no profile picture
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_courses_creation.html", profile_picture=profile_picture)
+
+@app.route("/staff_courses_edit_req")
+def staff_courses_edit_req():
+    return render_template("staffs/staff_courses_edit_req.html")
+
+@app.route("/staff_courses_view")
+def staff_courses_view():
+    return render_template("staffs/staff_courses_view.html")
+
+@app.route("/staff_class_management")
+def staff_class_management():
+    return render_template("staffs/staff_class_management.html")
+
+@app.route("/staff_class_creation")
+def staff_class_creation():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_class_creation.html", profile_picture=profile_picture)
+
+@app.route("/staff_class_edit_req")
+def staff_class_edit_req():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_class_edit_req.html", profile_picture=profile_picture)
+
+@app.route("/staff_class_student_management")
+def staff_class_student_management():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_class_student_management.html", profile_picture=profile_picture)
+
+@app.route("/staff_enrollment_acceptance")
+def staff_enrollment_acceptance():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_enrollment_acceptance.html", profile_picture=profile_picture)
+
+@app.route("/staff_materials")
+def staff_materials():
+    user_id = session.get('user_id')
+    profile_picture = 'default.png'
+
+    if user_id:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT profile_picture
+            FROM personal_information
+            WHERE user_id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    return render_template("staffs/staff_materials.html", profile_picture=profile_picture)
 
 if __name__ == "__main__":
     app.run(debug=True)
