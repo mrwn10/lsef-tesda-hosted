@@ -24,6 +24,8 @@ html, body {
     background-color: var(--tesda-light-gray);
     line-height: 1.6;
     color: var(--tesda-text);
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    max-width: 100%;
 }
 
 body.modal-open {
@@ -34,7 +36,7 @@ body.modal-open {
 .nav-container {
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000; /* Increased for better stacking */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -136,6 +138,10 @@ body.modal-open {
 
 .mobile-nav.active {
     right: 0;
+}
+
+.mobile-nav.active + main {
+    pointer-events: none; /* Prevent clicks on main content */
 }
 
 .mobile-nav-header {
@@ -322,6 +328,7 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 30px;
+    flex-wrap: wrap;
 }
 
 .brand-name {
@@ -331,6 +338,7 @@ body.modal-open {
     display: flex;
     align-items: center;
     font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
 }
 
 .brand-name::before {
@@ -350,10 +358,12 @@ body.modal-open {
     background-color: rgba(0, 0, 0, 0.02);
     border-radius: 4px;
     border-left: 3px solid var(--tesda-gold);
+    flex-wrap: wrap;
 }
 
 .logo-container img {
     height: 40px;
+    max-height: 40px;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
@@ -443,6 +453,7 @@ main {
     padding: 30px 5%;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .page-header {
@@ -479,6 +490,9 @@ main {
     padding: 30px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .profile-form.loading::before {
@@ -515,10 +529,12 @@ main {
 .form-columns {
     display: flex;
     gap: 2rem;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .form-column {
     flex: 1;
+    min-width: 300px; /* Minimum width before wrapping */
 }
 
 .form-section {
@@ -528,6 +544,7 @@ main {
     background-color: #f9fafc;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    width: 100%;
 }
 
 .form-section h2 {
@@ -546,6 +563,8 @@ main {
 .form-group {
     margin-bottom: 1.25rem;
     position: relative;
+    width: 100%;
+    clear: both; /* Prevent float issues */
 }
 
 label {
@@ -559,6 +578,8 @@ label {
 
 .input-with-icon {
     position: relative;
+    display: block;
+    width: 100%;
 }
 
 /* Style for left-side icons (lock, user, etc) */
@@ -582,6 +603,11 @@ label {
     cursor: pointer;
     font-size: 16px;
     z-index: 2;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .input-with-icon input, 
@@ -591,6 +617,7 @@ label {
     position: relative;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
+    max-width: 100%;
 }
 
 /* Fix for password fields */
@@ -607,6 +634,7 @@ select {
     padding-right: 2.5rem !important; /* Added to prevent text overlapping dropdown arrow */
     background-position: right 0.75rem center;
     font-family: 'Poppins', sans-serif;
+    font-size: 16px; /* Prevent zoom on iOS */
 }
 
 input[type="text"],
@@ -622,6 +650,7 @@ select {
     transition: all 0.3s ease;
     background-color: white;
     font-family: 'Poppins', sans-serif;
+    font-size: 16px; /* Prevents zoom on iOS */
 }
 
 input[type="text"]:focus,
@@ -647,6 +676,7 @@ select {
     justify-content: flex-end;
     margin-top: 2rem;
     gap: 1rem;
+    width: 100%;
 }
 
 .save-btn {
@@ -663,6 +693,7 @@ select {
     gap: 8px;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    min-height: 44px;
 }
 
 .save-btn:hover {
@@ -695,11 +726,13 @@ select {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .profile-frame {
     width: 180px;
     height: 180px;
+    max-width: 100%;
     border-radius: 50%;
     overflow: hidden;
     border: 4px solid #e2e8f0;
@@ -712,6 +745,7 @@ select {
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+    max-width: 100%;
 }
 
 .profile-frame:hover #profile-preview {
@@ -722,6 +756,9 @@ select {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
 }
 
 /* ===== Enhanced File Input Styles ===== */
@@ -730,6 +767,7 @@ select {
     overflow: hidden;
     display: inline-block;
     min-width: 200px;
+    max-width: 100%;
 }
 
 .file-input-wrapper input[type="file"] {
@@ -864,17 +902,6 @@ select {
     font-family: 'Poppins', sans-serif;
 }
 
-.toggle-password {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    cursor: pointer;
-    font-size: 16px;
-    z-index: 2;
-}
-
 .password-strength {
     margin-top: 0.5rem;
 }
@@ -917,10 +944,12 @@ select {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .signature-frame {
-    width: 300px;
+    width: 100%;
+    max-width: 300px;
     height: 150px;
     border: 2px solid var(--tesda-border);
     border-radius: 8px;
@@ -958,6 +987,7 @@ select {
     color: var(--tesda-text);
     max-width: 300px;
     text-align: center;
+    width: 100%;
 }
 
 .signature-note i {
@@ -971,6 +1001,7 @@ select {
     padding: 0.5rem;
     border-radius: 4px;
     display: none;
+    width: 100%;
 }
 
 #message-content {
@@ -981,6 +1012,7 @@ select {
     gap: 10px;
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
+    width: 100%;
 }
 
 #message-content.success {
@@ -1108,6 +1140,7 @@ select {
     text-align: center;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    min-height: 44px;
 }
 
 .btn-yes {
@@ -1142,6 +1175,12 @@ select {
 }
 
 /* ===== Responsive Design ===== */
+@media (max-width: 1200px) {
+    main {
+        max-width: 95%;
+    }
+}
+
 @media (max-width: 1024px) {
     .top-nav a {
         padding: 0 15px;
@@ -1157,8 +1196,27 @@ select {
     }
     
     .signature-frame {
-        width: 280px;
+        max-width: 280px;
         height: 140px;
+    }
+    
+    .form-columns {
+        gap: 1.5rem;
+    }
+    
+    .form-column {
+        min-width: 280px;
+    }
+}
+
+@media (max-width: 900px) {
+    .form-columns {
+        flex-direction: column;
+    }
+    
+    .form-column {
+        min-width: 100%;
+        width: 100%;
     }
 }
 
@@ -1185,6 +1243,7 @@ select {
         text-align: center;
         height: auto;
         min-height: 70px;
+        flex-wrap: wrap;
     }
     
     .brand-section {
@@ -1192,6 +1251,7 @@ select {
         gap: 10px;
         align-items: center;
         flex: 1;
+        flex-wrap: wrap;
     }
     
     .brand-name {
@@ -1199,6 +1259,7 @@ select {
         margin-right: 10px;
         display: flex;
         align-items: center;
+        white-space: normal;
     }
     
     .brand-name::before {
@@ -1219,6 +1280,7 @@ select {
     
     .logo-container img {
         height: 30px;
+        max-height: 30px;
     }
     
     .user-section {
@@ -1243,22 +1305,22 @@ select {
         flex-direction: column;
     }
     
-    /* Signature responsive adjustments */
+    .profile-frame {
+        width: 150px;
+        height: 150px;
+    }
+    
     .signature-frame {
-        width: 250px;
+        max-width: 250px;
         height: 120px;
     }
     
+    .profile-picture-controls,
     .signature-controls {
         flex-direction: column;
         width: 100%;
         max-width: 250px;
-    }
-    
-    .profile-picture-controls {
-        flex-direction: column;
-        width: 100%;
-        max-width: 250px;
+        align-items: center;
     }
     
     .file-input-wrapper {
@@ -1285,6 +1347,7 @@ select {
     }
     
     .btn {
+        width: 100%;
         min-width: 100%;
     }
     
@@ -1294,6 +1357,39 @@ select {
     
     .save-btn {
         width: 100%;
+    }
+    
+    .mobile-nav {
+        width: 85%;
+        max-width: 320px;
+    }
+    
+    /* Touch-friendly sizes */
+    button,
+    a,
+    input[type="submit"],
+    .upload-btn,
+    .remove-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: 14px;
+    }
+    
+    h1, h2, h3 {
+        font-size: 95%;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
     }
 }
 
@@ -1319,6 +1415,7 @@ select {
     
     .logo-container img {
         height: 25px;
+        max-height: 25px;
     }
     
     .brand-name::before {
@@ -1340,7 +1437,7 @@ select {
     }
     
     .page-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
     
     .mobile-nav {
@@ -1356,14 +1453,14 @@ select {
         height: 30px;
     }
     
-    .signature-frame {
-        width: 200px;
-        height: 100px;
+    .profile-frame {
+        width: 120px;
+        height: 120px;
     }
     
-    .profile-frame {
-        width: 150px;
-        height: 150px;
+    .signature-frame {
+        max-width: 200px;
+        height: 100px;
     }
     
     .modal-content {
@@ -1376,4 +1473,94 @@ select {
     .modal-footer {
         padding: 15px;
     }
+    
+    .form-section {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .top-nav {
+        padding: 0 10px;
+    }
+    
+    .sub-nav {
+        padding: 8px 10px;
+    }
+    
+    .brand-name {
+        font-size: 0.9rem;
+    }
+    
+    .logo-container img {
+        height: 22px;
+        max-height: 22px;
+    }
+    
+    .profile-img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .profile-frame {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .signature-frame {
+        max-width: 180px;
+        height: 90px;
+    }
+    
+    .form-section {
+        padding: 0.75rem;
+    }
+    
+    .mobile-nav {
+        width: 95%;
+        padding: 1rem;
+    }
+    
+    .mobile-brand {
+        font-size: 0.9rem;
+    }
+    
+    .mobile-brand img {
+        height: 25px;
+    }
+}
+
+/* Ensure all images are responsive */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Prevent text overflow */
+input, select, textarea, button {
+    max-width: 100%;
+}
+
+/* Fix for very long text */
+.file-name-display, .signature-note, .form-note {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Loading state for better UX */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-overlay.active {
+    display: flex;
 }

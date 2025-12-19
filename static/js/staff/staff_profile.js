@@ -1,10 +1,39 @@
-// staff_profile.js - Complete Fixed Version with Signature Integration
+// staff_profile.js - Complete Fixed Version with Enhanced Responsiveness
 $(document).ready(function() {
+    // Check and ensure viewport meta tag exists for proper mobile scaling
+    function checkViewportMeta() {
+        if (!$('meta[name="viewport"]').length) {
+            $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">');
+        }
+    }
+    
+    // Handle responsive images and prevent overflow
+    function handleResponsiveImages() {
+        // Ensure images don't overflow on small screens
+        $('#profile-preview, #signature-preview').on('load', function() {
+            $(this).css({
+                'max-width': '100%',
+                'max-height': '100%',
+                'object-fit': 'cover'
+            });
+        });
+        
+        // Initial check
+        $('#profile-preview, #signature-preview').each(function() {
+            if (this.complete) {
+                $(this).trigger('load');
+            }
+        });
+    }
+    
     // Initialize all functionality
     function init() {
+        checkViewportMeta();
+        handleResponsiveImages();
         initMobileNavigation();
         initModals();
         fetchProfileData();
+        setupFormValidation();
         
         // Profile form functionality
         $('#profile-form').submit(function(e) {
@@ -15,9 +44,13 @@ $(document).ready(function() {
                 return;
             }
 
-            // Show loading state on submit button
-            const $submitBtn = $(this).find('.save-btn');
+            // Show loading state
+            const $form = $(this);
+            const $submitBtn = $form.find('.save-btn');
             const originalText = $submitBtn.html();
+            
+            // Add loading class to form
+            $form.addClass('loading');
             $submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
             
             const formData = new FormData(this);
@@ -29,7 +62,8 @@ $(document).ready(function() {
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    // Restore button
+                    // Restore button and form
+                    $form.removeClass('loading');
                     $submitBtn.html(originalText).prop('disabled', false);
                     
                     if (response.success) {
@@ -56,12 +90,17 @@ $(document).ready(function() {
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Restore button
+                    // Restore button and form
+                    $form.removeClass('loading');
                     $submitBtn.html(originalText).prop('disabled', false);
                     
-                    let errorMsg = 'Error updating profile';
+                    let errorMsg = 'Error updating profile. Please try again.';
                     if (xhr.responseJSON && xhr.responseJSON.error) {
                         errorMsg = xhr.responseJSON.error;
+                    } else if (xhr.status === 413) {
+                        errorMsg = 'File too large. Maximum file size is 2MB.';
+                    } else if (xhr.status === 415) {
+                        errorMsg = 'Unsupported file format. Please use JPG or PNG.';
                     }
                     showMessage(errorMsg, 'error');
                 }
@@ -101,6 +140,76 @@ $(document).ready(function() {
             const password = $(this).val();
             const strength = checkPasswordStrength(password);
             updatePasswordStrengthIndicator(strength);
+        });
+        
+        // Handle window resize for responsive adjustments
+        $(window).on('resize', debounce(function() {
+            adjustFormLayout();
+        }, 250));
+        
+        // Initial layout adjustment
+        adjustFormLayout();
+    }
+    
+    // Debounce function for resize events
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Adjust form layout based on screen size
+    function adjustFormLayout() {
+        const windowWidth = $(window).width();
+        const $formColumns = $('.form-columns');
+        const $formSections = $('.form-section');
+        
+        if (windowWidth <= 768) {
+            // Mobile adjustments
+            $formSections.css({
+                'padding': '1rem',
+                'margin-bottom': '1.5rem'
+            });
+        } else {
+            // Desktop adjustments
+            $formSections.css({
+                'padding': '1.5rem',
+                'margin-bottom': '2rem'
+            });
+        }
+    }
+    
+    // Setup form validation
+    function setupFormValidation() {
+        // Contact number validation
+        $('#contact_number').on('input', function() {
+            const value = $(this).val().replace(/\D/g, '');
+            $(this).val(value);
+        });
+        
+        // Email validation
+        $('#email').on('blur', function() {
+            const email = $(this).val();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email && !emailRegex.test(email)) {
+                showMessage('Please enter a valid email address', 'error');
+            }
+        });
+        
+        // Password confirmation validation
+        $('#confirm_password').on('blur', function() {
+            const newPassword = $('#new_password').val();
+            const confirmPassword = $(this).val();
+            
+            if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+            }
         });
     }
     
@@ -173,6 +282,11 @@ $(document).ready(function() {
             
             // Show file name and success state
             updateFileInputUI($input, file, type);
+        };
+        
+        reader.onerror = function() {
+            showMessage('Error reading file. Please try again.', 'error');
+            $input.val('');
         };
         
         reader.readAsDataURL(file);
@@ -278,9 +392,12 @@ $(document).ready(function() {
             // Close mobile nav when clicking on links
             const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
             mobileNavLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
+                link.addEventListener('click', function(e) {
+                    // Only close if it's not an expandable header
+                    if (!this.classList.contains('mobile-nav-header-link')) {
+                        mobileNav.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
                 });
             });
             
@@ -299,6 +416,16 @@ $(document).ready(function() {
                     document.body.style.overflow = '';
                 }
             });
+            
+            // Handle window resize - close mobile nav on larger screens
+            function handleResize() {
+                if (window.innerWidth > 768 && mobileNav.classList.contains('active')) {
+                    mobileNav.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            window.addEventListener('resize', debounce(handleResize, 250));
         }
     }
     
@@ -349,6 +476,7 @@ $(document).ready(function() {
             const mobileNav = document.getElementById('mobileNav');
             if (mobileNav) {
                 mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
             }
             // Then open logout modal
             setTimeout(() => {
@@ -387,10 +515,15 @@ $(document).ready(function() {
     
     // Fetch profile data
     function fetchProfileData() {
+        // Show loading state
+        $('.profile-form').addClass('loading');
+        
         $.ajax({
             url: fetchProfileUrl, 
             type: "GET",
             success: function(response) {
+                $('.profile-form').removeClass('loading');
+                
                 if (response.success) {
                     const staff = response.staff;
 
@@ -430,6 +563,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
+                $('.profile-form').removeClass('loading');
                 showMessage('Error fetching profile data: ' + error, 'error');
             }
         });
@@ -442,6 +576,7 @@ $(document).ready(function() {
         if (password.length >= 8) strength++;
         if (/[A-Z]/.test(password)) strength++;
         if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
         return Math.min(strength, 4);
     }
 
@@ -462,6 +597,7 @@ $(document).ready(function() {
         messageDiv.text(message).removeClass().addClass('message ' + type);
         $('#message-container').fadeIn();
 
+        // Auto-hide after 5 seconds
         setTimeout(function() {
             $('#message-container').fadeOut();
         }, 5000);
