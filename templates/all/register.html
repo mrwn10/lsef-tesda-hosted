@@ -65,7 +65,7 @@
                 {% endif %}
             {% endwith %}
 
-            <form  id="registrationForm" method="POST" action="{{ url_for('register.register_user') }}" class="registration-form" enctype="multipart/form-data">
+            <form id="registrationForm" method="POST" action="{{ url_for('register.register_user') }}" class="registration-form" enctype="multipart/form-data">
                 <!-- Step 1: Personal Information -->
                 <div class="form-step active" data-step="1">
                     <h3 class="step-title">Personal Information</h3>
@@ -110,20 +110,53 @@
                         </div>
                     </div>
 
+                    <!-- Enhanced Profile Picture Upload -->
                     <div class="form-group">
-                        <label for="profile_picture">
+                        <label for="profile_picture" id="profile-label">
                             <i class="fas fa-image"></i> Profile Picture
                         </label>
-                        <input 
-                            type="file" 
-                            id="profile_picture" 
-                            name="profile_picture"
-                            accept="image/png, image/jpeg, image/jpg, image/gif"
-                            required
-                        >
-                        <small class="form-hint">
-                            Allowed formats: JPG, JPEG, PNG, GIF
-                        </small>
+                        
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <div class="upload-zone" id="uploadZone">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p class="upload-text">Drag & drop your photo here</p>
+                                <p class="upload-or">or</p>
+                                <button type="button" class="browse-btn" id="browseBtn">
+                                    <i class="fas fa-folder-open"></i> Browse Files
+                                </button>
+                                <small class="upload-hint">
+                                    Allowed formats: JPG, JPEG, PNG, GIF • Max 5MB
+                                </small>
+                            </div>
+                            <input 
+                                type="file" 
+                                id="profile_picture" 
+                                name="profile_picture"
+                                accept="image/png, image/jpeg, image/jpg, image/gif"
+                                required
+                                class="file-input-hidden"
+                            >
+                        </div>
+                        
+                        <!-- Immediate Preview Container -->
+                        <div id="immediatePreview" class="immediate-preview-container" style="display: none;">
+                            <div class="preview-content">
+                                <img id="previewImage" src="" alt="Preview" class="preview-img">
+                                <div class="preview-info">
+                                    <span id="fileName" class="file-name"></span>
+                                    <span id="fileSize" class="file-size"></span>
+                                </div>
+                                <button type="button" class="preview-remove" id="removePreview">
+                                    <i class="fas fa-times"></i> Change Photo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Status Messages -->
+                        <div id="uploadStatus" class="upload-status" style="display: none;">
+                            <span id="statusIcon" class="status-icon"></span>
+                            <span id="statusText" class="status-text"></span>
+                        </div>
                     </div>
 
                     <div class="step-buttons">

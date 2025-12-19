@@ -724,15 +724,89 @@ select {
     margin-bottom: 1rem;
 }
 
+/* ===== Enhanced File Input Styles ===== */
 .file-input-wrapper {
     position: relative;
     overflow: hidden;
     display: inline-block;
+    min-width: 200px;
 }
 
-.upload-btn, .remove-btn {
-    padding: 0.75rem 1.5rem;
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.upload-btn {
+    background-color: var(--tesda-blue);
+    color: white;
     border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    position: relative;
+    z-index: 1;
+    min-height: 44px;
+    width: 100%;
+}
+
+.upload-btn:hover {
+    background-color: var(--tesda-dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 51, 102, 0.2);
+}
+
+.upload-btn:active {
+    transform: translateY(0);
+}
+
+/* Success state for file upload */
+.upload-btn.upload-success {
+    background-color: #28a745;
+}
+
+.upload-btn.upload-success:hover {
+    background-color: #218838;
+}
+
+/* File name display */
+.file-name-display {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--tesda-text-light);
+    text-align: center;
+    max-width: 200px;
+    word-break: break-all;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--tesda-light-gray);
+    border-radius: 4px;
+    border-left: 3px solid var(--tesda-blue);
+    display: none;
+}
+
+.file-name-display.show {
+    display: block;
+}
+
+.remove-btn {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 0.75rem 1.5rem;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
@@ -742,21 +816,7 @@ select {
     gap: 8px;
     transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
-}
-
-.upload-btn {
-    background-color: var(--tesda-blue);
-    color: white;
-}
-
-.upload-btn:hover {
-    background-color: var(--tesda-dark-blue);
-}
-
-.remove-btn {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    min-height: 44px;
 }
 
 .remove-btn:hover {
@@ -846,6 +906,63 @@ select {
 
 .strength-text span {
     font-weight: 600;
+}
+
+/* ===== Signature Section Styles ===== */
+.signature-section {
+    margin-top: 1rem;
+}
+
+.signature-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.signature-frame {
+    width: 300px;
+    height: 150px;
+    border: 2px solid var(--tesda-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#signature-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.signature-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.signature-note {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--tesda-light-blue);
+    border-radius: 6px;
+    border-left: 3px solid var(--tesda-blue);
+    font-size: 0.9rem;
+    color: var(--tesda-text);
+    max-width: 300px;
+    text-align: center;
+}
+
+.signature-note i {
+    color: var(--tesda-blue);
+    margin-right: 8px;
 }
 
 /* Message System */
@@ -1031,16 +1148,17 @@ select {
         font-size: 0.9rem;
     }
     
-    .brand-content {
-        gap: 20px;
-    }
-    
     .brand-name {
         font-size: 1.3rem;
     }
     
     .logo-container {
         gap: 15px;
+    }
+    
+    .signature-frame {
+        width: 280px;
+        height: 140px;
     }
 }
 
@@ -1125,6 +1243,33 @@ select {
         flex-direction: column;
     }
     
+    /* Signature responsive adjustments */
+    .signature-frame {
+        width: 250px;
+        height: 120px;
+    }
+    
+    .signature-controls {
+        flex-direction: column;
+        width: 100%;
+        max-width: 250px;
+    }
+    
+    .profile-picture-controls {
+        flex-direction: column;
+        width: 100%;
+        max-width: 250px;
+    }
+    
+    .file-input-wrapper {
+        width: 100%;
+    }
+    
+    .upload-btn, .remove-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
     /* Modal adjustments for mobile */
     .modal {
         padding: 10px;
@@ -1143,22 +1288,11 @@ select {
         min-width: 100%;
     }
     
-    .profile-picture-controls {
-        flex-direction: column;
-        width: 100%;
-        max-width: 300px;
-    }
-    
-    .upload-btn, .remove-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
     .form-actions {
         flex-direction: column;
     }
     
-    .save-btn, .cancel-btn {
+    .save-btn {
         width: 100%;
     }
 }
@@ -1220,6 +1354,16 @@ select {
     
     .mobile-brand img {
         height: 30px;
+    }
+    
+    .signature-frame {
+        width: 200px;
+        height: 100px;
+    }
+    
+    .profile-frame {
+        width: 150px;
+        height: 150px;
     }
     
     .modal-content {

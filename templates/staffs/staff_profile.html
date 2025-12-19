@@ -165,6 +165,7 @@
                                     <label for="profile_picture" class="upload-btn">
                                         <i class="fas fa-cloud-upload-alt"></i> Change Picture
                                     </label>
+                                    <div class="file-name-display" id="profile-file-name"></div>
                                 </div>
                                 <button type="button" id="remove-picture" class="remove-btn">
                                     <i class="fas fa-trash-alt"></i> Remove
@@ -233,38 +234,10 @@
                                 </select>
                             </div>
                         </div>
-
-                        <!-- Signature Upload Section -->
-                        <div class="form-section signature-section">
-                            <h2><i class="fas fa-signature"></i> Signature</h2>
-                            <div class="signature-container">
-                                <div class="signature-frame">
-                                    <img id="signature-preview" 
-                                        src="{{ url_for('static', filename='img/default_signature.png') }}" 
-                                        alt="Signature Preview">
-                                </div>
-                                <div class="signature-controls">
-                                    <div class="file-input-wrapper">
-                                        <input type="file" id="signature" name="signature" accept="image/png">
-                                        <label for="signature" class="upload-btn">
-                                            <i class="fas fa-cloud-upload-alt"></i> Upload Signature
-                                        </label>
-                                    </div>
-                                    <button type="button" id="remove-signature" class="remove-btn">
-                                        <i class="fas fa-trash-alt"></i> Remove
-                                    </button>
-                                </div>
-                                <div class="file-info">
-                                    <p>Max. file size: 2MB</p>
-                                    <p>Format: PNG, JPG, JPEG</p>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
-                <!-- Right Column: Account and Address Info -->
+                <!-- Right Column: Account, Address Info, and Signature -->
                 <div class="form-column">
                     <!-- Account Information -->
                     <div class="form-section">
@@ -356,6 +329,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Signature Upload Section -->
+                    <div class="form-section signature-section">
+                        <h2><i class="fas fa-signature"></i> Signature</h2>
+                        <div class="signature-container">
+                            <div class="signature-frame">
+                                <img id="signature-preview" 
+                                    src="{{ url_for('static', filename='img/default_signature.png') }}" 
+                                    alt="Signature Preview">
+                            </div>
+                            <div class="signature-controls">
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="signature" name="signature" accept="image/png,image/jpeg,image/jpg">
+                                    <label for="signature" class="upload-btn">
+                                        <i class="fas fa-cloud-upload-alt"></i> Upload Signature
+                                    </label>
+                                    <div class="file-name-display" id="signature-file-name"></div>
+                                </div>
+                                <button type="button" id="remove-signature" class="remove-btn">
+                                    <i class="fas fa-trash-alt"></i> Remove
+                                </button>
+                            </div>
+                            <div class="file-info">
+                                <p>Max. file size: 2MB</p>
+                                <p>Format: PNG, JPG, JPEG</p>
+                            </div>
+                            <div class="signature-note">
+                                <p><i class="fas fa-info-circle"></i> Your signature will be used on official documents and certificates.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -371,6 +375,7 @@
         const fetchProfileUrl = "/staff/profile"; 
         const updateProfileUrl = "/staff/profile/update"; 
         const defaultProfilePic = "/static/img/tesda_logo.png"; 
+        const defaultSignaturePic = "/static/img/default_signature.png";
     </script>
     <script src="{{ url_for('static', filename='js/staff/staff_profile.js') }}"></script>
 </body>
