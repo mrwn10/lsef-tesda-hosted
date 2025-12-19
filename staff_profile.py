@@ -9,10 +9,15 @@ import traceback
 staff_profile_bp = Blueprint('staff_profile', __name__, url_prefix='/staff')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_SIGNATURE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_signature(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_SIGNATURE_EXTENSIONS
 
 @staff_profile_bp.route('/profile', methods=['GET'])
 def staff_profile():
@@ -25,11 +30,11 @@ def staff_profile():
 
     try:
         query = """
-            SELECT l.user_id, l.username, l.email, l.role, l.account_status,
+            SELECT l.user_id, l.username, l.email, l.role, l.account_status, l.verified,
                    pi.info_id, pi.first_name, pi.middle_name, pi.last_name,
                    pi.province, pi.municipality, pi.baranggay,
                    pi.contact_number, pi.date_of_birth, pi.gender,
-                   pi.profile_picture, pi.date_registered
+                   pi.profile_picture, pi.signature, pi.date_registered
             FROM login l
             JOIN personal_information pi ON l.user_id = pi.user_id
             WHERE l.user_id = %s
@@ -49,6 +54,12 @@ def staff_profile():
             _external=True
         ) if staff_data['profile_picture'] else None
 
+        staff_data['signature_url'] = url_for(
+            'static',
+            filename=f"uploads/signatures/{staff_data['signature']}",
+            _external=True
+        ) if staff_data['signature'] else None
+
         return jsonify({'success': True, 'staff': staff_data})
 
     except Exception as e:
@@ -57,6 +68,7 @@ def staff_profile():
         return jsonify({'error': 'Failed to fetch profile data'}), 500
     finally:
         cursor.close()
+
 
 @staff_profile_bp.route('/profile/update', methods=['POST'])
 def update_staff_profile():
@@ -71,7 +83,7 @@ def update_staff_profile():
         data = request.form.to_dict() if request.form else {}
         files = request.files
 
-        if not data:
+        if not data and 'profile_picture' not in files and 'signature' not in files:
             return jsonify({'error': 'No form data received'}), 400
 
         username = data.get('username')
@@ -90,22 +102,22 @@ def update_staff_profile():
         date_of_birth = data.get('date_of_birth')
         gender = data.get('gender')
 
-        cursor.execute("SELECT password, username, email FROM login WHERE user_id = %s", (user_id,))
+        cursor.execute("SELECT password, username, email, verified FROM login WHERE user_id = %s", (user_id,))
         user = cursor.fetchone()
-
         if not user:
             return jsonify({'error': 'User not found'}), 404
 
+        # Check username/email uniqueness
         if username and username != user['username']:
             cursor.execute("SELECT user_id FROM login WHERE username = %s AND user_id != %s", (username, user_id))
             if cursor.fetchone():
                 return jsonify({'error': 'Username already taken'}), 400
-
         if email and email != user['email']:
             cursor.execute("SELECT user_id FROM login WHERE email = %s AND user_id != %s", (email, user_id))
             if cursor.fetchone():
                 return jsonify({'error': 'Email already in use'}), 400
 
+        # Profile picture upload
         profile_picture = None
         if 'profile_picture' in files:
             file = files['profile_picture']
@@ -119,6 +131,7 @@ def update_staff_profile():
                 file.save(os.path.join(upload_dir, secure_filename(filename)))
                 profile_picture = filename
 
+                # Delete old picture
                 cursor.execute("SELECT profile_picture FROM personal_information WHERE user_id = %s", (user_id,))
                 old_picture = cursor.fetchone()
                 if old_picture and old_picture['profile_picture']:
@@ -129,21 +142,49 @@ def update_staff_profile():
                         except Exception as e:
                             current_app.logger.error(f"Error deleting old profile picture: {str(e)}")
 
+        # Signature upload
+        signature_file = None
+        if 'signature' in files:
+            file = files['signature']
+            if file and file.filename != '' and allowed_signature(file.filename):
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{user_id}_{uuid.uuid4().hex}.png"
+                
+                upload_dir = os.path.join(current_app.static_folder, 'uploads', 'signatures')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                file.save(os.path.join(upload_dir, secure_filename(filename)))
+                signature_file = filename
+
+                # Delete old signature
+                cursor.execute("SELECT signature FROM personal_information WHERE user_id = %s", (user_id,))
+                old_signature = cursor.fetchone()
+                if old_signature and old_signature['signature']:
+                    old_filepath = os.path.join(upload_dir, old_signature['signature'])
+                    if os.path.exists(old_filepath):
+                        try:
+                            os.remove(old_filepath)
+                        except Exception as e:
+                            current_app.logger.error(f"Error deleting old signature: {str(e)}")
+
+                # Update verified status if pending
+                if user['verified'] == 'pending':
+                    cursor.execute("UPDATE login SET verified = 'verified' WHERE user_id = %s", (user_id,))
+
+        # Password update
         password_update = ""
         password_params = ()
         if current_password and new_password and confirm_password:
             if current_password != user['password']:
                 return jsonify({'error': 'Current password is incorrect'}), 400
-
             if new_password != confirm_password:
                 return jsonify({'error': 'New passwords do not match'}), 400
-
             if len(new_password) < 4:
                 return jsonify({'error': 'Password must be at least 4 characters'}), 400
-
             password_update = ", password = %s"
             password_params = (new_password,)
 
+        # Update login table
         update_login_query = f"""
             UPDATE login
             SET username = %s, email = %s {password_update}
@@ -151,10 +192,10 @@ def update_staff_profile():
         """
         cursor.execute(
             update_login_query,
-            (username or user['username'],
-             email or user['email']) + password_params + (user_id,)
+            (username or user['username'], email or user['email']) + password_params + (user_id,)
         )
 
+        # Update personal info
         update_fields = {
             'first_name': first_name or '',
             'middle_name': middle_name or '',
@@ -174,6 +215,8 @@ def update_staff_profile():
 
         if profile_picture:
             update_fields['profile_picture'] = profile_picture
+        if signature_file:
+            update_fields['signature'] = signature_file
 
         update_personal_query = """
             UPDATE personal_information
@@ -188,37 +231,43 @@ def update_staff_profile():
                 date_of_birth = %(date_of_birth)s,
                 gender = %(gender)s
                 {profile_picture_update}
+                {signature_update}
             WHERE user_id = %(user_id)s
         """.format(
-            profile_picture_update=", profile_picture = %(profile_picture)s" if profile_picture else ""
+            profile_picture_update=", profile_picture = %(profile_picture)s" if profile_picture else "",
+            signature_update=", signature = %(signature)s" if signature_file else ""
         )
 
         cursor.execute(update_personal_query, update_fields)
         db.commit()
 
+        # Fetch updated profile
         cursor.execute("""
-            SELECT l.username, l.email, l.role, l.account_status,
+            SELECT l.username, l.email, l.role, l.account_status, l.verified,
                    pi.first_name, pi.middle_name, pi.last_name,
                    pi.province, pi.municipality, pi.baranggay,
                    pi.contact_number, pi.date_of_birth, pi.gender,
-                   pi.profile_picture, pi.date_registered
+                   pi.profile_picture, pi.signature, pi.date_registered
             FROM login l
             JOIN personal_information pi ON l.user_id = pi.user_id
             WHERE l.user_id = %s
         """, (user_id,))
         updated_profile = cursor.fetchone()
-
         if not updated_profile:
             return jsonify({'error': 'Failed to fetch updated profile'}), 500
 
         updated_profile['date_of_birth'] = updated_profile['date_of_birth'].strftime('%Y-%m-%d') if updated_profile['date_of_birth'] else None
         updated_profile['date_registered'] = updated_profile['date_registered'].strftime('%Y-%m-%d %H:%M:%S') if updated_profile['date_registered'] else None
-
         updated_profile['profile_picture_url'] = url_for(
             'static',
             filename=f"uploads/profile_pictures/{updated_profile['profile_picture']}",
             _external=True
         ) if updated_profile['profile_picture'] else None
+        updated_profile['signature_url'] = url_for(
+            'static',
+            filename=f"uploads/signatures/{updated_profile['signature']}",
+            _external=True
+        ) if updated_profile['signature'] else None
 
         return jsonify({
             'success': True,

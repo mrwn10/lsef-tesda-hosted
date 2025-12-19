@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set max date for date of birth (must be in the past)
     document.getElementById('date_of_birth').max = new Date().toISOString().split('T')[0];
     
+    const profilePictureInput = document.getElementById('profile_picture');
+    const reviewProfilePicture = document.getElementById('review-profile-picture');
+
     // Multi-step form functionality
     const formSteps = document.querySelectorAll('.form-step');
     const progressSteps = document.querySelectorAll('.step');
@@ -161,6 +164,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const firstName = document.getElementById('first_name').value;
         const middleName = document.getElementById('middle_name').value;
         const lastName = document.getElementById('last_name').value;
+
+        // Profile picture preview
+    if (profilePictureInput && profilePictureInput.files.length > 0) {
+        const file = profilePictureInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            reviewProfilePicture.src = e.target.result;
+            reviewProfilePicture.style.display = 'block';
+        };
+
+        reader.readAsDataURL(file);
+    }
+
         document.getElementById('review-fullname').textContent = `${firstName} ${middleName} ${lastName}`.trim();
         
         document.getElementById('review-dob').textContent = document.getElementById('date_of_birth').value;

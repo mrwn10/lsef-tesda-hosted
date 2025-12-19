@@ -6,22 +6,19 @@ import mysql.connector
 
 student_homepage_bp = Blueprint('student_homepage', __name__)
 
-# Student homepage route
 @student_homepage_bp.route('/student_homepage')
 def student_home():
     """Serve the student homepage with user_id from session"""
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback if user has no profile picture
+    profile_picture = 'default.png' 
 
     if not user_id:
-        # User not logged in; redirect to login page
-        return redirect(url_for('login.login'))  # Adjust to your login blueprint/route
+       
+        return redirect(url_for('login.login'))  
 
-    # Fetch profile picture, verification status, and enrollment status from database
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    # Get profile picture, verification status, and check if user is enrolled in any class
     cursor.execute("""
         SELECT pi.profile_picture, l.verified, 
                EXISTS(SELECT 1 FROM enrollment WHERE user_id = %s AND status = 'enrolled') as is_enrolled
@@ -35,19 +32,15 @@ def student_home():
         if user.get('profile_picture'):
             profile_picture = user['profile_picture']
         
-        # Check if user is verified
         is_verified = user.get('verified') == 'verified'
         
-        # Check if user is already enrolled in any class
         is_enrolled = user.get('is_enrolled', False)
     else:
         is_verified = False
         is_enrolled = False
 
-    # Check if user has seen the verification notification before
     notification_seen = session.get('verification_notification_seen', False)
     
-    # Don't show notification if user is already enrolled
     if is_enrolled:
         notification_seen = True
 

@@ -402,12 +402,12 @@ $(document).ready(function() {
                 return;
             }
             
-            // Validate instructor name
-            const instructorName = document.getElementById('instructor_name').value.trim();
-            if (!instructorName) {
-                showMessage('Please enter the instructor name', 'error');
+            const instructorId = document.getElementById('instructor_id').value;
+            if (!instructorId) {
+                showMessage('Please select an instructor', 'error');
                 return;
             }
+
             
             // Create days_of_week JSON and schedule text
             const daysData = {};

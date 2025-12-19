@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Nov 08, 2025 at 01:07 PM
+-- Host: 127.0.0.1
+-- Generation Time: Dec 19, 2025 at 06:25 AM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -38,6 +38,15 @@ CREATE TABLE `certificates` (
   `file_path` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `certificates`
+--
+
+INSERT INTO `certificates` (`id`, `enrollment_id`, `name`, `course`, `date`, `cert_hash`, `tx_hash`, `file_path`, `created_at`) VALUES
+(142, 18, 'Micheal Seldo', 'ICT 101', '2025-11-27', 'LSEFa8e08c62bfd43a1ac932aada6624fe331ddf4fd6bb65c1684e083c59913bd7', '0x60dea1fc433c284b1c29cb8c5bfc8a1b2d1e8ce5d71724e22a827c7a02ad8e89', 'certs/TESDA_Accreditation_Micheal_Seldo_ICT_101.pdf', '2025-11-27 12:00:09'),
+(143, 18, 'Micheal Seldo', 'ICT 101', '2025-11-27', 'LSEF216acfa12d1fffacceaa545d008481bf205b46836eb725a5f35af6724891ee', '0x69cdfb8ac5af89198109e14b0536bed81329eba7d0b56cee4e73fbdfeadb2a7f', 'certs/Completion_Certificate_Micheal_Seldo_ICT_101.pdf', '2025-11-27 12:00:22'),
+(144, 9, 'Mark John', 'FOOD 102', '2025-12-19', '10e998701ea3e722961c246b2b999e3ee427b983880242b8a4a984f1063b8747', NULL, 'certs/Private_Completion_Mark_John_FOOD_102_SIGNED.pdf', '2025-12-19 05:17:08');
 
 -- --------------------------------------------------------
 
@@ -72,12 +81,15 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `batch`, `schedule`, `days_of_week`, `venue`, `max_students`, `instructor_id`, `instructor_name`, `start_date`, `end_date`, `prerequisites`, `status`, `date_created`, `date_updated`, `edit_reason`) VALUES
-(15, 9, 'FOOD 101', '2025 - 2026', 'Batch 1', 'Tuesday 8:00 AM-4:00 PM, Thursday 10:00 AM-6:00 PM', '{\"Tuesday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Thursday\": {\"start\": \"10:00\", \"end\": \"18:00\"}}', 'LSEF TESDA', 25, 10, 'Vincent Octavio', '2025-10-01', '2026-09-08', 'Before entering the Food and Beverages field, students should have a basic understanding of food safety, hygiene practices, and customer service. A keen interest in culinary arts, attention to detail, and good communication skills are also essential for success in this area.', 'active', '2025-10-22 19:42:25', '2025-11-03 19:18:24', NULL),
+(15, 9, 'FOOD 102', '2025 - 2026', 'Batch 1', '', '{\"Thursday\": {\"start\": \"10:00\", \"end\": \"18:00\"}, \"Tuesday\": {\"start\": \"08:00\", \"end\": \"16:00\"}}', 'LSEF TESDA', 25, 10, 'Vincent Octavio', '2025-10-01', '2026-09-08', 'Before entering the Food and Beverages field, students should have a basic understanding of food safety, hygiene practices, and customer service. A keen interest in culinary arts, attention to detail, and good communication skills are also essential for success in this area.', 'active', '2025-10-22 19:42:25', '2025-11-27 20:08:00', 'okay'),
 (21, 17, 'HOUSE 101', '2025 - 2026', '2025', 'Wednesday 08:00-15:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"13:00\"}, \"Tuesday\": {\"start\": \"06:00\", \"end\": \"13:00\"}, \"Wednesday\": {\"start\": \"08:00\", \"end\": \"15:00\"}}', 'LSEF TESDA', 25, 10, 'Lebron James', '2025-11-08', '2026-11-08', 'Applicants must be able to read and communicate in basic English and Filipino and possess good physical condition to perform housekeeping duties. No previous experience is required, but completion of high school or equivalent is recommended.', 'active', '2025-11-08 11:49:12', '2025-11-08 11:55:00', NULL),
 (22, 18, 'BREAD 101', '2025 - 2026', '2025', 'Friday 10:00-15:00', '{\"Monday\": {\"start\": \"11:00\", \"end\": \"17:00\"}, \"Wednesday\": {\"start\": \"11:00\", \"end\": \"17:00\"}, \"Friday\": {\"start\": \"10:00\", \"end\": \"15:00\"}}', 'LSEF TESDA', 25, 10, 'James Harden', '2025-11-08', '2026-11-08', 'Applicants should be able to communicate in basic English and Filipino and be in good physical and mental condition. No prior baking experience is required, but having basic cooking knowledge is an advantage.', 'active', '2025-11-08 11:50:09', '2025-11-08 11:54:58', NULL),
 (23, 19, 'BOOK 101', '2025 - 2026', '2025', 'Friday 10:00-18:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"15:00\"}, \"Wednesday\": {\"start\": \"06:00\", \"end\": \"15:00\"}, \"Friday\": {\"start\": \"10:00\", \"end\": \"18:00\"}}', 'LSEF TESDA', 25, 10, 'James Harden', '2025-11-08', '2026-11-08', 'Before starting bookkeeping, it’s important to have a basic understanding of accounting principles, familiarity with financial documents (like invoices and receipts), and proficiency in using spreadsheets or accounting software. Attention to detail and basic math skills are also essential for maintaining accurate financial records.\n', 'active', '2025-11-08 11:51:18', '2025-11-08 11:54:55', NULL),
 (24, 20, 'ICT 101', '2025 - 2026', '2025', 'Saturday 10:00-16:00', '{\"Tuesday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Thursday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Saturday\": {\"start\": \"10:00\", \"end\": \"16:00\"}}', 'LSEF TESDA', 25, 10, 'Megan Young', '2025-11-08', '2026-11-08', 'Must be able to read and write; basic computer literacy and knowledge of electronic components are recommended. Some training centers may require completion of a basic ICT-related course.', 'active', '2025-11-08 11:52:17', '2025-11-08 11:54:51', NULL),
-(25, 21, 'EIM 101', '2025 - 2026', '2025', 'Thursday 10:00-16:00', '{\"Monday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Tuesday\": {\"start\": \"08:00\", \"end\": \"15:00\"}, \"Thursday\": {\"start\": \"10:00\", \"end\": \"16:00\"}}', 'LSEF TESDA', 25, 10, 'Elon Musk', '2025-11-08', '2026-11-08', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'active', '2025-11-08 11:54:19', '2025-11-08 11:54:48', NULL);
+(25, 21, 'EIM 101', '2025 - 2026', '2025', 'Thursday 10:00-16:00', '{\"Monday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Tuesday\": {\"start\": \"08:00\", \"end\": \"15:00\"}, \"Thursday\": {\"start\": \"10:00\", \"end\": \"16:00\"}}', 'LSEF TESDA', 25, 10, 'Elon Musk', '2025-11-08', '2026-11-08', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'active', '2025-11-08 11:54:19', '2025-11-08 11:54:48', NULL),
+(26, 21, 'EIM !03', '2026-2027', '2025', 'Monday 6:00 AM-10:00 AM, Thursday 6:00 AM-10:00 AM, Tuesday 6:00 AM-10:00 AM, Wednesday 6:00 AM-10:0', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Thursday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Tuesday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Wednesday\": {\"start\": \"06:00\", \"end\": \"10:00\"}}', 'LSEF', 25, 1, 'Pilip Mansai', '2025-12-10', '2027-12-10', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'active', '2025-11-11 10:56:46', '2025-11-11 10:57:41', NULL),
+(27, 20, 'Fundamentals', '2025-2026', 'batch 2025', 'Thursday 07:00-11:00', '{\"Monday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Tuesday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Wednesday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Thursday\": {\"start\": \"07:00\", \"end\": \"11:00\"}}', 'LSEF ', 25, 10, 'Vincent Octabio', '2025-11-28', '2026-07-29', 'Must be able to read and write; basic computer literacy and knowledge of electronic components are recommended. Some training centers may require completion of a basic ICT-related course.', 'active', '2025-11-27 20:06:09', '2025-11-27 20:08:32', NULL),
+(28, 9, 'Food and Beverages', '2025 - 2026', 'batch 2025', 'Monday 6:00 AM-10:00 AM, Tuesday 6:00 AM-10:00 AM, Wednesday 6:00 AM-10:00 AM, Thursday 6:00 AM-10:0', '{\"Monday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Tuesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Wednesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Thursday\":{\"start\":\"06:00\",\"end\":\"10:00\"}}', 'LSEF sta.cruz', 25, 20, 'Nadine Lustre', '2025-12-20', '2026-06-24', 'Before entering the Food and Beverages field, students should have a basic understanding of food safety, hygiene practices, and customer service. A keen interest in culinary arts, attention to detail, and good communication skills are also essential for success in this area.', 'active', '2025-12-19 11:12:31', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -118,7 +130,7 @@ INSERT INTO `courses` (`course_id`, `course_code`, `course_title`, `course_descr
 (18, 'BREAD 104', 'BREAD AND PASTRY PRODUCTION', 'The Bread and Pastry Production course equips learners with the knowledge and practical skills to prepare and produce a variety of bakery and pastry products. It includes training in baking bread, cakes, pastries, and other desserts following industry standards of quality and safety.', 'Vocational', 'Beginner', 'Applicants should be able to communicate in basic English and Filipino and be in good physical and mental condition. No prior baking experience is required, but having basic cooking knowledge is an advantage.', 'Upon completion, trainees will be able to prepare, bake, and present bread and pastry products professionally. They will also learn food safety practices, sanitation, and the use of baking tools and equipment essential in bakery or pastry shop operations.', 141, 0.00, 25, 'active', 1, 1, NULL, '2025-10-12 20:26:32', NULL, '2025-10-12 20:26:32', NULL, NULL),
 (19, 'BOOK 103', 'BOOKKEEPING', 'This program covers the competencies required to maintain books of accounts, prepare financial reports, and review internal control systems in various business environments.', 'Vocational', 'All Levels', 'Before starting bookkeeping, it’s important to have a basic understanding of accounting principles, familiarity with financial documents (like invoices and receipts), and proficiency in using spreadsheets or accounting software. Attention to detail and basic math skills are also essential for maintaining accurate financial records.\n', 'Post transactions to the general ledger\nPrepare trial balance and basic financial statements\nReview internal control systems\nProcess payroll and tax documents\nUse accounting software applications', 350, 0.00, 25, 'active', 1, 10, 1, '2025-10-13 08:07:55', '2025-11-03 19:11:22', '2025-10-13 14:06:46', '2025-10-22 19:47:23', NULL),
 (20, 'ICT 102', 'COMPUTER SYSTEM SERVICING', 'This course trains learners to install, configure, and maintain computer systems and networks. It covers hardware troubleshooting, software installation, and network setup to ensure computers function efficiently and securely.', 'Skills', 'Intermediate', 'Must be able to read and write; basic computer literacy and knowledge of electronic components are recommended. Some training centers may require completion of a basic ICT-related course.', 'Learners will be able to assemble and disassemble computer hardware, install operating systems and software, configure local area networks (LAN), and perform preventive maintenance and repair on computer systems.', 280, 0.00, 25, 'active', 1, 1, NULL, '2025-10-13 14:41:20', '2025-11-03 19:14:50', '2025-10-13 14:41:20', NULL, NULL),
-(21, 'EIM 101', 'ELECTRICAL INSTALLATION AND MAINTENANCE', 'This course provides learners with the knowledge and skills to install, maintain, and repair electrical wiring, lighting, and power systems in residential, commercial, and industrial settings. It also covers safety procedures and the proper use of electrical tools and equipment.', 'Technical', 'Beginner', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'Learners will be able to perform electrical installation, maintenance, and troubleshooting according to industry standards and safety regulations. They will gain competencies in interpreting electrical plans, using measuring instruments, and ensuring proper circuit function.', 196, 0.00, 25, 'active', 1, 10, 1, '2025-10-22 19:44:04', '2025-11-03 19:12:41', '2025-10-22 19:47:35', '2025-10-22 19:47:35', NULL);
+(21, 'EIM 101', 'ELECTRICAL INSTALLATION AND MAINTENANCE', 'This course provides learners with the knowledge and skills to install, maintain, and repair electrical wiring, lighting, and power systems in residential, commercial, and industrial settings. It also covers safety procedures and the proper use of electrical tools and equipment.', 'Technical', 'Intermediate', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'Learners will be able to perform electrical installation, maintenance, and troubleshooting according to industry standards and safety regulations. They will gain competencies in interpreting electrical plans, using measuring instruments, and ensuring proper circuit function.', 196, 0.00, 25, 'active', 1, 10, 1, '2025-10-22 19:44:04', '2025-11-27 20:09:30', '2025-10-22 19:47:35', '2025-10-22 19:47:35', NULL);
 
 -- --------------------------------------------------------
 
@@ -144,7 +156,9 @@ INSERT INTO `enrollment` (`enrollment_id`, `user_id`, `class_id`, `enrollment_da
 (13, 17, 22, '2025-11-08 12:49:11', 'enrolled'),
 (14, 19, 23, '2025-11-08 14:05:01', 'enrolled'),
 (15, 18, 23, '2025-11-08 14:06:09', 'rejected'),
-(16, 18, 23, '2025-11-08 14:07:03', 'pending');
+(16, 18, 23, '2025-11-08 14:07:03', 'pending'),
+(17, 27, 23, '2025-11-26 19:35:21', 'enrolled'),
+(18, 85, 24, '2025-11-27 19:50:53', 'enrolled');
 
 -- --------------------------------------------------------
 
@@ -234,7 +248,12 @@ INSERT INTO `login` (`user_id`, `username`, `password`, `email`, `role`, `accoun
 (81, 'christineparis2024', 'Chris09!', 'ye@gmail.com', 'student', 'active', 'pending'),
 (82, 'kanyeyeast', 'Kanye09!', 'yeast@gmail.com', 'student', 'pending', 'pending'),
 (83, 'nigg', 'Beepboop09!', 'niig@gmail.com', 'staff', 'active', 'verified'),
-(84, 'wakara', 'Marwindalin09!', 'waka@gmail.com', 'staff', 'active', 'verified');
+(84, 'wakara', 'Marwindalin09!', 'waka@gmail.com', 'staff', 'active', 'verified'),
+(85, 'michealseldo', 'Seldo@123', 'Seldo@gmail.com', 'student', 'active', 'verified'),
+(86, 'paulominsi', 'Paulominisi123.', 'paulo@gmail.com', 'staff', 'active', 'verified'),
+(87, 'isaacniton', 'Isaac123.', 'Isaac@gmail.com', 'student', 'active', 'pending'),
+(88, 'nolanlimo', 'Nolanlimo123.', 'limo@gmail.com', 'student', 'active', 'pending'),
+(89, 'linlimo', 'Linlin123.', 'lin@gmail.com', 'student', 'active', 'pending');
 
 -- --------------------------------------------------------
 
@@ -267,7 +286,8 @@ INSERT INTO `materials` (`material_id`, `class_id`, `instructor_id`, `instructor
 (7, 15, 10, 'niko Nonoy', 'may pasok na sa november', 'gg', 'announcement', 'Screenshot_from_2025-09-20_08-28-28.png', '20251022194922_Screenshot_from_2025-09-20_08-28-28.png', 'image/png', 237858, '2025-10-22 19:49:22', NULL, NULL),
 (8, 15, 10, 'niko Nonoy', 'isapa', 'wala ulit pasok', 'classwork', 'Screenshot_from_2025-09-24_09-13-20.png', '20251022195409_Screenshot_from_2025-09-24_09-13-20.png', 'image/png', 97297, '2025-10-22 19:54:09', NULL, NULL),
 (9, NULL, 10, 'niko Nonoy', 'Walang pasok', 'may bagyong tino', 'announcement', 'th15_defence_20.jpg', '20251104104201_th15_defence_20.jpg', 'image/jpeg', 1094052, '2025-11-04 10:42:01', NULL, NULL),
-(10, 15, 10, 'niko Nonoy', 'Assignment', 'assignement 1', 'classwork', '508497457_1238429944449072_4759415022123866266_n_1.jpg', '20251104104526_508497457_1238429944449072_4759415022123866266_n_1.jpg', 'image/jpeg', 196149, '2025-11-04 10:45:26', '2025-11-04 10:45:00', '2025-11-04 10:47:00');
+(10, 15, 10, 'niko Nonoy', 'Assignment', 'assignement 1', 'classwork', '508497457_1238429944449072_4759415022123866266_n_1.jpg', '20251104104526_508497457_1238429944449072_4759415022123866266_n_1.jpg', 'image/jpeg', 196149, '2025-11-04 10:45:26', '2025-11-04 10:45:00', '2025-11-04 10:47:00'),
+(11, NULL, 1, 'Admin Ako', 'walang pasok', 'may bagyo', 'announcement', NULL, NULL, NULL, NULL, '2025-11-27 20:10:37', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -289,82 +309,88 @@ CREATE TABLE `personal_information` (
   `gender` enum('male','female','other') NOT NULL,
   `profile_picture` varchar(255) DEFAULT NULL,
   `terms_accepted` tinyint(1) NOT NULL DEFAULT 0,
-  `date_registered` datetime NOT NULL DEFAULT current_timestamp()
+  `date_registered` datetime NOT NULL DEFAULT current_timestamp(),
+  `signature` varchar(150) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `personal_information`
 --
 
-INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`) VALUES
-(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09474371682', 'Admin', 'M', 'Ako', '2025-06-03', 'male', '1_8b857edd7d394680b7a326ad0235ee5e.jpg', 1, '2025-06-05 22:58:27'),
-(14, 10, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09474371682', 'Niko', 'N', 'Nonoy', '2000-11-05', 'male', '10_8e72396301fc4280980ba99b98f75dff.png', 1, '2025-06-08 09:55:38'),
-(29, 17, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Marwin', 'Mejoradaaaa', 'Dalin', '2004-03-01', 'male', '17_f7f4e25350df442582215d422ac9871f.png', 1, '2025-10-12 08:24:29'),
-(30, 18, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Mark', '', 'Capillan', '2004-03-01', 'male', NULL, 1, '2025-10-12 10:29:44'),
-(31, 19, 'Palawan', 'Kalayaan', 'Pag-Asa (Pob.)', '09474371682', 'Piolo', '', 'Pascual', '1988-03-01', 'male', NULL, 1, '2025-10-12 10:31:10'),
-(32, 20, 'Cagayan', 'Lasam', 'Magsaysay', '09474371682', 'Nadine', '', 'Lustre', '1989-03-01', 'female', NULL, 1, '2025-10-12 10:32:21'),
-(33, 21, 'Bukidnon', 'Lantapan', 'Kibangay', '09474371682', 'James', '', 'Reid', '2001-03-01', 'male', NULL, 1, '2025-10-12 10:33:31'),
-(34, 22, 'Benguet', 'La Trinidad', 'Puguis', '09474371682', 'Son', '', 'Goku', '1990-02-10', 'male', NULL, 1, '2025-10-12 10:42:49'),
-(35, 23, 'Cagayan', 'Lal-Lo', 'Dalaya', '09474371682', 'Son', '', 'Gohan', '1924-09-29', 'female', NULL, 1, '2025-10-12 10:44:01'),
-(36, 24, 'Bohol', 'City of Tagbilaran', 'Taloto', '09474371682', 'Francine', '', 'Mejia', '2008-01-31', 'female', NULL, 1, '2025-10-12 10:46:15'),
-(37, 25, 'Biliran', 'Culaba', 'Patag', '09474371682', 'James', '', 'Bond', '1980-03-02', 'male', NULL, 1, '2025-10-12 10:47:53'),
-(38, 26, 'Biliran', 'Biliran', 'Sanggalang', '09474371682', 'Christine', '', 'Terante', '2003-06-08', 'female', NULL, 1, '2025-10-12 10:49:25'),
-(39, 27, 'Bohol', 'City of Tagbilaran', 'Poblacion II', '09474371682', 'Catherine', '', 'Cath', '2007-03-29', 'female', NULL, 1, '2025-10-12 10:50:21'),
-(40, 28, 'Biliran', 'Cabucgayan', 'Magbangon (Pob.)', '09474371682', 'Long', '', 'Mejia', '1998-03-20', 'male', NULL, 1, '2025-10-12 10:51:06'),
-(41, 29, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'JC', 'Caayaman', 'Porcopio', '2009-06-16', 'male', NULL, 1, '2025-10-13 07:59:12'),
-(42, 30, 'Laguna', 'Los Baños', 'Malinta', '09108236537', 'Adrian Miguel Santos', 'Miguel Santos', 'Santos', '2002-07-08', 'male', NULL, 1, '2025-10-13 09:22:13'),
-(43, 31, 'Laguna', 'Los Baños', 'Mayondon', '09108236537', 'Bianca ', 'Rose ', 'Delgado', '2001-07-18', 'female', NULL, 1, '2025-10-13 09:24:18'),
-(44, 32, 'Laguna', 'Santa Cruz', 'Duhat', '09108236537', 'Carlo	', 'James ', '	Reyes', '1999-06-16', 'male', NULL, 1, '2025-10-13 09:26:29'),
-(45, 33, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Diana	 ', '', 'Mae	Cruz	 ', '2001-07-31', 'female', NULL, 1, '2025-10-13 09:27:41'),
-(46, 34, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Ethan	 ', 'Paul ', '	Gomez', '2002-06-13', 'male', NULL, 1, '2025-10-13 09:28:57'),
-(47, 35, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'Frances	Joy	', '', 'Morales', '2004-06-25', 'female', NULL, 1, '2025-10-13 09:30:23'),
-(48, 36, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Gabriel	 ', 'Leon ', '	Navarro', '2002-07-26', 'male', NULL, 1, '2025-10-13 09:31:25'),
-(49, 37, 'Laguna', 'Santa Cruz', 'Duhat', '09108236537', 'Hannah	 ', '	Claire	 ', 'Vega', '2001-07-18', 'female', NULL, 1, '2025-10-13 09:32:31'),
-(50, 38, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Ian', '	Rafael	', 'Ortega', '2005-07-14', 'male', NULL, 1, '2025-10-13 09:33:46'),
-(51, 39, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Jasmine	 ', 'Pearl	 ', 'Bautista', '2005-07-21', 'female', NULL, 1, '2025-10-13 09:34:54'),
-(52, 40, 'Laguna', 'Santa Cruz', 'Santisima Cruz', '09108236537', 'Kevin	 ', 'Allen	 ', 'Cruzado', '2006-07-19', 'male', NULL, 1, '2025-10-13 09:36:00'),
-(53, 41, 'Laguna', 'Santa Cruz', 'Santo Angel Sur', '09108236537', 'Laura	 ', 'Anne	 ', 'Mercado', '2002-10-18', 'female', NULL, 1, '2025-10-13 09:37:04'),
-(54, 42, 'Laguna', 'Santa Cruz', 'Labuin', '09108236537', 'Marco	', '', 'Luis	Rivera', '1999-07-15', 'male', NULL, 1, '2025-10-13 09:38:27'),
-(55, 43, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Nicole ', '	Faith	', 'Ramos	 ', '2005-11-17', 'female', NULL, 1, '2025-10-13 09:39:46'),
-(56, 44, 'Laguna', 'Santa Cruz', 'Santo Angel Sur', '09108236537', 'Oscar	 ', 'Benjamin	 ', 'Navarro', '2000-07-21', 'male', NULL, 1, '2025-10-13 09:40:48'),
-(57, 45, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Patricia	 ', 'Dolores	 ', 'Santos', '2002-02-21', 'female', NULL, 1, '2025-10-13 09:42:20'),
-(58, 46, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Quentin	 ', ' ', 'Dale	Ocampo', '2004-07-22', 'male', NULL, 1, '2025-10-13 09:43:43'),
-(59, 47, 'Laguna', 'Santa Cruz', 'Bagumbayan', '09108236537', 'Rachel	 ', '', 'Mae	Cabrera', '2000-07-11', 'female', NULL, 1, '2025-10-13 09:44:44'),
-(60, 48, 'Laguna', 'Santa Cruz', 'San Juan', '09108236537', 'Samuel', 'Peter	 ', 'Diaz	Male', '2007-06-21', 'male', NULL, 1, '2025-10-13 10:03:39'),
-(61, 49, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Theresa	Joy	 ', ' ', 'Villanueva', '2003-07-18', 'female', NULL, 1, '2025-10-13 10:05:07'),
-(62, 50, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Ulric	Manuel	 ', '', 'Aquino', '1995-11-09', 'male', NULL, 1, '2025-10-13 10:05:52'),
-(63, 51, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Vanessa	 ', 'Leigh	 ', 'Padilla	', '2001-11-15', 'female', NULL, 1, '2025-10-13 10:07:01'),
-(64, 52, 'Laguna', 'Santa Cruz', 'Santisima Cruz', '09108236537', 'William Troy', '', ' 	Lorenzo', '2001-11-08', 'male', NULL, 1, '2025-10-13 10:08:04'),
-(65, 53, 'Laguna', 'Santa Cruz', 'Alipit', '09108236537', 'Ximena	 ', 'Rose	 ', 'Alonzo', '2004-06-09', 'female', NULL, 1, '2025-10-13 10:08:55'),
-(66, 54, 'Laguna', 'Santa Cruz', 'Oogong', '09108236537', 'Yuri	 ', 'Alex	 ', 'Herrera', '2001-06-21', 'female', NULL, 1, '2025-10-13 10:09:48'),
-(67, 55, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Zoe ', '	Camille	 ', 'Pineda', '2002-07-16', 'female', NULL, 1, '2025-10-13 10:10:50'),
-(68, 56, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Aaron	 ', 'Miguel	 ', 'Bautista', '1998-07-09', 'male', NULL, 1, '2025-10-13 10:11:50'),
-(69, 57, 'Laguna', 'Santa Cruz', 'San Juan', '09108236537', 'Bella	 ', '', 'Lynn	Santos', '1997-06-19', 'female', NULL, 1, '2025-10-13 10:12:42'),
-(70, 58, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'Chase	 ', 'Donovan	 ', 'Cruz', '1992-07-23', 'male', NULL, 1, '2025-10-13 10:14:05'),
-(71, 59, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Denise	 ', 'Marie	 ', 'Esteban	 ', '2001-06-15', 'female', NULL, 1, '2025-10-13 10:15:03'),
-(72, 60, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Elijah	 ', 'Noah	 ', 'Serrano', '2001-06-22', 'female', NULL, 1, '2025-10-13 10:15:55'),
-(73, 61, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Felicia	 ', 'Anne	 ', 'Torres', '2002-07-18', 'female', NULL, 1, '2025-10-13 10:17:55'),
-(74, 62, 'Laguna', 'Santa Cruz', 'Calios', '09108236537', 'Gavin	 ', 'Charles	 ', 'Medina', '1999-10-08', 'male', NULL, 1, '2025-10-13 10:19:26'),
-(75, 63, 'Laguna', 'Siniloan', 'Mayatba', '09108236537', 'Hazel	 ', 'Ingrid	 ', 'Ramos', '1998-06-10', 'female', NULL, 1, '2025-10-13 10:20:27'),
-(76, 64, 'Laguna', 'City of Biñan', 'Malaban', '09108236537', 'Isaiah	 ', 'Mark	 ', 'Paredes', '1999-06-10', 'male', NULL, 1, '2025-10-13 10:21:22'),
-(77, 65, 'Laguna', 'Pila', 'Masico', '09108236537', 'Joy	 ', 'Elaine	 ', 'Manalo', '1994-06-22', 'female', NULL, 1, '2025-10-13 10:22:21'),
-(78, 66, 'Laguna', 'Mabitac', 'Matalatala', '09108236537', 'Kyle	 ', 'Dominic	 ', 'Serrano', '2000-05-18', 'male', NULL, 1, '2025-10-13 10:23:20'),
-(79, 67, 'Laguna', 'Majayjay', 'Oobi', '09108236537', 'Leah	 ', 'Paloma	 ', 'Bautista', '2001-10-10', 'female', NULL, 1, '2025-10-13 10:24:11'),
-(80, 68, 'Laguna', 'Pagsanjan', 'Layugan', '09108236537', 'Miles	 ', 'Henry	 ', 'Gonzales', '1999-09-08', 'female', NULL, 1, '2025-10-13 10:25:10'),
-(81, 69, 'Laguna', 'Pakil', 'Gonzales (Pob.)', '09108236537', 'Nina	 ', 'Estelle ', '	Calderon', '2001-06-08', 'female', NULL, 1, '2025-10-13 10:26:01'),
-(82, 70, 'Laguna', 'Pangil', 'Mabato-Azufre', '09108236537', 'Owen	 ', 'Victor	 ', 'De la Cruz', '2000-07-19', 'male', NULL, 1, '2025-10-13 10:26:56'),
-(83, 71, 'Laguna', 'Paete', 'Bangkusay (Pob.)', '09108236537', 'Phoebe	 Joy	', ' ', 'Miranda', '2002-05-15', 'female', NULL, 1, '2025-10-13 10:28:25'),
-(84, 72, 'Laguna', 'Nagcarlan', 'Cabuyew', '09108236537', 'Quentin	 ', 'Ira	 ', 'Sison', '1998-06-18', 'female', NULL, 1, '2025-10-13 10:29:13'),
-(85, 73, 'Laguna', 'Pagsanjan', 'Pinagsanjan', '09108236537', 'Rosa	 ', 'May	 ', 'Castillo', '2001-06-13', 'female', NULL, 1, '2025-10-13 10:30:02'),
-(86, 74, 'Laguna', 'Paete', 'Ilaya del Norte (Pob.)', '09108236537', 'Sean	 ', 'Patrick	 ', 'Valencia', '1999-07-13', 'male', NULL, 1, '2025-10-13 10:30:59'),
-(87, 75, 'Laguna', 'Mabitac', 'Matalatala', '09108236537', 'Tessa	 ', 'Lorraine	 ', 'Cabral', '2005-06-09', 'female', NULL, 1, '2025-10-13 10:31:46'),
-(88, 76, 'Laguna', 'Pakil', 'Casinsin', '09108236537', 'Ulysses	 ', 'Dean	 ', 'Herrera', '1996-06-07', 'male', NULL, 1, '2025-10-13 10:32:43'),
-(90, 78, 'Laguna', 'City of Santa Rosa', 'Pook', '09108236537', 'Warren	 ', 'Joel	 ', 'Lim', '2001-09-28', 'male', NULL, 1, '2025-10-13 10:34:24'),
-(92, 80, 'Benguet', 'Mankayan', 'Poblacion', '09474371682', 'Mark', NULL, 'John', '2002-02-05', 'male', NULL, 1, '2025-10-22 19:34:38'),
-(93, 81, 'Marinduque', 'Santa Cruz', 'Dolores', '09474371682', 'Christine', NULL, 'Paris', '2005-02-09', 'female', NULL, 1, '2025-11-01 18:59:13'),
-(94, 82, 'Abra', 'Lagayan', 'Pulot', '09474371682', 'kanye', '', 'yeast', '2005-06-07', 'male', NULL, 1, '2025-11-01 19:11:48'),
-(97, 83, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-08 17:26:40'),
-(98, 84, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-08 18:27:21');
+INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`, `signature`) VALUES
+(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09474371682', 'Admin', 'M', 'Ako', '2025-06-03', 'male', '1_8b857edd7d394680b7a326ad0235ee5e.jpg', 1, '2025-06-05 22:58:27', NULL),
+(14, 10, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09474371623', 'Niko', 'N', 'Nonoy', '2000-11-05', 'male', '10_e71d136bfa8b4571a3f17304b03efd34.jpg', 1, '2025-06-08 09:55:38', '10_signature_cde4d29aa9cc48d0b85ce6d3a0cf7210.png'),
+(29, 17, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Marwin', 'Mejoradaaaa', 'Dalin', '2004-03-01', 'male', '17_f7f4e25350df442582215d422ac9871f.png', 1, '2025-10-12 08:24:29', NULL),
+(30, 18, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Mark', '', 'Capillan', '2004-03-01', 'male', NULL, 1, '2025-10-12 10:29:44', NULL),
+(31, 19, 'Palawan', 'Kalayaan', 'Pag-Asa (Pob.)', '09474371682', 'Piolo', '', 'Pascual', '1988-03-01', 'male', NULL, 1, '2025-10-12 10:31:10', NULL),
+(32, 20, 'Cagayan', 'Lasam', 'Magsaysay', '09474371682', 'Nadine', '', 'Lustre', '1989-03-01', 'female', NULL, 1, '2025-10-12 10:32:21', NULL),
+(33, 21, 'Bukidnon', 'Lantapan', 'Kibangay', '09474371682', 'James', '', 'Reid', '2001-03-01', 'male', NULL, 1, '2025-10-12 10:33:31', NULL),
+(34, 22, 'Benguet', 'La Trinidad', 'Puguis', '09474371682', 'Son', '', 'Goku', '1990-02-10', 'male', NULL, 1, '2025-10-12 10:42:49', NULL),
+(35, 23, 'Cagayan', 'Lal-Lo', 'Dalaya', '09474371682', 'Son', '', 'Gohan', '1924-09-29', 'female', NULL, 1, '2025-10-12 10:44:01', NULL),
+(36, 24, 'Bohol', 'City of Tagbilaran', 'Taloto', '09474371682', 'Francine', '', 'Mejia', '2008-01-31', 'female', NULL, 1, '2025-10-12 10:46:15', NULL),
+(37, 25, 'Biliran', 'Culaba', 'Patag', '09474371682', 'James', '', 'Bond', '1980-03-02', 'male', NULL, 1, '2025-10-12 10:47:53', NULL),
+(38, 26, 'Biliran', 'Biliran', 'Sanggalang', '09474371682', 'Christine', '', 'Terante', '2003-06-08', 'female', NULL, 1, '2025-10-12 10:49:25', NULL),
+(39, 27, 'Bohol', 'City of Tagbilaran', 'Poblacion II', '09474371682', 'Catherine', '', 'Cath', '2007-03-29', 'female', NULL, 1, '2025-10-12 10:50:21', NULL),
+(40, 28, 'Biliran', 'Cabucgayan', 'Magbangon (Pob.)', '09474371682', 'Long', '', 'Mejia', '1998-03-20', 'male', NULL, 1, '2025-10-12 10:51:06', NULL),
+(41, 29, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'JC', 'Caayaman', 'Porcopio', '2009-06-16', 'male', '29_59f59b323e89468e82e5b269f86d9507.png', 1, '2025-10-13 07:59:12', NULL),
+(42, 30, 'Laguna', 'Los Baños', 'Malinta', '09108236537', 'Adrian Miguel Santos', 'Miguel Santos', 'Santos', '2002-07-08', 'male', NULL, 1, '2025-10-13 09:22:13', NULL),
+(43, 31, 'Laguna', 'Los Baños', 'Mayondon', '09108236537', 'Bianca ', 'Rose ', 'Delgado', '2001-07-18', 'female', NULL, 1, '2025-10-13 09:24:18', NULL),
+(44, 32, 'Laguna', 'Santa Cruz', 'Duhat', '09108236537', 'Carlo	', 'James ', '	Reyes', '1999-06-16', 'male', NULL, 1, '2025-10-13 09:26:29', NULL),
+(45, 33, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Diana	 ', '', 'Mae	Cruz	 ', '2001-07-31', 'female', NULL, 1, '2025-10-13 09:27:41', NULL),
+(46, 34, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Ethan	 ', 'Paul ', '	Gomez', '2002-06-13', 'male', NULL, 1, '2025-10-13 09:28:57', NULL),
+(47, 35, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'Frances	Joy	', '', 'Morales', '2004-06-25', 'female', NULL, 1, '2025-10-13 09:30:23', NULL),
+(48, 36, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Gabriel	 ', 'Leon ', '	Navarro', '2002-07-26', 'male', NULL, 1, '2025-10-13 09:31:25', NULL),
+(49, 37, 'Laguna', 'Santa Cruz', 'Duhat', '09108236537', 'Hannah	 ', '	Claire	 ', 'Vega', '2001-07-18', 'female', NULL, 1, '2025-10-13 09:32:31', NULL),
+(50, 38, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Ian', '	Rafael	', 'Ortega', '2005-07-14', 'male', NULL, 1, '2025-10-13 09:33:46', NULL),
+(51, 39, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Jasmine	 ', 'Pearl	 ', 'Bautista', '2005-07-21', 'female', NULL, 1, '2025-10-13 09:34:54', NULL),
+(52, 40, 'Laguna', 'Santa Cruz', 'Santisima Cruz', '09108236537', 'Kevin	 ', 'Allen	 ', 'Cruzado', '2006-07-19', 'male', NULL, 1, '2025-10-13 09:36:00', NULL),
+(53, 41, 'Laguna', 'Santa Cruz', 'Santo Angel Sur', '09108236537', 'Laura	 ', 'Anne	 ', 'Mercado', '2002-10-18', 'female', NULL, 1, '2025-10-13 09:37:04', NULL),
+(54, 42, 'Laguna', 'Santa Cruz', 'Labuin', '09108236537', 'Marco	', '', 'Luis	Rivera', '1999-07-15', 'male', NULL, 1, '2025-10-13 09:38:27', NULL),
+(55, 43, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Nicole ', '	Faith	', 'Ramos	 ', '2005-11-17', 'female', NULL, 1, '2025-10-13 09:39:46', NULL),
+(56, 44, 'Laguna', 'Santa Cruz', 'Santo Angel Sur', '09108236537', 'Oscar	 ', 'Benjamin	 ', 'Navarro', '2000-07-21', 'male', NULL, 1, '2025-10-13 09:40:48', NULL),
+(57, 45, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Patricia	 ', 'Dolores	 ', 'Santos', '2002-02-21', 'female', NULL, 1, '2025-10-13 09:42:20', NULL),
+(58, 46, 'Laguna', 'Santa Cruz', 'Pagsawitan', '09108236537', 'Quentin	 ', ' ', 'Dale	Ocampo', '2004-07-22', 'male', NULL, 1, '2025-10-13 09:43:43', NULL),
+(59, 47, 'Laguna', 'Santa Cruz', 'Bagumbayan', '09108236537', 'Rachel	 ', '', 'Mae	Cabrera', '2000-07-11', 'female', NULL, 1, '2025-10-13 09:44:44', NULL),
+(60, 48, 'Laguna', 'Santa Cruz', 'San Juan', '09108236537', 'Samuel', 'Peter	 ', 'Diaz	Male', '2007-06-21', 'male', NULL, 1, '2025-10-13 10:03:39', NULL),
+(61, 49, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Theresa	Joy	 ', ' ', 'Villanueva', '2003-07-18', 'female', NULL, 1, '2025-10-13 10:05:07', NULL),
+(62, 50, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Ulric	Manuel	 ', '', 'Aquino', '1995-11-09', 'male', NULL, 1, '2025-10-13 10:05:52', NULL),
+(63, 51, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Vanessa	 ', 'Leigh	 ', 'Padilla	', '2001-11-15', 'female', NULL, 1, '2025-10-13 10:07:01', NULL),
+(64, 52, 'Laguna', 'Santa Cruz', 'Santisima Cruz', '09108236537', 'William Troy', '', ' 	Lorenzo', '2001-11-08', 'male', NULL, 1, '2025-10-13 10:08:04', NULL),
+(65, 53, 'Laguna', 'Santa Cruz', 'Alipit', '09108236537', 'Ximena	 ', 'Rose	 ', 'Alonzo', '2004-06-09', 'female', NULL, 1, '2025-10-13 10:08:55', NULL),
+(66, 54, 'Laguna', 'Santa Cruz', 'Oogong', '09108236537', 'Yuri	 ', 'Alex	 ', 'Herrera', '2001-06-21', 'female', NULL, 1, '2025-10-13 10:09:48', NULL),
+(67, 55, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Zoe ', '	Camille	 ', 'Pineda', '2002-07-16', 'female', NULL, 1, '2025-10-13 10:10:50', NULL),
+(68, 56, 'Laguna', 'Santa Cruz', 'San Pablo Norte', '09108236537', 'Aaron	 ', 'Miguel	 ', 'Bautista', '1998-07-09', 'male', NULL, 1, '2025-10-13 10:11:50', NULL),
+(69, 57, 'Laguna', 'Santa Cruz', 'San Juan', '09108236537', 'Bella	 ', '', 'Lynn	Santos', '1997-06-19', 'female', NULL, 1, '2025-10-13 10:12:42', NULL),
+(70, 58, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'Chase	 ', 'Donovan	 ', 'Cruz', '1992-07-23', 'male', NULL, 1, '2025-10-13 10:14:05', NULL),
+(71, 59, 'Laguna', 'Santa Cruz', 'San Pablo Sur', '09108236537', 'Denise	 ', 'Marie	 ', 'Esteban	 ', '2001-06-15', 'female', NULL, 1, '2025-10-13 10:15:03', NULL),
+(72, 60, 'Laguna', 'Santa Cruz', 'Barangay V (Pob.)', '09108236537', 'Elijah	 ', 'Noah	 ', 'Serrano', '2001-06-22', 'female', NULL, 1, '2025-10-13 10:15:55', NULL),
+(73, 61, 'Laguna', 'Santa Cruz', 'Santo Angel Central', '09108236537', 'Felicia	 ', 'Anne	 ', 'Torres', '2002-07-18', 'female', NULL, 1, '2025-10-13 10:17:55', NULL),
+(74, 62, 'Laguna', 'Santa Cruz', 'Calios', '09108236537', 'Gavin	 ', 'Charles	 ', 'Medina', '1999-10-08', 'male', NULL, 1, '2025-10-13 10:19:26', NULL),
+(75, 63, 'Laguna', 'Siniloan', 'Mayatba', '09108236537', 'Hazel	 ', 'Ingrid	 ', 'Ramos', '1998-06-10', 'female', NULL, 1, '2025-10-13 10:20:27', NULL),
+(76, 64, 'Laguna', 'City of Biñan', 'Malaban', '09108236537', 'Isaiah	 ', 'Mark	 ', 'Paredes', '1999-06-10', 'male', NULL, 1, '2025-10-13 10:21:22', NULL),
+(77, 65, 'Laguna', 'Pila', 'Masico', '09108236537', 'Joy	 ', 'Elaine	 ', 'Manalo', '1994-06-22', 'female', NULL, 1, '2025-10-13 10:22:21', NULL),
+(78, 66, 'Laguna', 'Mabitac', 'Matalatala', '09108236537', 'Kyle	 ', 'Dominic	 ', 'Serrano', '2000-05-18', 'male', NULL, 1, '2025-10-13 10:23:20', NULL),
+(79, 67, 'Laguna', 'Majayjay', 'Oobi', '09108236537', 'Leah	 ', 'Paloma	 ', 'Bautista', '2001-10-10', 'female', NULL, 1, '2025-10-13 10:24:11', NULL),
+(80, 68, 'Laguna', 'Pagsanjan', 'Layugan', '09108236537', 'Miles	 ', 'Henry	 ', 'Gonzales', '1999-09-08', 'female', NULL, 1, '2025-10-13 10:25:10', NULL),
+(81, 69, 'Laguna', 'Pakil', 'Gonzales (Pob.)', '09108236537', 'Nina	 ', 'Estelle ', '	Calderon', '2001-06-08', 'female', NULL, 1, '2025-10-13 10:26:01', NULL),
+(82, 70, 'Laguna', 'Pangil', 'Mabato-Azufre', '09108236537', 'Owen	 ', 'Victor	 ', 'De la Cruz', '2000-07-19', 'male', NULL, 1, '2025-10-13 10:26:56', NULL),
+(83, 71, 'Laguna', 'Paete', 'Bangkusay (Pob.)', '09108236537', 'Phoebe	 Joy	', ' ', 'Miranda', '2002-05-15', 'female', NULL, 1, '2025-10-13 10:28:25', NULL),
+(84, 72, 'Laguna', 'Nagcarlan', 'Cabuyew', '09108236537', 'Quentin	 ', 'Ira	 ', 'Sison', '1998-06-18', 'female', NULL, 1, '2025-10-13 10:29:13', NULL),
+(85, 73, 'Laguna', 'Pagsanjan', 'Pinagsanjan', '09108236537', 'Rosa	 ', 'May	 ', 'Castillo', '2001-06-13', 'female', NULL, 1, '2025-10-13 10:30:02', NULL),
+(86, 74, 'Laguna', 'Paete', 'Ilaya del Norte (Pob.)', '09108236537', 'Sean	 ', 'Patrick	 ', 'Valencia', '1999-07-13', 'male', NULL, 1, '2025-10-13 10:30:59', NULL),
+(87, 75, 'Laguna', 'Mabitac', 'Matalatala', '09108236537', 'Tessa	 ', 'Lorraine	 ', 'Cabral', '2005-06-09', 'female', NULL, 1, '2025-10-13 10:31:46', NULL),
+(88, 76, 'Laguna', 'Pakil', 'Casinsin', '09108236537', 'Ulysses	 ', 'Dean	 ', 'Herrera', '1996-06-07', 'male', NULL, 1, '2025-10-13 10:32:43', NULL),
+(90, 78, 'Laguna', 'City of Santa Rosa', 'Pook', '09108236537', 'Warren	 ', 'Joel	 ', 'Lim', '2001-09-28', 'male', NULL, 1, '2025-10-13 10:34:24', NULL),
+(92, 80, 'Benguet', 'Mankayan', 'Poblacion', '09474371682', 'Mark', NULL, 'John', '2002-02-05', 'male', NULL, 1, '2025-10-22 19:34:38', NULL),
+(93, 81, 'Marinduque', 'Santa Cruz', 'Dolores', '09474371682', 'Christine', NULL, 'Paris', '2005-02-09', 'female', NULL, 1, '2025-11-01 18:59:13', NULL),
+(94, 82, 'Abra', 'Lagayan', 'Pulot', '09474371682', 'kanye', '', 'yeast', '2005-06-07', 'male', NULL, 1, '2025-11-01 19:11:48', NULL),
+(97, 83, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-08 17:26:40', NULL),
+(98, 84, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-08 18:27:21', NULL),
+(99, 85, 'Laguna', 'Pagsanjan', 'Maulawin', '09108236537', 'Micheal', 'Moni', 'Seldo', '2014-02-13', 'male', NULL, 1, '2025-11-27 19:44:16', NULL),
+(100, 86, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-27 20:13:36', NULL),
+(101, 87, 'Bataan', 'Mariveles', 'San Carlos', '09108236537', 'Isaac', 'Niro', 'Niton', '2025-12-10', 'male', NULL, 1, '2025-12-19 10:11:50', NULL),
+(102, 88, 'Basilan', 'Hadji Muhtamad', 'Sangbay Big', '09345363644', 'Nolan', 'Maryo', 'Limo', '2002-02-06', 'male', NULL, 1, '2025-12-19 10:21:12', NULL),
+(103, 89, 'Laguna', 'Pagsanjan', 'Layugan', '09345363644', 'Lin', 'Mendoza', 'Limo', '2003-10-09', 'male', '20251219103930_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', 1, '2025-12-19 10:39:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -387,7 +413,8 @@ CREATE TABLE `student_grades` (
 --
 
 INSERT INTO `student_grades` (`grade_id`, `enrollment_id`, `prelim_grade`, `midterm_grade`, `final_grade`, `remarks`, `date_recorded`) VALUES
-(3, 9, 87.00, 87.00, 87.00, 'Completed', '2025-10-22 19:55:47');
+(3, 9, 87.00, 87.00, 87.00, 'Completed', '2025-10-22 19:55:47'),
+(4, 18, 86.00, 82.00, 84.00, 'Completed', '2025-11-27 20:02:39');
 
 -- --------------------------------------------------------
 
@@ -419,7 +446,8 @@ CREATE TABLE `student_requirements` (
 INSERT INTO `student_requirements` (`requirement_id`, `user_id`, `birth_certificate`, `educational_credentials`, `id_photos`, `barangay_clearance`, `medical_certificate`, `marriage_certificate`, `valid_id`, `transcript_form`, `good_moral_certificate`, `brown_envelope`, `additional_notes`, `date_uploaded`) VALUES
 (1, 29, '29_birth_certificate_Screenshot_2025-10-12_153544.png', '29_educational_credentials_Screenshot_2025-10-12_151447.png', '29_id_photos_Screenshot_2025-10-01_161648.png', '29_barangay_clearance_Screenshot_2025-10-01_161501.png', '29_medical_certificate_Screenshot_2025-10-12_152355.png', '29_marriage_certificate_Screenshot_2025-07-03_230222.png', '29_valid_id_Screenshot_2025-10-12_154423.png', '29_transcript_form_Screenshot_2025-10-01_161501.png', '29_good_moral_certificate_Screenshot_2025-10-12_173749.png', '29_brown_envelope_Screenshot_2025-10-01_161501.png', '', '2025-10-13 14:13:40'),
 (3, 17, '17_birth_certificate_Screenshot_2025-04-15_131105.png', '17_educational_credentials_Screenshot_2025-10-01_161501.png', '17_id_photos_Screenshot_2025-05-28_170843.png', '17_barangay_clearance_Screenshot_2025-10-12_154941.png', '17_medical_certificate_Screenshot_2025-05-28_171026.png', '17_marriage_certificate_Screenshot_2025-10-12_151447.png', '17_valid_id_Screenshot_2025-07-03_230222.png', '17_transcript_form_Screenshot_2025-10-12_153544.png', '17_good_moral_certificate_Screenshot_2025-09-28_170241.png', '17_brown_envelope_Screenshot_2025-10-12_163427.png', 'to follow po yung iba', '2025-10-13 16:48:20'),
-(4, 80, '80_birth_certificate_Screenshot_from_2025-09-20_08-28-28.png', '80_educational_credentials_Screenshot_from_2025-09-23_22-24-50.png', '80_id_photos_Screenshot_from_2025-09-23_22-47-29.png', '80_barangay_clearance_Screenshot_from_2025-09-23_22-25-32.png', '80_medical_certificate_Screenshot_from_2025-09-24_00-14-04.png', '80_marriage_certificate_Screenshot_from_2025-09-23_22-24-24.png', '80_valid_id_Screenshot_from_2025-09-23_22-25-32.png', '80_transcript_form_Screenshot_from_2025-09-24_09-13-20.png', '80_good_moral_certificate_Screenshot_from_2025-09-23_22-47-58.png', '80_brown_envelope_Screenshot_from_2025-09-24_09-13-20.png', 'pagpunta ko dyan', '2025-10-22 19:38:11');
+(4, 80, '80_birth_certificate_Screenshot_from_2025-09-20_08-28-28.png', '80_educational_credentials_Screenshot_from_2025-09-23_22-24-50.png', '80_id_photos_Screenshot_from_2025-09-23_22-47-29.png', '80_barangay_clearance_Screenshot_from_2025-09-23_22-25-32.png', '80_medical_certificate_Screenshot_from_2025-09-24_00-14-04.png', '80_marriage_certificate_Screenshot_from_2025-09-23_22-24-24.png', '80_valid_id_Screenshot_from_2025-09-23_22-25-32.png', '80_transcript_form_Screenshot_from_2025-09-24_09-13-20.png', '80_good_moral_certificate_Screenshot_from_2025-09-23_22-47-58.png', '80_brown_envelope_Screenshot_from_2025-09-24_09-13-20.png', 'pagpunta ko dyan', '2025-10-22 19:38:11'),
+(5, 85, '85_birth_certificate_central_luzon_ppt.jpg', '85_educational_credentials_508497457_1238429944449072_4759415022123866266_n_1.jpg', '85_id_photos_508884083_734705079084048_8964909700600746865_n.jpg', '85_barangay_clearance_508884083_734705079084048_8964909700600746865_n.jpg', '85_medical_certificate_download.jpg', NULL, '85_valid_id_maxresdefault_1.jpg', '85_transcript_form_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', '85_good_moral_certificate_th15_war_67.jpg', '85_brown_envelope_th15_war_67.jpg', '', '2025-11-27 19:47:51');
 
 -- --------------------------------------------------------
 
@@ -578,13 +606,13 @@ ALTER TABLE `user_archived`
 -- AUTO_INCREMENT for table `certificates`
 --
 ALTER TABLE `certificates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=142;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
 
 --
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -596,37 +624,37 @@ ALTER TABLE `courses`
 -- AUTO_INCREMENT for table `enrollment`
 --
 ALTER TABLE `enrollment`
-  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `login`
 --
 ALTER TABLE `login`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
 
 --
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `material_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `material_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `personal_information`
 --
 ALTER TABLE `personal_information`
-  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `student_grades`
 --
 ALTER TABLE `student_grades`
-  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `student_requirements`
 --
 ALTER TABLE `student_requirements`
-  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `submissions`

@@ -65,7 +65,7 @@
                 {% endif %}
             {% endwith %}
 
-            <form id="registrationForm" method="POST" action="{{ url_for('register.register_user') }}" class="registration-form">
+            <form  id="registrationForm" method="POST" action="{{ url_for('register.register_user') }}" class="registration-form" enctype="multipart/form-data">
                 <!-- Step 1: Personal Information -->
                 <div class="form-step active" data-step="1">
                     <h3 class="step-title">Personal Information</h3>
@@ -108,6 +108,22 @@
                                 <option value="female">Female</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profile_picture">
+                            <i class="fas fa-image"></i> Profile Picture
+                        </label>
+                        <input 
+                            type="file" 
+                            id="profile_picture" 
+                            name="profile_picture"
+                            accept="image/png, image/jpeg, image/jpg, image/gif"
+                            required
+                        >
+                        <small class="form-hint">
+                            Allowed formats: JPG, JPEG, PNG, GIF
+                        </small>
                     </div>
 
                     <div class="step-buttons">
@@ -257,70 +273,89 @@
 
                 <!-- Step 4: Review and Submit -->
                 <div class="form-step" data-step="4">
-                    <h3 class="step-title">Review Your Information</h3>
-                    
-                    <div class="review-section">
-                        <h4>Personal Information</h4>
-                        <div class="review-item">
-                            <span class="review-label">Full Name:</span>
-                            <span id="review-fullname"></span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Date of Birth:</span>
-                            <span id="review-dob"></span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Gender:</span>
-                            <span id="review-gender"></span>
-                        </div>
-                    </div>
+                <h3 class="step-title">Review Your Information</h3>
 
-                    <div class="review-section">
-                        <h4>Contact Details</h4>
-                        <div class="review-item">
-                            <span class="review-label">Email:</span>
-                            <span id="review-email"></span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Contact Number:</span>
-                            <span id="review-contact"></span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Address:</span>
-                            <span id="review-address"></span>
-                        </div>
-                    </div>
-
-                    <div class="review-section">
-                        <h4>Account Information</h4>
-                        <div class="review-item">
-                            <span class="review-label">Username:</span>
-                            <span id="review-username"></span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Account Type:</span>
-                            <span id="review-role"></span>
-                        </div>
-                    </div>
-
-                    <div class="form-group terms-group">
-                        <input type="checkbox" id="terms" name="terms" required>
-                        <label for="terms">
-                            I agree to the <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
-                            <small class="terms-note">(Click the checkbox to read Terms and Conditions)</small>
-                        </label>
-                    </div>
-
-                    <div class="step-buttons">
-                        <button type="button" class="btn-prev"><i class="fas fa-arrow-left"></i> Previous</button>
-                        <button type="submit" class="submit-btn" disabled>
-                            <span class="btn-text">Create Account</span>
-                            <span class="btn-loader">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </span>
-                        </button>
+                <!-- Profile Picture Review -->
+                <div class="review-section text-center">
+                    <h4>Profile Picture</h4>
+                    <div class="profile-review-wrapper">
+                        <img 
+                            id="review-profile-picture"
+                            src=""
+                            alt="Profile Picture Preview"
+                            class="profile-review-img"
+                        >
                     </div>
                 </div>
+
+                <div class="review-section">
+                    <h4>Personal Information</h4>
+                    <div class="review-item">
+                        <span class="review-label">Full Name:</span>
+                        <span id="review-fullname"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Date of Birth:</span>
+                        <span id="review-dob"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Gender:</span>
+                        <span id="review-gender"></span>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h4>Contact Details</h4>
+                    <div class="review-item">
+                        <span class="review-label">Email:</span>
+                        <span id="review-email"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Contact Number:</span>
+                        <span id="review-contact"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Address:</span>
+                        <span id="review-address"></span>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h4>Account Information</h4>
+                    <div class="review-item">
+                        <span class="review-label">Username:</span>
+                        <span id="review-username"></span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Account Type:</span>
+                        <span id="review-role"></span>
+                    </div>
+                </div>
+
+                <div class="form-group terms-group">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        I agree to the
+                        <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal">
+                            Terms and Conditions
+                        </a>
+                        <small class="terms-note">(Click the checkbox to read Terms and Conditions)</small>
+                    </label>
+                </div>
+
+                <div class="step-buttons">
+                    <button type="button" class="btn-prev">
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button type="submit" class="submit-btn" disabled>
+                        <span class="btn-text">Create Account</span>
+                        <span class="btn-loader">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             </form>
 
             <div class="auth-links">

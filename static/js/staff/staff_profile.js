@@ -56,6 +56,23 @@ $(document).ready(function() {
             $('#profile_picture').val('');
             $('#profile-preview').attr('src', defaultProfilePic);
         });
+        // Signature preview
+        $('#signature').change(function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#signature-preview').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $('#remove-signature').click(function() {
+            $('#signature').val('');
+            $('#signature-preview').attr('src', defaultSignaturePic); // define a default signature placeholder
+        });
+
 
         $('.toggle-password').click(function() {
             const input = $(this).siblings('input');
@@ -256,6 +273,12 @@ $(document).ready(function() {
                     } else {
                         $('#profile-preview').attr('src', defaultProfilePic);
                     }
+                    if (staff.signature_url) {
+                        $('#signature-preview').attr('src', staff.signature_url);
+                    } else {
+                        $('#signature-preview').attr('src', defaultSignaturePic);
+                    }
+
                 } else {
                     showMessage(response.error || 'Failed to load profile data', 'error');
                 }

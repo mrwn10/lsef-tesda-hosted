@@ -100,6 +100,22 @@ body::before {
     transform: scale(1.05);
 }
 
+.profile-review-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.profile-review-img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #ddd;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+
 .registration-header h1 {
     color: var(--primary-color);
     margin-bottom: 0.5rem;
