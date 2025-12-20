@@ -173,7 +173,7 @@ function loadProfileData() {
     $('#profile-form').addClass('loading');
     
     $.ajax({
-        url: '/admin/profile',
+        url: '/admin/profile', // ORIGINAL HARDCODED URL
         type: 'GET',
         success: function(response) {
             if (response.success && response.admin) {
@@ -206,12 +206,13 @@ function updateFormFields(profileData) {
     // Update profile picture
     if (profileData.profile_picture_url) {
         $('#profile-preview').attr('src', profileData.profile_picture_url);
-    if (profileData.signature_url) {
-        $('#signature-preview').attr('src', profileData.signature_url);
-    }
-
     } else {
         $('#profile-preview').attr('src', defaultProfilePic);
+    }
+    
+    // Update signature - ORIGINAL HAS A BUG HERE (missing closing brace)
+    if (profileData.signature_url) {
+        $('#signature-preview').attr('src', profileData.signature_url);
     }
 }
 
@@ -234,7 +235,7 @@ $('#profile-form').on('submit', function(e) {
     let formData = new FormData(this);
     
     $.ajax({
-        url: updateProfileUrl,
+        url: updateProfileUrl, // USING VARIABLE FROM HTML
         type: 'POST',
         data: formData,
         processData: false,
@@ -268,7 +269,7 @@ $('#profile-form').on('submit', function(e) {
 $('#profile_picture').change(function() {
     const file = this.files[0];
     if (file) {
-        // Check file size (max 2MB)
+        // Check file size (max 2MB) - ORIGINAL SIZE
         if (file.size > 2 * 1024 * 1024) {
             showMessage('error', 'File size exceeds 2MB limit');
             $(this).val('');

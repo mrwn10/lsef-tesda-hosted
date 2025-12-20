@@ -27,6 +27,8 @@ html, body {
     background-color: var(--tesda-light-gray);
     line-height: 1.6;
     color: var(--tesda-text);
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 body.modal-open {
@@ -37,7 +39,7 @@ body.modal-open {
 .nav-container {
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -139,6 +141,10 @@ body.modal-open {
 
 .mobile-nav.active {
     right: 0;
+}
+
+.mobile-nav.active + main {
+    pointer-events: none;
 }
 
 .mobile-nav-header {
@@ -325,6 +331,7 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 30px;
+    flex-wrap: wrap;
 }
 
 .brand-name {
@@ -334,6 +341,7 @@ body.modal-open {
     display: flex;
     align-items: center;
     font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
 }
 
 .brand-name::before {
@@ -353,10 +361,12 @@ body.modal-open {
     background-color: rgba(0, 0, 0, 0.02);
     border-radius: 4px;
     border-left: 3px solid var(--tesda-gold);
+    flex-wrap: wrap;
 }
 
 .logo-container img {
     height: 40px;
+    max-height: 40px;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
@@ -446,6 +456,7 @@ main {
     padding: 30px 5%;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .page-header {
@@ -467,7 +478,7 @@ main {
 
 .breadcrumb {
     color: #64748b;
-    font-size: 14px;
+    font-size: 1rem;
     font-family: 'Poppins', sans-serif;
 }
 
@@ -482,6 +493,9 @@ main {
     padding: 30px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .profile-form.loading::before {
@@ -518,10 +532,12 @@ main {
 .form-columns {
     display: flex;
     gap: 2rem;
+    flex-wrap: wrap;
 }
 
 .form-column {
     flex: 1;
+    min-width: 300px;
 }
 
 .form-section {
@@ -531,6 +547,7 @@ main {
     background-color: #f9fafc;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    width: 100%;
 }
 
 .form-section h2 {
@@ -549,6 +566,7 @@ main {
 .form-group {
     margin-bottom: 1.25rem;
     position: relative;
+    width: 100%;
 }
 
 label {
@@ -562,9 +580,11 @@ label {
 
 .input-with-icon {
     position: relative;
+    display: block;
+    width: 100%;
 }
 
-/* Style for left-side icons (lock, user, etc) */
+/* Style for left-side icons */
 .input-with-icon i:not(.toggle-password) {
     position: absolute;
     left: 12px;
@@ -575,7 +595,7 @@ label {
     z-index: 1;
 }
 
-/* Specific style for the eye icon */
+/* Style for the eye icon */
 .input-with-icon i.toggle-password {
     position: absolute;
     right: 12px;
@@ -585,6 +605,11 @@ label {
     cursor: pointer;
     font-size: 16px;
     z-index: 2;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .input-with-icon input, 
@@ -594,6 +619,7 @@ label {
     position: relative;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
+    max-width: 100%;
 }
 
 /* Fix for password fields */
@@ -609,6 +635,8 @@ label {
 select {
     padding-right: 2.5rem !important;
     background-position: right 0.75rem center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
 }
 
 input[type="text"],
@@ -624,6 +652,7 @@ select {
     transition: all 0.3s ease;
     background-color: white;
     font-family: 'Poppins', sans-serif;
+    font-size: 16px;
 }
 
 input[type="text"]:focus,
@@ -649,6 +678,7 @@ select {
     justify-content: flex-end;
     margin-top: 2rem;
     gap: 1rem;
+    width: 100%;
 }
 
 .save-btn {
@@ -665,6 +695,7 @@ select {
     gap: 8px;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    min-height: 44px;
 }
 
 .save-btn:hover {
@@ -681,11 +712,13 @@ select {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .profile-frame {
     width: 180px;
     height: 180px;
+    max-width: 100%;
     border-radius: 50%;
     overflow: hidden;
     border: 4px solid #e2e8f0;
@@ -698,6 +731,7 @@ select {
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+    max-width: 100%;
 }
 
 .profile-frame:hover #profile-preview {
@@ -708,17 +742,95 @@ select {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
 }
 
+/* ===== Enhanced File Input Styles ===== */
 .file-input-wrapper {
     position: relative;
     overflow: hidden;
     display: inline-block;
+    min-width: 200px;
+    max-width: 100%;
 }
 
-.upload-btn, .remove-btn {
-    padding: 0.75rem 1.5rem;
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.upload-btn {
+    background-color: var(--tesda-blue);
+    color: white;
     border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    position: relative;
+    z-index: 1;
+    min-height: 44px;
+    width: 100%;
+}
+
+.upload-btn:hover {
+    background-color: var(--tesda-dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 51, 102, 0.2);
+}
+
+.upload-btn:active {
+    transform: translateY(0);
+}
+
+/* Success state for file upload */
+.upload-btn.upload-success {
+    background-color: #28a745;
+}
+
+.upload-btn.upload-success:hover {
+    background-color: #218838;
+}
+
+/* File name display */
+.file-name-display {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--tesda-text-light);
+    text-align: center;
+    max-width: 200px;
+    word-break: break-all;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--tesda-light-gray);
+    border-radius: 4px;
+    border-left: 3px solid var(--tesda-blue);
+    display: none;
+}
+
+.file-name-display.show {
+    display: block;
+}
+
+.remove-btn {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 0.75rem 1.5rem;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
@@ -728,21 +840,7 @@ select {
     gap: 8px;
     transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
-}
-
-.upload-btn {
-    background-color: var(--tesda-blue);
-    color: white;
-}
-
-.upload-btn:hover {
-    background-color: var(--tesda-dark-blue);
-}
-
-.remove-btn {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    min-height: 44px;
 }
 
 .remove-btn:hover {
@@ -823,6 +921,66 @@ select {
     font-weight: 600;
 }
 
+/* ===== Signature Section Styles ===== */
+.signature-section {
+    margin-top: 1rem;
+}
+
+.signature-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.signature-frame {
+    width: 100%;
+    max-width: 300px;
+    height: 150px;
+    border: 2px solid var(--tesda-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#signature-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.signature-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.signature-note {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--tesda-light-blue);
+    border-radius: 6px;
+    border-left: 3px solid var(--tesda-blue);
+    font-size: 0.9rem;
+    color: var(--tesda-text);
+    max-width: 300px;
+    text-align: center;
+    width: 100%;
+}
+
+.signature-note i {
+    color: var(--tesda-blue);
+    margin-right: 8px;
+}
+
 /* ===== MODAL STYLES ===== */
 .modal {
     display: none;
@@ -835,7 +993,7 @@ select {
     z-index: 2000;
     justify-content: center;
     align-items: center;
-    overflow: auto;
+    overflow-y: auto;
     padding: 20px;
 }
 
@@ -847,9 +1005,11 @@ select {
     max-width: 100%;
     max-height: 90vh;
     border-radius: 8px;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     animation: modalFadeIn 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header {
@@ -860,6 +1020,7 @@ select {
     justify-content: space-between;
     align-items: center;
     border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -886,6 +1047,7 @@ select {
     justify-content: center;
     border-radius: 50%;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .close-modal:hover {
@@ -895,6 +1057,7 @@ select {
 .modal-body {
     padding: 20px;
     border-bottom: 1px solid #eee;
+    overflow-y: auto;
 }
 
 .modal-body p {
@@ -910,6 +1073,7 @@ select {
     display: flex;
     justify-content: space-between;
     gap: 15px;
+    flex-shrink: 0;
 }
 
 .btn {
@@ -923,6 +1087,7 @@ select {
     text-align: center;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    min-height: 44px;
 }
 
 .btn-yes {
@@ -1033,6 +1198,12 @@ select {
 }
 
 /* ===== Responsive Design ===== */
+@media (max-width: 1200px) {
+    main {
+        max-width: 95%;
+    }
+}
+
 @media (max-width: 1024px) {
     .top-nav a {
         padding: 0 15px;
@@ -1049,6 +1220,30 @@ select {
     
     .logo-container {
         gap: 15px;
+    }
+    
+    .signature-frame {
+        max-width: 280px;
+        height: 140px;
+    }
+    
+    .form-columns {
+        gap: 1.5rem;
+    }
+    
+    .form-column {
+        min-width: 280px;
+    }
+}
+
+@media (max-width: 900px) {
+    .form-columns {
+        flex-direction: column;
+    }
+    
+    .form-column {
+        min-width: 100%;
+        width: 100%;
     }
 }
 
@@ -1075,6 +1270,7 @@ select {
         text-align: center;
         height: auto;
         min-height: 70px;
+        flex-wrap: wrap;
     }
     
     .brand-content {
@@ -1082,6 +1278,7 @@ select {
         gap: 10px;
         align-items: center;
         flex: 1;
+        flex-wrap: wrap;
     }
     
     .brand-name {
@@ -1089,6 +1286,7 @@ select {
         margin-right: 10px;
         display: flex;
         align-items: center;
+        white-space: normal;
     }
     
     .brand-name::before {
@@ -1109,6 +1307,7 @@ select {
     
     .logo-container img {
         height: 30px;
+        max-height: 30px;
     }
     
     .user-section {
@@ -1133,15 +1332,50 @@ select {
         flex-direction: column;
     }
     
-    .profile-picture-controls {
+    .profile-frame {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .signature-frame {
+        max-width: 250px;
+        height: 120px;
+    }
+    
+    .profile-picture-controls,
+    .signature-controls {
         flex-direction: column;
         width: 100%;
-        max-width: 300px;
+        max-width: 250px;
+        align-items: center;
+    }
+    
+    .file-input-wrapper {
+        width: 100%;
     }
     
     .upload-btn, .remove-btn {
         width: 100%;
         justify-content: center;
+    }
+    
+    /* Modal adjustments for mobile */
+    .modal {
+        padding: 10px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: 100%;
     }
     
     .form-actions {
@@ -1152,19 +1386,37 @@ select {
         width: 100%;
     }
     
-    /* Mobile modal adjustments */
-    .modal-content {
-        width: 95%;
-        margin: 10% auto;
+    .mobile-nav {
+        width: 85%;
+        max-width: 320px;
     }
     
-    .modal-footer {
-        flex-direction: column;
+    /* Touch-friendly sizes */
+    button,
+    a,
+    input[type="submit"],
+    .upload-btn,
+    .remove-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: 14px;
     }
     
-    .modal-footer .btn {
-        width: 100%;
-        margin-bottom: 5px;
+    h1, h2, h3 {
+        font-size: 95%;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
     }
 }
 
@@ -1190,6 +1442,7 @@ select {
     
     .logo-container img {
         height: 25px;
+        max-height: 25px;
     }
     
     .brand-name::before {
@@ -1211,7 +1464,7 @@ select {
     }
     
     .page-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
     
     .mobile-nav {
@@ -1227,6 +1480,16 @@ select {
         height: 30px;
     }
     
+    .profile-frame {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .signature-frame {
+        max-width: 200px;
+        height: 100px;
+    }
+    
     .modal-content {
         width: 100%;
         margin: 10px;
@@ -1237,9 +1500,12 @@ select {
     .modal-footer {
         padding: 15px;
     }
+    
+    .form-section {
+        padding: 1rem;
+    }
 }
 
-/* Extra small devices */
 @media (max-width: 360px) {
     .brand-name {
         font-size: 0.9rem;
@@ -1294,4 +1560,21 @@ select {
 
 .save-btn:disabled:hover {
     background-color: #94a3b8;
+}
+
+/* Ensure all images are responsive */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Prevent text overflow */
+input, select, textarea, button {
+    max-width: 100%;
+}
+
+/* Fix for very long text */
+.file-name-display, .signature-note, .form-note {
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
