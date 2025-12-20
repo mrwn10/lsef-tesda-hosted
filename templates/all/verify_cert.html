@@ -70,7 +70,10 @@
                         <p class="verification-description">Enter the <strong>certificate hash</strong> provided on your certificate to verify its authenticity. This system allows you to confirm that your TESDA certificate is valid and officially recognized.</p>
                     </div>
                     
-                    <form action="{{ url_for('verify_cert.verify_cert_check') }}" method="POST" class="verification-form">
+                    <form action="{{ url_for('verify_cert.verify_cert_check') }}"
+                        method="POST"
+                        class="verification-form">
+
                         <div class="form-group">
                             <label for="cert_hash">Certificate Hash</label>
                             <input type="text" id="cert_hash" name="cert_hash" placeholder="Enter your certificate hash code" required>

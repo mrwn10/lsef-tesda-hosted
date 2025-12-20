@@ -254,6 +254,27 @@
                         </div>
                     </div>
 
+                    <!-- Signature Section -->
+                    <div class="form-section profile-picture-section">
+                        <h2><i class="fas fa-signature"></i> Signature</h2>
+
+                        <div class="profile-picture-container">
+                            <div class="profile-frame">
+                                <img id="signature-preview"
+                                    src="{{ url_for('static', filename='uploads/signatures/' + (signature or 'default_signature.png')) }}"
+                                    alt="Signature">
+                            </div>
+
+                            <div class="profile-picture-controls">
+                                <input type="file" id="signature" name="signature" accept="image/*">
+                                <label for="signature" class="upload-btn">
+                                    <i class="fas fa-upload"></i> Upload Signature
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+
                     <!-- Personal Information -->
                     <div class="form-section">
                         <h2><i class="fas fa-user"></i> Personal Information</h2>

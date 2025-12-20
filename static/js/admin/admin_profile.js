@@ -206,6 +206,10 @@ function updateFormFields(profileData) {
     // Update profile picture
     if (profileData.profile_picture_url) {
         $('#profile-preview').attr('src', profileData.profile_picture_url);
+    if (profileData.signature_url) {
+        $('#signature-preview').attr('src', profileData.signature_url);
+    }
+
     } else {
         $('#profile-preview').attr('src', defaultProfilePic);
     }
@@ -286,6 +290,22 @@ $('#profile_picture').change(function() {
         reader.readAsDataURL(file);
     }
 });
+
+$('#signature').change(function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (!['image/png','image/jpeg','image/jpg'].includes(file.type)) {
+        showMessage('error', 'Signature must be PNG or JPG');
+        this.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => $('#signature-preview').attr('src', e.target.result);
+    reader.readAsDataURL(file);
+});
+
 
 $('#remove-picture').click(function() {
     $('#profile_picture').val('');

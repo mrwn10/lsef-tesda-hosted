@@ -12,11 +12,13 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
 from PIL import Image
-
 import math
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
+import qrcode
+from io import BytesIO
+
 
 
 staff_class_student_management_bp = Blueprint('staff_class_student_management', __name__)
@@ -369,46 +371,59 @@ def upload_grade_sheet(class_id):
 def generate_private_certificate_hash(content):
     return hashlib.sha256(content.encode()).hexdigest()
 
+# ---------------- SAVE CERT ----------------
 def save_private_certificate(enrollment_id, name, course, date, cert_hash, file_path):
+    file_path = file_path.replace("\\", "/").lstrip("/") 
+
     db = get_db()
     cursor = db.cursor()
+
     cursor.execute("""
-        SELECT id FROM certificates WHERE enrollment_id=%s AND course=%s
+        SELECT id FROM certificates
+        WHERE enrollment_id=%s AND course=%s
     """, (enrollment_id, course))
+
     existing = cursor.fetchone()
+
     if existing:
         cursor.execute("""
-            UPDATE certificates SET name=%s, cert_hash=%s, file_path=%s, date=%s, created_at=NOW()
+            UPDATE certificates
+            SET name=%s, cert_hash=%s, file_path=%s, date=%s, created_at=NOW()
             WHERE id=%s
         """, (name, cert_hash, file_path, date, existing[0]))
     else:
         cursor.execute("""
-            INSERT INTO certificates (enrollment_id, name, course, date, cert_hash, file_path, created_at)
+            INSERT INTO certificates
+            (enrollment_id, name, course, date, cert_hash, file_path, created_at)
             VALUES (%s,%s,%s,%s,%s,%s,NOW())
         """, (enrollment_id, name, course, date, cert_hash, file_path))
+
     db.commit()
     cursor.close()
 
-# ---------------- CURVED TEXT FUNCTION ----------------
-def draw_curved_text(c, text, fontname, fontsize, center_x, center_y, radius_x, radius_y, arc_angle=60, upward=True, letter_spacing=1.2):
+# ---------------- CURVED TEXT ----------------
+def draw_curved_text(
+    c, text, fontname, fontsize,
+    center_x, center_y,
+    radius_x, radius_y,
+    arc_angle=60, upward=True, letter_spacing=1.2
+):
     if fontname not in pdfmetrics.getRegisteredFontNames():
         fontname = "Helvetica-Bold"
     if not text:
         return
+
     c.setFont(fontname, fontsize)
     angle_per_char = (arc_angle / len(text)) * letter_spacing
     start_angle = -((len(text) - 1) * angle_per_char) / 2
     angle = start_angle
+
     for ch in text:
         rad = math.radians(angle)
-        if upward:
-            x = center_x + radius_x * math.sin(rad)
-            y = center_y + radius_y * math.cos(rad)
-            rotation = -angle
-        else:
-            x = center_x + radius_x * math.sin(rad)
-            y = center_y - radius_y * math.cos(rad)
-            rotation = angle
+        x = center_x + radius_x * math.sin(rad)
+        y = center_y + (radius_y * math.cos(rad) if upward else -radius_y * math.cos(rad))
+        rotation = -angle if upward else angle
+
         c.saveState()
         c.translate(x, y)
         c.rotate(rotation)
@@ -416,8 +431,14 @@ def draw_curved_text(c, text, fontname, fontsize, center_x, center_y, radius_x, 
         c.restoreState()
         angle += angle_per_char
 
-# ---------------- CREATE PRIVATE CERTIFICATE ----------------
-def create_private_completion_certificate(recipient_name, course_title, trainor_user_id, output_filename, cert_hash=None):
+# ---------------- CREATE CERTIFICATE ----------------
+def create_private_completion_certificate(
+    recipient_name,
+    course_title,
+    trainor_user_id,
+    output_filename,
+    cert_hash=None
+):
     page_width, page_height = landscape(letter)
     c = canvas.Canvas(output_filename, pagesize=landscape(letter))
     margin = 0.5 * inch
@@ -431,73 +452,157 @@ def create_private_completion_certificate(recipient_name, course_title, trainor_
         c.drawCentredString(x, y, text)
         c.setFillColor(colors.black)
 
-    # ---------------- BORDERS ----------------
+    # ========================= PAGE 1 =========================
     c.setStrokeColor(colors.red)
     c.setLineWidth(25)
     c.rect(margin, margin, page_width - 2*margin, page_height - 2*margin)
+
     inset = 20
     c.setLineWidth(2)
-    c.rect(margin + inset, margin + inset, page_width - 2*margin - inset*2, page_height - 2*margin - inset*2)
+    c.rect(margin + inset, margin + inset,
+           page_width - 2*margin - inset*2,
+           page_height - 2*margin - inset*2)
 
-    # ---------------- LOGO ----------------
+    # logo_path = "static/img/lsef_logo.png"
+    # if os.path.exists(logo_path):
+        
+    #     c.drawImage(logo_path, center_x - 60, page_height - margin - 75,
+    #                 width=120, height=100, mask="auto")
     logo_path = "static/img/lsef_logo.png"
     if os.path.exists(logo_path):
-        c.drawImage(logo_path, center_x - 60, page_height - margin - 75, width=120, height=100, mask="auto")
+        logo_width = 120
+        logo_height = 100
+        bg_width = 100
+        bg_height = 90
 
-    # ---------------- HEADER ----------------
-    draw_centered_text("菲津富内湖中華學校", "STSong-Light", 30, center_x, page_height - margin - 90, colors.darkred)
-    draw_centered_text("Laguna Sino-Filipino Educational Foundation Inc.", "Helvetica-Bold", 25, center_x, page_height - margin - 120)
-    draw_centered_text("F. Sario St. Santa Cruz, Laguna", "Helvetica", 18, center_x, page_height - margin - 148)
+        logo_x = center_x - (logo_width / 2)
+        logo_y = page_height - margin - 67
 
-    # ---------------- CURVED TITLE ----------------
-    draw_curved_text(c, "Certificate of Completion", "UnifrakturCook", 60, center_x, page_height - margin - 420, radius_x=520, radius_y=200)
+        bg_x = center_x
+        bg_y = logo_y + (logo_height / 2)
 
-    # ---------------- COURSE & RECIPIENT ----------------
-    draw_centered_text(course_title, "Helvetica-Bold", 24, center_x, page_height - margin - 260)
-    draw_centered_text("This certificate is proudly awarded to", "Helvetica", 18, center_x, page_height - margin - 295)
-    draw_centered_text(recipient_name, "UnifrakturCook", 50, center_x, page_height - margin - 365)
-    c.line(center_x - 220, page_height - margin - 370, center_x + 220, page_height - margin - 370)
-    draw_centered_text("In recognition of your dedication, passion and hard work", "Helvetica", 18, center_x, page_height - margin - 410)
+        c.setFillColor(colors.white)
+        c.setStrokeColor(colors.red)
+        c.ellipse(
+            bg_x - (bg_width / 2), bg_y - (bg_height / 2),
+            bg_x + (bg_width / 2), bg_y + (bg_height / 2),
+            fill=1, stroke=0
+        )
 
-    # ---------------- SIGNATURES ----------------
+        logo = ImageReader(logo_path)
+        c.drawImage(logo, logo_x, logo_y, width=logo_width, height=logo_height, mask='auto')
+
+
+    draw_centered_text("菲津富内湖中華學校", "STSong-Light", 30,
+                       center_x, page_height - margin - 90, colors.darkred)
+    draw_centered_text("Laguna Sino-Filipino Educational Foundation Inc.",
+                       "Helvetica-Bold", 25,
+                       center_x, page_height - margin - 120)
+    draw_centered_text("F. Sario St. Santa Cruz, Laguna",
+                       "Helvetica", 18,
+                       center_x, page_height - margin - 148)
+
+    draw_curved_text(c, "Certificate of Completion", "UnifrakturCook", 60,
+                     center_x, page_height - margin - 420,
+                     radius_x=520, radius_y=200)
+
+    draw_centered_text(course_title, "Helvetica-Bold", 24,
+                       center_x, page_height - margin - 260)
+    draw_centered_text("This certificate is proudly awarded to",
+                       "Helvetica", 18,
+                       center_x, page_height - margin - 295)
+    draw_centered_text(recipient_name, "UnifrakturCook", 50,
+                       center_x, page_height - margin - 365)
+
+    c.line(center_x - 220, page_height - margin - 370,
+           center_x + 220, page_height - margin - 370)
+
+    draw_centered_text("In recognition of your dedication, passion and hard work",
+                       "Helvetica", 18,
+                       center_x, page_height - margin - 410)
+
+    # ========================= SIGNATURES =========================
     sign_y = page_height - margin - 500
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT first_name, last_name, signature FROM personal_information WHERE user_id=%s", (trainor_user_id,))
+
+    cursor.execute("""
+        SELECT first_name, last_name, signature
+        FROM personal_information WHERE user_id=%s
+    """, (trainor_user_id,))
     trainor = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT pi.first_name, pi.last_name, pi.signature
+        FROM login l
+        JOIN personal_information pi ON l.user_id = pi.user_id
+        WHERE l.role='admin'
+        ORDER BY l.user_id ASC LIMIT 1
+    """)
+    admin = cursor.fetchone()
     cursor.close()
 
-    trainor_name = "Trainor"
-    signature_path = None
-    if trainor:
-        trainor_name = f"{trainor['first_name']} {trainor['last_name']}"
-        if trainor['signature']:
-            sig_candidate = os.path.join("static", "uploads", "signatures", trainor["signature"])
-            if os.path.exists(sig_candidate):
-                signature_path = sig_candidate
+    def draw_signature(x1, x2, name, title, sig):
+        c.line(x1, sign_y + 20, x2, sign_y + 20)
+        if sig:
+            path = os.path.join("static", "uploads", "signatures", sig)
+            if os.path.exists(path):
+                with Image.open(path) as img:
+                    r = min(160/img.width, 50/img.height)
+                    c.drawImage(ImageReader(img),
+                                x1 + ((x2-x1)-img.width*r)/2,
+                                sign_y + 30,
+                                img.width*r, img.height*r,
+                                mask="auto")
+        draw_centered_text(name, "Helvetica-Bold", 18, (x1+x2)/2, sign_y + 25)
+        draw_centered_text(title, "Helvetica", 15, (x1+x2)/2, sign_y + 3)
 
-    # Trainor line & signature
-    left_x1, left_x2 = margin + 85, margin + 265
-    c.line(left_x1, sign_y + 20, left_x2, sign_y + 20)
-    if signature_path:
-        with Image.open(signature_path) as img:
-            max_w, max_h = 160, 50
-            ratio = min(max_w / img.width, max_h / img.height)
-            w, h = img.width*ratio, img.height*ratio
-            x = left_x1 + ((left_x2 - left_x1)-w)/2
-            c.drawImage(ImageReader(img), x, sign_y + 30, w, h, mask="auto")
-    draw_centered_text(trainor_name, "Helvetica-Bold", 18, margin + 175, sign_y + 25)
-    draw_centered_text("Trainor", "Helvetica", 15, margin + 175, sign_y + 3)
+    draw_signature(margin+85, margin+265,
+                   f"{trainor['first_name']} {trainor['last_name']}" if trainor else "Instructor",
+                   "Instructor",
+                   trainor['signature'] if trainor else None)
 
-    # Chairman line
-    right_x1, right_x2 = page_width - margin - 265, page_width - margin - 85
-    c.line(right_x1, sign_y + 20, right_x2, sign_y + 20)
-    draw_centered_text("Enrico Ariel T. Ting", "Helvetica-Bold", 18, page_width - margin - 175, sign_y + 25)
-    draw_centered_text("Chairman, BOT", "Helvetica", 15, page_width - margin - 175, sign_y + 3)
+    draw_signature(page_width-margin-265, page_width-margin-85,
+                   f"{admin['first_name']} {admin['last_name']}" if admin else "Chairman",
+                   "Chairman, BOT",
+                   admin['signature'] if admin else None)
 
-    # ---------------- HASH ----------------
-    if cert_hash:
-        draw_centered_text(f"Verification Hash: {cert_hash}", "Helvetica", 9, center_x, margin + 35, colors.gray)
+    # if cert_hash:
+    #     draw_centered_text(f"Verification Hash: {cert_hash}",
+    #                        "Helvetica", 9, center_x, margin+35, colors.gray)
+
+    # ========================= PAGE 2 (QR VERIFICATION) =========================
+    c.showPage()
+
+    draw_centered_text("Certificate Verification",
+                       "Helvetica-Bold", 28, center_x, page_height - 120)
+
+    VERIFY_BASE_URL = "https://www.lseftesda.online"
+    verify_url = f"{VERIFY_BASE_URL}/verify-certificate/{cert_hash}"
+
+
+    qr = qrcode.make(verify_url)
+    buffer = BytesIO()
+    qr.save(buffer)
+    buffer.seek(0)
+
+    qr_size = 200
+    c.drawImage(ImageReader(buffer),
+                center_x - qr_size/2,
+                page_height/2 - qr_size/2,
+                qr_size, qr_size)
+
+    draw_centered_text("Scan the QR code to verify this certificate",
+                       "Helvetica", 16, center_x, page_height/2 - 140)
+
+    draw_centered_text("Verification Hash:",
+                       "Helvetica-Bold", 14, center_x, page_height/2 - 180)
+
+    draw_centered_text(cert_hash,
+                       "Helvetica", 10, center_x, page_height/2 - 200)
+
+    draw_centered_text("If verification fails, contact the issuing institution.",
+                       "Helvetica", 12, center_x, 80, colors.gray)
 
     c.save()
 
@@ -506,12 +611,16 @@ def create_private_completion_certificate(recipient_name, course_title, trainor_
 def generate_private_completion():
     if 'user_id' not in session or session.get('role') != 'staff':
         return jsonify({'error': 'Unauthorized access'}), 403
+
     try:
         enrollment_id = request.form['enrollment_id']
         db = get_db()
         cursor = db.cursor(dictionary=True)
+
         cursor.execute("""
-            SELECT pi.first_name, pi.last_name, c.class_title, c.instructor_id, sg.remarks
+            SELECT pi.first_name, pi.last_name,
+                   c.class_title, c.instructor_id,
+                   sg.remarks
             FROM enrollment e
             JOIN personal_information pi ON e.user_id = pi.user_id
             JOIN classes c ON e.class_id = c.class_id
@@ -521,36 +630,54 @@ def generate_private_completion():
         student = cursor.fetchone()
         cursor.close()
 
-        if not student:
-            return jsonify({'error': 'Not Found', 'message': 'Enrollment not found'}), 404
-        if student['remarks'] != 'Completed':
-            return jsonify({'error': 'Bad Request', 'message': 'Student has not completed the course'}), 400
+        if not student or student['remarks'] != 'Completed':
+            return jsonify({'error': 'Invalid enrollment'}), 400
 
         recipient_name = f"{student['first_name']} {student['last_name']}"
         course_title = student['class_title']
         trainor_user_id = student['instructor_id']
         date_completed = datetime.now().strftime('%Y-%m-%d')
 
-        # Certificate directory & filename
-        CERT_DIR = os.path.join('static', 'certs')
+        CERT_DIR = os.path.join("static", "certs")
         os.makedirs(CERT_DIR, exist_ok=True)
-        sanitized_name = "".join(c for c in recipient_name if c.isalnum() or c in (' ', '_')).strip()
-        sanitized_course = "".join(c for c in course_title if c.isalnum() or c in (' ', '_')).strip()
-        cert_filename = f"Private_Completion_{sanitized_name.replace(' ','_')}_{sanitized_course.replace(' ','_')}.pdf"
+
+        safe_name = recipient_name.replace(" ", "_")
+        safe_course = course_title.replace(" ", "_")
+
+        cert_filename = f"Private_Completion_{safe_name}_{safe_course}.pdf"
         cert_path = os.path.join(CERT_DIR, cert_filename)
 
-        # Certificate hash
-        cert_hash = generate_private_certificate_hash(f"{recipient_name}{course_title}{date_completed}{enrollment_id}")
+        cert_hash = generate_private_certificate_hash(
+            f"{recipient_name}{course_title}{date_completed}{enrollment_id}"
+        )
 
-        # Generate PDF
-        create_private_completion_certificate(recipient_name, course_title, trainor_user_id, cert_path, cert_hash)
+        create_private_completion_certificate(
+            recipient_name,
+            course_title,
+            trainor_user_id,
+            cert_path,
+            cert_hash
+        )
 
-        # Save to DB
-        file_path = os.path.join("certs", cert_filename).replace("\\", "/")
-        save_private_certificate(enrollment_id, recipient_name, course_title, date_completed, cert_hash, file_path)
+        # ✅ STORE RELATIVE PATH ONLY
+        relative_path = f"certs/{cert_filename}"
 
-        return jsonify({'success': True, 'message': 'Private Completion Certificate generated successfully!', 'file_path': os.path.join('static', file_path).replace("\\","/"), 'cert_hash': cert_hash})
+        save_private_certificate(
+            enrollment_id,
+            recipient_name,
+            course_title,
+            date_completed,
+            cert_hash,
+            relative_path
+        )
+
+        return jsonify({
+            "success": True,
+            "file_path": f"/static/{relative_path}", 
+            "cert_hash": cert_hash
+        })
 
     except Exception as e:
-        return jsonify({'error': 'Server Error', 'message': f'Error generating private certificate: {str(e)}'}), 500
+        return jsonify({"error": str(e)}), 500
+
 

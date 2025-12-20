@@ -13,7 +13,44 @@ def validate_time_format(time_str):
         hours, minutes = map(int, time_str.split(':'))
         return 6 <= hours <= 18 and minutes == 0 
     except (ValueError, AttributeError):
-        return False
+        return 
+    
+def check_staff_verification(cursor, user_id):
+    """
+    Returns:
+      (True, None) → allowed to create class
+      (False, message) → blocked with reason
+    """
+    cursor.execute("""
+        SELECT account_status, verified
+        FROM login
+        WHERE user_id = %s
+    """, (user_id,))
+    user = cursor.fetchone()
+
+    if not user:
+        return False, "User account not found."
+
+    if user['account_status'] != 'active':
+        return False, "Your account is not active. Please contact the administrator."
+
+    if user['verified'] == 'pending':
+        return False, (
+            "Your account is active but not verified. "
+            "Please complete your profile and upload your signature to proceed."
+        )
+
+    return True, None
+
+def has_uploaded_signature(cursor, user_id):
+    cursor.execute("""
+        SELECT signature
+        FROM personal_information
+        WHERE user_id = %s
+    """, (user_id,))
+    row = cursor.fetchone()
+    return row and row.get('signature')
+
 
 @staff_class_creation_bp.route('/class/create', methods=['GET', 'POST'])
 def create_class():
@@ -53,6 +90,23 @@ def create_class():
             if not instructor_id:
                 return jsonify({'status': 'error', 'message': 'Instructor not logged in.'}), 401
 
+            allowed, error_message = check_staff_verification(cursor, instructor_id)
+            if not allowed:
+                return jsonify({
+                    'status': 'error',
+                    'message': error_message,
+                    'redirect': '/staff/profile'  
+                }), 403
+
+            
+            if not has_uploaded_signature(cursor, instructor_id):
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Please upload your signature in your profile before creating a class.',
+                    'redirect': '/staff/profile'
+                }), 403
+
+
             data = request.form  
 
             course_id = data.get('course_id')
@@ -67,7 +121,6 @@ def create_class():
             days_of_week = data.get('days_of_week')
             instructor_name = data.get('instructor_name')
 
-            # Validate required fields
             required_fields = {
                 'course_id': 'Course',
                 'class_title': 'Class Title',
@@ -88,7 +141,6 @@ def create_class():
                     'message': f"Missing required fields: {', '.join([required_fields[field] for field in missing_fields])}"
                 }), 400
 
-            # Validate JSON and time format
             try:
                 days_of_week_json = json.loads(days_of_week)
                 for day, times in days_of_week_json.items():
@@ -97,12 +149,11 @@ def create_class():
                             'status': 'error',
                             'message': 'Invalid time format. Times must be on the hour (e.g., 7:00, 8:00)'
                         }), 400
-                    # Generate simple schedule summary (optional)
+                   
                     schedule = f"{day} {times['start']}-{times['end']}"
             except json.JSONDecodeError:
                 return jsonify({'status': 'error', 'message': 'Invalid JSON format for days_of_week.'}), 400
 
-            # Fetch prerequisites
             prereq_query = "SELECT prerequisites FROM courses WHERE course_id = %s"
             cursor.execute(prereq_query, (course_id,))
             course = cursor.fetchone()

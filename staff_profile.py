@@ -107,7 +107,6 @@ def update_staff_profile():
         if not user:
             return jsonify({'error': 'User not found'}), 404
 
-        # Check username/email uniqueness
         if username and username != user['username']:
             cursor.execute("SELECT user_id FROM login WHERE username = %s AND user_id != %s", (username, user_id))
             if cursor.fetchone():
@@ -117,7 +116,6 @@ def update_staff_profile():
             if cursor.fetchone():
                 return jsonify({'error': 'Email already in use'}), 400
 
-        # Profile picture upload
         profile_picture = None
         if 'profile_picture' in files:
             file = files['profile_picture']
@@ -131,7 +129,6 @@ def update_staff_profile():
                 file.save(os.path.join(upload_dir, secure_filename(filename)))
                 profile_picture = filename
 
-                # Delete old picture
                 cursor.execute("SELECT profile_picture FROM personal_information WHERE user_id = %s", (user_id,))
                 old_picture = cursor.fetchone()
                 if old_picture and old_picture['profile_picture']:
@@ -142,7 +139,6 @@ def update_staff_profile():
                         except Exception as e:
                             current_app.logger.error(f"Error deleting old profile picture: {str(e)}")
 
-        # Signature upload
         signature_file = None
         if 'signature' in files:
             file = files['signature']
@@ -156,7 +152,6 @@ def update_staff_profile():
                 file.save(os.path.join(upload_dir, secure_filename(filename)))
                 signature_file = filename
 
-                # Delete old signature
                 cursor.execute("SELECT signature FROM personal_information WHERE user_id = %s", (user_id,))
                 old_signature = cursor.fetchone()
                 if old_signature and old_signature['signature']:
@@ -171,7 +166,6 @@ def update_staff_profile():
                 if user['verified'] == 'pending':
                     cursor.execute("UPDATE login SET verified = 'verified' WHERE user_id = %s", (user_id,))
 
-        # Password update
         password_update = ""
         password_params = ()
         if current_password and new_password and confirm_password:
@@ -184,7 +178,6 @@ def update_staff_profile():
             password_update = ", password = %s"
             password_params = (new_password,)
 
-        # Update login table
         update_login_query = f"""
             UPDATE login
             SET username = %s, email = %s {password_update}
@@ -195,7 +188,6 @@ def update_staff_profile():
             (username or user['username'], email or user['email']) + password_params + (user_id,)
         )
 
-        # Update personal info
         update_fields = {
             'first_name': first_name or '',
             'middle_name': middle_name or '',
@@ -241,7 +233,6 @@ def update_staff_profile():
         cursor.execute(update_personal_query, update_fields)
         db.commit()
 
-        # Fetch updated profile
         cursor.execute("""
             SELECT l.username, l.email, l.role, l.account_status, l.verified,
                    pi.first_name, pi.middle_name, pi.last_name,

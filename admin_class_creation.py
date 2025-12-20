@@ -24,12 +24,9 @@ def create_class():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    # =======================
-    # GET REQUEST
-    # =======================
     if request.method == 'GET':
         try:
-            # Fetch active courses
+           
             cursor.execute("""
                 SELECT course_id, course_title 
                 FROM courses 
@@ -37,20 +34,18 @@ def create_class():
             """)
             courses = cursor.fetchall()
 
-            # Fetch active staff instructors
             cursor.execute("""
                 SELECT 
                     u.user_id,
                     CONCAT(p.first_name, ' ', p.last_name) AS full_name
                 FROM login u
                 JOIN personal_information p ON u.user_id = p.user_id
-                WHERE u.account_status = 'active'
+                WHERE u.account_status = 'active'AND u.verified = 'verified'
                   AND u.role = 'staff'
                 ORDER BY full_name ASC
             """)
             instructors = cursor.fetchall()
 
-            # Fetch admin profile picture
             profile_picture = 'default.png'
             cursor.execute("""
                 SELECT profile_picture 
@@ -71,9 +66,6 @@ def create_class():
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-    # =======================
-    # POST REQUEST
-    # =======================
     try:
         data = request.form
 
@@ -97,7 +89,6 @@ def create_class():
                 'message': f"Missing required fields: {', '.join(required_fields[f] for f in missing)}"
             }), 400
 
-        # Validate days_of_week JSON
         days_json = json.loads(data['days_of_week'])
         for _, times in days_json.items():
             if not validate_time_format(times.get('start')) or not validate_time_format(times.get('end')):
@@ -106,7 +97,6 @@ def create_class():
                     'message': 'Invalid time format. Times must be on the hour.'
                 }), 400
 
-        # Get instructor full name
         cursor.execute("""
             SELECT CONCAT(p.first_name, ' ', p.last_name) AS full_name
             FROM personal_information p
@@ -119,7 +109,6 @@ def create_class():
 
         instructor_name = instructor['full_name']
 
-        # Fetch course prerequisites
         cursor.execute(
             "SELECT prerequisites FROM courses WHERE course_id = %s",
             (data['course_id'],)
@@ -127,7 +116,6 @@ def create_class():
         course = cursor.fetchone()
         prerequisites = course['prerequisites'] if course else None
 
-        # Insert class
         cursor.execute("""
             INSERT INTO classes (
                 course_id, class_title, school_year, batch, schedule,

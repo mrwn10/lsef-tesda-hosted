@@ -91,16 +91,12 @@ def create_staff():
                     profile_picture=profile_picture
                 )
 
-            # Create staff account
             cursor.execute(
                 "INSERT INTO login (username, password, email, role, account_status, verified) VALUES (%s, %s, %s, %s, %s, %s)",
-                (username, password, email, 'staff', 'active', 'verified')
+                (username, password, email, 'staff', 'active', 'pending')
             )
-
-            # Get the new user_id
+            
             user_id = cursor.lastrowid
-
-            # Create basic personal information record with default values
             cursor.execute(
                 """INSERT INTO personal_information 
                 (user_id, province, municipality, baranggay, contact_number, 
