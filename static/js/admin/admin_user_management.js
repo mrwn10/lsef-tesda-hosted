@@ -577,7 +577,7 @@ $(document).ready(function() {
         $('#pagination-container').hide();
     }
     
-    // View detailed user information
+    // View detailed user information - UPDATED WITH PROFILE PICTURE
     function viewUserDetails(userId) {
         currentUserId = userId;
         window.currentUserId = userId;
@@ -599,6 +599,15 @@ $(document).ready(function() {
                     const user = response.user;
                     const dob = user.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString() : 'Not specified';
                     const registerDate = new Date(user.date_registered).toLocaleDateString();
+                    
+                    // SET PROFILE PICTURE - SAME PATTERN AS REFERENCE CODE
+                    const profilePicture = user.profile_picture || 'default.png';
+                    const staticPath = window.appUrls.staticProfilePath || '/static/uploads/profile_pictures/';
+                    document.getElementById('profilePicture').src = `${staticPath}${profilePicture}`;
+                    
+                    // SET USER NAME AND EMAIL
+                    document.getElementById('profileName').textContent = user.full_name || `${user.first_name} ${user.last_name}`;
+                    document.getElementById('profileEmail').textContent = user.email;
                     
                     let detailsHtml = `
                         <div class="user-details-content">

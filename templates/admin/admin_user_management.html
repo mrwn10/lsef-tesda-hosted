@@ -16,7 +16,8 @@
             pendingUsers: "{{ url_for('admin_user_management.get_pending_users') }}",
             userDetails: "{{ url_for('admin_user_management.get_user_details', user_id=0) }}",
             updateStatus: "{{ url_for('admin_user_management.update_user_status') }}",
-            logoutUrl: "{{ url_for('login.logout') }}"
+            logoutUrl: "{{ url_for('login.logout') }}",
+            staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}"  // <-- ADDED
         };
         
         // Store current user ID globally for modal actions
@@ -279,6 +280,14 @@
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Add Profile Header Section -->
+                <div class="profile-header" style="text-align: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9;">
+                    <img id="profilePicture" src="{{ url_for('static', filename='img/default_profile.png') }}" alt="Profile Picture" 
+                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 4px solid var(--tesda-blue); margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                    <h3 id="profileName" style="color: var(--tesda-blue); margin: 0 0 0.5rem 0; font-weight: 700; font-size: 1.5rem;"></h3>
+                    <p class="profile-email" id="profileEmail" style="color: #64748b; font-size: 1rem; margin: 0;"></p>
+                </div>
+                
                 <div class="user-details-content" id="userDetailsContent">
                     <!-- User details will be inserted here by JavaScript -->
                 </div>

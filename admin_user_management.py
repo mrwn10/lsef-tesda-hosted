@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, session, redirect, url_for
 from flask_mail import Message
 from database import get_db
 
@@ -100,7 +100,26 @@ def send_rejection_email(email, username):
     
 @admin_user_management_bp.route('/user_management')
 def user_management():
-    return render_template('admin/user_management.html')
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login.login_page'))
+    
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    admin_user_id = session.get('user_id')
+    
+    # Fetch admin profile picture
+    profile_picture = 'default.png'
+    if admin_user_id:
+        cursor.execute("""
+            SELECT profile_picture FROM personal_information WHERE user_id = %s
+        """, (admin_user_id,))
+        user = cursor.fetchone()
+        if user and user.get('profile_picture'):
+            profile_picture = user['profile_picture']
+    
+    cursor.close()
+    
+    return render_template('admin/user_management.html', profile_picture=profile_picture)
 
 @admin_user_management_bp.route('/get_pending_users', methods=['GET'])
 def get_pending_users():
@@ -123,7 +142,8 @@ def get_pending_users():
                 p.contact_number,
                 p.date_of_birth,
                 p.gender,
-                p.date_registered
+                p.date_registered,
+                p.profile_picture  # <-- ADDED
             FROM login l
             INNER JOIN personal_information p ON l.user_id = p.user_id
             WHERE l.account_status = 'pending'
@@ -139,6 +159,7 @@ def get_pending_users():
                 user['date_of_birth'] = 'Not specified'
             user['full_address'] = f"{user['baranggay']}, {user['municipality']}, {user['province']}"
             user['full_name'] = f"{user['first_name']} {user['middle_name'] + ' ' if user['middle_name'] else ''}{user['last_name']}"
+            user['profile_picture'] = user['profile_picture'] or 'default.png'  # Add fallback
         
         return jsonify({
             'success': True,
@@ -311,6 +332,8 @@ def get_user_details(user_id):
         user['date_registered'] = user['date_registered'].strftime('%Y-%m-%d %H:%M:%S')
         
         user['full_address'] = f"{user['baranggay']}, {user['municipality']}, {user['province']}"
+        user['full_name'] = f"{user['first_name']} {user['middle_name'] + ' ' if user['middle_name'] else ''}{user['last_name']}".strip()
+        user['profile_picture'] = user['profile_picture'] or 'default.png'  # Add fallback
         
         return jsonify({
             'success': True,
@@ -340,7 +363,8 @@ def search_users():
                 l.user_id, l.username, l.email, l.role, 
                 p.first_name, COALESCE(p.middle_name, '') AS middle_name, p.last_name,
                 p.province, p.municipality, p.baranggay, p.contact_number,
-                p.date_of_birth, p.gender, p.date_registered
+                p.date_of_birth, p.gender, p.date_registered,
+                p.profile_picture  # <-- ADDED
             FROM login l
             INNER JOIN personal_information p ON l.user_id = p.user_id
             WHERE l.account_status = 'pending'
@@ -374,6 +398,7 @@ def search_users():
             user['date_of_birth'] = user['date_of_birth'].strftime('%Y-%m-%d') if user['date_of_birth'] else 'Not specified'
             user['full_address'] = f"{user['baranggay']}, {user['municipality']}, {user['province']}"
             user['full_name'] = f"{user['first_name']} {user['middle_name']} {user['last_name']}".strip()
+            user['profile_picture'] = user['profile_picture'] or 'default.png'  # Add fallback
 
         return jsonify({'success': True, 'users': results})
 
