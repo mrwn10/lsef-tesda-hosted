@@ -1,33 +1,138 @@
-// Global variable to track current auto remarks
+// ===================== SMOOTH UX FIXES =====================
+// Global variables
 let currentAutoRemarks = '';
+let debounceTimer = null;
+let isModalClosing = false;
+let currentOpenModal = null;
+let isSaving = false;
 
-// Show loading screen
-function showLoadingScreen(message) {
-    $('#loading-message').text(message);
-    $('#loading-screen').fadeIn();
+// Smooth toast notification
+function showSuccessToast(message) {
+    const toast = document.getElementById('success-toast');
+    if (!toast) return;
+    
+    const messageSpan = toast.querySelector('.toast-message');
+    if (messageSpan) {
+        messageSpan.textContent = message;
+    }
+    
+    toast.style.display = 'flex';
+    
+    // Force reflow for smooth animation
+    toast.offsetHeight;
+    
+    // Show with animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // Auto hide after 2 seconds
+    setTimeout(() => {
+        hideSuccessToast();
+    }, 2000);
 }
 
-// Hide loading screen
+function hideSuccessToast() {
+    const toast = document.getElementById('success-toast');
+    if (!toast) return;
+    
+    toast.classList.remove('show');
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 500);
+}
+
+// Improved loading screen
+function showLoadingScreen(message, details = '') {
+    $('#loading-message').text(message);
+    $('#loading-details').text(details);
+    $('#loading-screen').fadeIn(200);
+}
+
 function hideLoadingScreen() {
-    $('#loading-screen').fadeOut();
+    $('#loading-screen').fadeOut(200);
+}
+
+// Debounced auto-remarks calculation
+function debouncedCalculateAutoRemarks() {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+    }
+    
+    const loadingEl = document.getElementById('autoRemarksLoading');
+    if (loadingEl) loadingEl.style.display = 'inline-block';
+    
+    debounceTimer = setTimeout(() => {
+        calculateAutoRemarks();
+    }, 500);
+}
+
+// Calculate auto remarks
+function calculateAutoRemarks() {
+    const prelim = parseFloat(document.getElementById('prelimGrade').value) || null;
+    const midterm = parseFloat(document.getElementById('midtermGrade').value) || null;
+    const final = parseFloat(document.getElementById('finalGrade').value) || null;
+    
+    const loadingEl = document.getElementById('autoRemarksLoading');
+    if (loadingEl) loadingEl.style.display = 'none';
+    
+    let localRemarks = calculateRemarksLocally(prelim, midterm, final);
+    currentAutoRemarks = localRemarks;
+    updateAutoRemarksDisplay();
+    
+    if (document.getElementById('useAutoRemarks').checked) {
+        document.getElementById('remarks').value = currentAutoRemarks;
+    }
+    
+    if (prelim !== null && midterm !== null && final !== null) {
+        const displayElement = document.getElementById('autoRemarksText');
+        const originalText = displayElement.textContent;
+        displayElement.innerHTML = `${localRemarks} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
+        
+        fetch('/staff_student/get_auto_remarks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prelim_grade: prelim,
+                midterm_grade: midterm,
+                final_grade: final
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.auto_remarks !== localRemarks) {
+                currentAutoRemarks = data.auto_remarks;
+                updateAutoRemarksDisplay();
+                
+                if (document.getElementById('useAutoRemarks').checked) {
+                    document.getElementById('remarks').value = currentAutoRemarks;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error verifying auto remarks:', error);
+        });
+    }
+}
+
+// Local remarks calculation
+function calculateRemarksLocally(prelim, midterm, final) {
+    if (prelim === null || midterm === null || final === null) {
+        return 'Incomplete';
+    }
+    
+    const average = (prelim + midterm + final) / 3;
+    return average >= 75 ? 'Passed' : 'Failed';
 }
 
 // Initialize all functionality
 function init() {
     initMobileNavigation();
     initModals();
-    
-    // File upload display
-    document.getElementById('file-upload').addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
-        document.getElementById('file-name').textContent = fileName;
-    });
-
-    // Event listeners for auto remarks toggle
-    const useAutoRemarks = document.getElementById('useAutoRemarks');
-    if (useAutoRemarks) {
-        useAutoRemarks.addEventListener('change', toggleRemarksSelect);
-    }
+    initFileUpload();
+    initGradeInputValidation();
 }
 
 // Mobile Navigation Functionality
@@ -44,12 +149,10 @@ function initMobileNavigation() {
         
         if (closeMobileNav) {
             closeMobileNav.addEventListener('click', function() {
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
+                closeMobileNavOnly();
             });
         }
         
-        // Expandable mobile menu sections
         const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
         mobileNavHeaders.forEach(header => {
             header.addEventListener('click', function() {
@@ -57,78 +160,155 @@ function initMobileNavigation() {
                 const submenu = document.getElementById(`${section}-submenu`);
                 const chevron = this.querySelector('.chevron-icon');
                 
-                // Toggle active class
                 this.classList.toggle('active');
                 
-                // Toggle submenu
                 if (submenu) {
                     submenu.classList.toggle('active');
                 }
                 
-                // Rotate chevron icon
                 if (chevron) {
                     chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
                 }
             });
         });
         
-        // Close mobile nav when clicking on links
-        const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a:not(.logout-btn)');
         mobileNavLinks.forEach(link => {
             link.addEventListener('click', function() {
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
+                closeMobileNavOnly();
             });
         });
         
-        // Close mobile nav when clicking outside
         document.addEventListener('click', function(e) {
             if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
+                closeMobileNavOnly();
             }
         });
         
-        // Close mobile nav with Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
-                mobileNav.classList.remove('active');
-                document.body.style.overflow = '';
+                closeMobileNavOnly();
             }
         });
     }
 }
 
+function closeMobileNavOnly() {
+    const mobileNav = document.getElementById('mobileNav');
+    if (mobileNav) {
+        mobileNav.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// File upload display
+function initFileUpload() {
+    const fileUpload = document.getElementById('file-upload');
+    if (fileUpload) {
+        fileUpload.addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+            document.getElementById('file-name').textContent = fileName;
+        });
+    }
+}
+
+// Grade input validation
+function initGradeInputValidation() {
+    const gradeInputs = ['prelimGrade', 'midtermGrade', 'finalGrade'];
+    
+    gradeInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('blur', function() {
+                validateGradeInput(this);
+            });
+        }
+    });
+}
+
+function validateGradeInput(input) {
+    const value = parseFloat(input.value);
+    if (input.value && (isNaN(value) || value < 0 || value > 100)) {
+        input.classList.add('invalid');
+        input.classList.remove('valid');
+        return false;
+    } else if (input.value) {
+        input.classList.add('valid');
+        input.classList.remove('invalid');
+        return true;
+    } else {
+        input.classList.remove('valid', 'invalid');
+        return true;
+    }
+}
+
 // Initialize all modal functionality
 function initModals() {
-    // Close modal function - works for ALL modals
-    function closeAllModals() {
-        $('.modal').fadeOut(300);
-        document.body.style.overflow = '';
-        document.body.classList.remove('modal-open');
-    }
-
-    // Open modal function
-    function openModal(modalId) {
+    // Smooth close function
+    window.closeModal = function(modalId) {
+        if (isModalClosing) return;
+        
+        isModalClosing = true;
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('modal-open');
+            modal.classList.add('smooth-closing');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.classList.remove('smooth-closing');
+                document.body.style.overflow = '';
+                document.body.classList.remove('modal-open');
+                currentOpenModal = null;
+                isModalClosing = false;
+                
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = null;
+                }
+            }, 300);
+        } else {
+            isModalClosing = false;
         }
-    }
+    };
 
-    // Close modal when clicking outside - works for ALL modals
+    // Smooth open function
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            if (currentOpenModal && currentOpenModal !== modalId) {
+                closeModal(currentOpenModal);
+            }
+            
+            setTimeout(() => {
+                modal.style.display = 'flex';
+                modal.classList.add('smooth-opening');
+                document.body.style.overflow = 'hidden';
+                document.body.classList.add('modal-open');
+                currentOpenModal = modalId;
+            }, currentOpenModal ? 350 : 0);
+        }
+    };
+
+    // Close all modals
+    window.closeAllModals = function() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (modal.style.display !== 'none') {
+                closeModal(modal.id);
+            }
+        });
+    };
+
+    // Close modal when clicking outside
     $(document).on('click', function(e) {
-        if ($(e.target).hasClass('modal')) {
-            closeAllModals();
+        if ($(e.target).hasClass('modal') && !$(e.target).closest('.modal-content').length) {
+            closeModal(currentOpenModal);
         }
     });
 
-    // Escape key to close modals - works for ALL modals
+    // Escape key to close modals
     $(document).keyup(function(e) {
-        if (e.keyCode === 27) {
-            closeAllModals();
+        if (e.keyCode === 27 && currentOpenModal) {
+            closeModal(currentOpenModal);
         }
     });
 
@@ -144,12 +324,7 @@ function initModals() {
     $('#mobile-logout-trigger').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        // First close mobile nav properly
-        const mobileNav = document.getElementById('mobileNav');
-        if (mobileNav) {
-            mobileNav.classList.remove('active');
-        }
-        // Then open logout modal
+        closeMobileNavOnly();
         setTimeout(() => {
             openModal('logout-modal');
         }, 10);
@@ -158,18 +333,19 @@ function initModals() {
     $('#cancel-logout').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        closeAllModals();
+        closeModal('logout-modal');
     });
     
     $('#close-logout-modal').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        closeAllModals();
+        closeModal('logout-modal');
     });
     
     $('#confirm-logout').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
+        showLoadingScreen('Logging out...');
         const logoutUrl = document.body.getAttribute('data-logout-url');
         if (logoutUrl) {
             window.location.href = logoutUrl;
@@ -180,103 +356,125 @@ function initModals() {
     });
 
     // Edit Grade Modal
-    $('#cancel-edit').click(function() {
-        closeAllModals();
-    });
-
-    $('#close-edit-modal').click(function() {
-        closeAllModals();
-    });
-
-    $('#save-grade-changes').click(function() {
-        submitGradeEdit();
-    });
+    const cancelEditBtn = document.getElementById('cancel-edit');
+    const closeEditBtn = document.getElementById('close-edit-modal');
+    const saveGradeBtn = document.getElementById('save-grade-changes');
+    
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal('editGradeModal');
+        });
+    }
+    
+    if (closeEditBtn) {
+        closeEditBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal('editGradeModal');
+        });
+    }
+    
+    if (saveGradeBtn) {
+        saveGradeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            submitGradeEdit();
+        });
+    }
 
     // Profile Modal
-    $('#close-profile-details').click(function() {
-        closeAllModals();
-    });
+    const closeProfileDetailsBtn = document.getElementById('close-profile-details');
+    const closeProfileModalBtn = document.getElementById('close-profile-modal');
+    
+    if (closeProfileDetailsBtn) {
+        closeProfileDetailsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal('viewProfileModal');
+        });
+    }
+    
+    if (closeProfileModalBtn) {
+        closeProfileModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal('viewProfileModal');
+        });
+    }
 
-    $('#close-profile-modal').click(function() {
-        closeAllModals();
-    });
+    // Auto remarks toggle
+    const useAutoRemarks = document.getElementById('useAutoRemarks');
+    if (useAutoRemarks) {
+        useAutoRemarks.addEventListener('change', toggleRemarksSelect);
+    }
 }
 
+// Open edit modal
 function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks) {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+    }
+    
     document.getElementById('editEnrollmentId').value = enrollmentId;
     document.getElementById('prelimGrade').value = prelim || '';
     document.getElementById('midtermGrade').value = midterm || '';
     document.getElementById('finalGrade').value = finalGrade || '';
     document.getElementById('remarks').value = remarks || 'Passed';
     
-    // Set auto remarks
+    ['prelimGrade', 'midtermGrade', 'finalGrade'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.classList.remove('valid', 'invalid');
+        }
+    });
+    
     currentAutoRemarks = autoRemarks || 'Incomplete';
     updateAutoRemarksDisplay();
     
-    // Enable auto remarks by default
     document.getElementById('useAutoRemarks').checked = true;
     toggleRemarksSelect();
     
-    document.getElementById('editGradeModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('modal-open');
-}
-
-function calculateAutoRemarks() {
-    const prelim = document.getElementById('prelimGrade').value;
-    const midterm = document.getElementById('midtermGrade').value;
-    const final = document.getElementById('finalGrade').value;
+    const loadingEl = document.getElementById('autoRemarksLoading');
+    if (loadingEl) loadingEl.style.display = 'none';
     
-    // If all fields are empty, reset display
-    if (!prelim && !midterm && !final) {
-        currentAutoRemarks = 'Enter grades to see automatic remarks';
-        updateAutoRemarksDisplay();
-        return;
+    const prelimInput = document.getElementById('prelimGrade');
+    const midtermInput = document.getElementById('midtermGrade');
+    const finalInput = document.getElementById('finalGrade');
+    
+    if (prelimInput) {
+        prelimInput.oninput = debouncedCalculateAutoRemarks;
+    }
+    if (midtermInput) {
+        midtermInput.oninput = debouncedCalculateAutoRemarks;
+    }
+    if (finalInput) {
+        finalInput.oninput = debouncedCalculateAutoRemarks;
     }
     
-    showLoadingScreen('Calculating remarks...');
+    openModal('editGradeModal');
     
-    // Send request to calculate auto remarks
-    fetch('/staff_student/get_auto_remarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            prelim_grade: prelim || null,
-            midterm_grade: midterm || null,
-            final_grade: final || null
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoadingScreen();
-        if (data.success) {
-            currentAutoRemarks = data.auto_remarks;
-            updateAutoRemarksDisplay();
-            
-            // If auto remarks is enabled, update the remarks select
-            if (document.getElementById('useAutoRemarks').checked) {
-                document.getElementById('remarks').value = currentAutoRemarks;
-            }
+    setTimeout(() => {
+        const firstInput = document.getElementById('prelimGrade');
+        if (firstInput) {
+            firstInput.focus();
         }
-    })
-    .catch(error => {
-        hideLoadingScreen();
-        console.error('Error calculating auto remarks:', error);
-        currentAutoRemarks = 'Error calculating remarks';
-        updateAutoRemarksDisplay();
-    });
+    }, 100);
 }
 
 function updateAutoRemarksDisplay() {
     const displayElement = document.getElementById('autoRemarksText');
     const container = document.getElementById('autoRemarksDisplay');
     
-    displayElement.textContent = currentAutoRemarks;
+    if (!displayElement || !container) return;
     
-    // Remove all existing classes
+    const textOnly = currentAutoRemarks.replace(/<[^>]*>/g, '').trim();
+    displayElement.textContent = textOnly;
+    
     container.className = 'auto-remarks-display';
     
-    // Add appropriate class based on remarks
     if (currentAutoRemarks === 'Passed' || currentAutoRemarks === 'Completed') {
         container.classList.add('passed');
     } else if (currentAutoRemarks === 'Failed') {
@@ -289,20 +487,27 @@ function updateAutoRemarksDisplay() {
 }
 
 function toggleRemarksSelect() {
-    const useAutoRemarks = document.getElementById('useAutoRemarks').checked;
+    const useAutoRemarks = document.getElementById('useAutoRemarks');
     const remarksSelect = document.getElementById('remarks');
     
-    if (useAutoRemarks) {
+    if (!useAutoRemarks || !remarksSelect) return;
+    
+    if (useAutoRemarks.checked) {
         remarksSelect.disabled = true;
         remarksSelect.value = currentAutoRemarks;
         remarksSelect.title = 'Automatic remarks is enabled';
+        remarksSelect.classList.add('disabled');
     } else {
         remarksSelect.disabled = false;
         remarksSelect.title = 'Manual remarks selection';
+        remarksSelect.classList.remove('disabled');
     }
 }
 
+// SMOOTH SUBMIT FUNCTION - Updated to match certificate generation success behavior
 function submitGradeEdit() {
+    if (isSaving) return;
+    
     const enrollmentId = document.getElementById('editEnrollmentId').value;
     const prelim = document.getElementById('prelimGrade').value;
     const midterm = document.getElementById('midtermGrade').value;
@@ -310,68 +515,170 @@ function submitGradeEdit() {
     const useAutoRemarks = document.getElementById('useAutoRemarks').checked;
     let remarks = document.getElementById('remarks').value;
 
-    // Validate grades
-    if (prelim && (prelim < 0 || prelim > 100)) {
+    // Validate inputs
+    const prelimValid = validateGradeInput(document.getElementById('prelimGrade'));
+    const midtermValid = validateGradeInput(document.getElementById('midtermGrade'));
+    const finalValid = validateGradeInput(document.getElementById('finalGrade'));
+    
+    if (!prelimValid || !midtermValid || !finalValid) {
         Swal.fire({
             icon: 'error',
-            title: 'Invalid Grade',
-            text: 'Prelim grade must be between 0 and 100'
-        });
-        return;
-    }
-    if (midterm && (midterm < 0 || midterm > 100)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid Grade',
-            text: 'Midterm grade must be between 0 and 100'
-        });
-        return;
-    }
-    if (finalGrade && (finalGrade < 0 || finalGrade > 100)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid Grade',
-            text: 'Final grade must be between 0 and 100'
+            title: 'Invalid Grades',
+            text: 'Please fix invalid grade values (must be between 0 and 100)',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#b91c1c',
+            timer: 3000
         });
         return;
     }
 
-    showLoadingScreen('Saving grade changes...');
+    isSaving = true;
+    
+    // Prepare save button
+    const saveBtn = document.getElementById('save-grade-changes');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.classList.add('btn-saving');
+    saveBtn.disabled = true;
 
-    fetch('/staff_student/edit_grade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            enrollment_id: enrollmentId,
-            prelim_grade: prelim || null,
-            midterm_grade: midterm || null,
-            final_grade: finalGrade || null,
-            remarks: remarks,
-            use_auto_remarks: useAutoRemarks
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoadingScreen();
-        Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: data.message,
-            timer: 2000,
-            showConfirmButton: false
-        }).then(() => {
-            closeModal('editGradeModal');
-            location.reload();
-        });
-    })
-    .catch(error => {
-        hideLoadingScreen();
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to update grade'
-        });
+    // 1. First, close modal smoothly
+    closeModal('editGradeModal');
+    
+    // 2. Show loading screen briefly
+    setTimeout(() => {
+        showLoadingScreen('Saving grade changes...');
+        
+        // 3. Make API call
+        setTimeout(() => {
+            fetch('/staff_student/edit_grade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enrollment_id: enrollmentId,
+                    prelim_grade: prelim || null,
+                    midterm_grade: midterm || null,
+                    final_grade: finalGrade || null,
+                    remarks: remarks,
+                    use_auto_remarks: useAutoRemarks
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 4. Hide loading screen
+                hideLoadingScreen();
+                isSaving = false;
+                
+                // 5. Show success dialog (SAME AS CERTIFICATE GENERATION)
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Grade Saved Successfully!',
+                    html: `
+                        <p>Student grades have been updated successfully.</p>
+                        <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #065f46;">
+                            <small style="color: #475569;">
+                                <i class="fas fa-info-circle"></i> 
+                                Prelim: ${prelim || 'N/A'}, Midterm: ${midterm || 'N/A'}, Final: ${finalGrade || 'N/A'}
+                            </small>
+                        </div>
+                    `,
+                    showCancelButton: false,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#065f46'
+                }).then(() => {
+                    // Restore save button state
+                    if (saveBtn) {
+                        saveBtn.innerHTML = originalText;
+                        saveBtn.classList.remove('btn-saving');
+                        saveBtn.disabled = false;
+                    }
+                    
+                    // Update the specific row in the table without reloading the page
+                    updateStudentRowLocally(enrollmentId, prelim, midterm, finalGrade, remarks);
+                });
+            })
+            .catch(error => {
+                hideLoadingScreen();
+                isSaving = false;
+                
+                console.error('Error:', error);
+                
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Save Failed',
+                    text: error.message || 'Failed to save grade changes. Please try again.',
+                    confirmButtonText: 'Try Again',
+                    confirmButtonColor: '#b91c1c'
+                }).then(() => {
+                    // Re-open the edit modal so user can try again
+                    openEditModal(
+                        enrollmentId,
+                        prelim,
+                        midterm,
+                        finalGrade,
+                        remarks,
+                        currentAutoRemarks
+                    );
+                    
+                    // Restore save button
+                    if (saveBtn) {
+                        saveBtn.innerHTML = originalText;
+                        saveBtn.classList.remove('btn-saving');
+                        saveBtn.disabled = false;
+                    }
+                });
+            });
+        }, 100);
+    }, 50);
+}
+
+// Update student row locally without page reload
+function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) {
+    // Find the row with matching enrollment_id
+    const rows = document.querySelectorAll('.class-table tbody tr');
+    rows.forEach(row => {
+        const editBtn = row.querySelector('.edit-btn');
+        if (editBtn && editBtn.getAttribute('onclick')) {
+            // Extract enrollmentId from onclick attribute
+            const match = editBtn.getAttribute('onclick').match(/openEditModal\('([^']+)'/);
+            if (match && match[1] === enrollmentId) {
+                // Update grade cells
+                const gradeCell = row.children[2];
+                if (prelim && midterm && final) {
+                    const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
+                    gradeCell.innerHTML = `<span class="grade-value">${avg}%</span>`;
+                } else {
+                    gradeCell.innerHTML = '<span class="grade-na">N/A</span>';
+                }
+                
+                // Update current remarks
+                const remarksCell = row.children[4];
+                if (remarks) {
+                    remarksCell.innerHTML = `<span class="current-remarks ${remarks.toLowerCase()}">${remarks}</span>`;
+                }
+                
+                // Update auto remarks based on new grades
+                const autoRemarksCell = row.children[3];
+                if (prelim && midterm && final) {
+                    const avg = (parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3;
+                    const autoRemarks = avg >= 75 ? 'Passed' : 'Failed';
+                    autoRemarksCell.innerHTML = `<span class="auto-remarks ${autoRemarks.toLowerCase()}">${autoRemarks}</span>`;
+                } else {
+                    autoRemarksCell.innerHTML = `<span class="auto-remarks incomplete">Incomplete</span>`;
+                }
+                
+                // Update completion button status
+                const completionBtn = row.querySelector('.completion-btn');
+                if (completionBtn) {
+                    completionBtn.disabled = remarks !== 'Completed';
+                }
+            }
+        }
     });
 }
 
@@ -391,134 +698,133 @@ function openProfileModal(userId) {
                 throw new Error(data.error || 'Failed to load profile');
             }
 
-            // Personal Information
             const profile = data.personal_info;
             document.getElementById('profileName').innerText = 
-                `${profile.first_name} ${profile.middle_name || ''} ${profile.last_name}`;
+                `${profile.first_name} ${profile.middle_name || ''} ${profile.last_name}`.trim();
             document.getElementById('profileEmail').innerText = profile.email;
             document.getElementById('profileContact').innerText = profile.contact_number || 'Not provided';
             document.getElementById('profileDOB').innerText = profile.date_of_birth || 'Not specified';
             document.getElementById('profileGender').innerText = profile.gender || 'Not specified';
             document.getElementById('profileAddress').innerText = 
                 profile.baranggay ? `${profile.baranggay}, ${profile.municipality}, ${profile.province}` : 'Not provided';
-            document.getElementById('profilePicture').src = 
-                profile.profile_picture ? `/static/uploads/profile_pictures/${profile.profile_picture}` : '/static/img/tesda_logo.png';
+            
+            // FIXED: Use same path structure as subnav with proper fallback
+            const profilePicture = profile.profile_picture || 'default.png';
+            const staticPath = window.appUrls.staticProfilePath || '/static/uploads/profile_pictures/';
+            document.getElementById('profilePicture').src = `${staticPath}${profilePicture}`;
 
-            // Classes Information
             const classesTable = document.getElementById('profileClassesTable').getElementsByTagName('tbody')[0];
             classesTable.innerHTML = '';
             
             data.classes.forEach(cls => {
                 const row = classesTable.insertRow();
+                row.insertCell(0).textContent = cls.class_title || 'N/A';
                 
-                // Class details
-                row.insertCell(0).textContent = cls.class_title;
-                
-                // Format schedule information
-                let scheduleText = cls.schedule;
+                let scheduleText = cls.schedule || 'N/A';
                 if (cls.days_of_week && Array.isArray(cls.days_of_week)) {
                     scheduleText += ` (${cls.days_of_week.join(', ')})`;
                 }
                 row.insertCell(1).textContent = scheduleText;
                 
-                row.insertCell(2).textContent = cls.venue;
-                row.insertCell(3).textContent = cls.start_date;
-                row.insertCell(4).textContent = cls.end_date;
+                row.insertCell(2).textContent = cls.venue || 'N/A';
                 
-                // Final grade and remarks
-                row.insertCell(5).textContent = cls.final_grade !== null ? cls.final_grade + '%' : 'N/A';
-                row.insertCell(6).textContent = cls.remarks || 'N/A';
-                row.insertCell(7).textContent = cls.instructor_name || 'N/A';
+                let avgGrade = 'N/A';
+                if (cls.prelim_grade && cls.midterm_grade && cls.final_grade) {
+                    avgGrade = ((parseFloat(cls.prelim_grade) + parseFloat(cls.midterm_grade) + parseFloat(cls.final_grade)) / 3).toFixed(2) + '%';
+                }
+                row.insertCell(3).textContent = avgGrade;
+                
+                row.insertCell(4).textContent = cls.remarks || 'N/A';
+                row.insertCell(5).textContent = cls.status || 'N/A';
+                row.insertCell(6).textContent = cls.instructor_name || 'N/A';
             });
 
-            // Certificates Information - FIXED TABLE STRUCTURE
             const certsTable = document.getElementById('profileCertificatesTable').getElementsByTagName('tbody')[0];
             certsTable.innerHTML = '';
             
-            data.certificates.forEach(cert => {
+            if (data.certificates && data.certificates.length > 0) {
+                data.certificates.forEach(cert => {
+                    const row = certsTable.insertRow();
+                    row.insertCell(0).textContent = cert.course || cert.class_title || 'N/A';
+                    row.insertCell(1).textContent = cert.date || 'N/A';
+                    row.insertCell(2).textContent = cert.created_at ? new Date(cert.created_at).toLocaleDateString() : 'N/A';
+                    
+                    const viewCell = row.insertCell(3);
+                    if (cert.file_path) {
+                        const viewLink = document.createElement('a');
+                        viewLink.href = cert.file_path;
+                        viewLink.textContent = 'View';
+                        viewLink.target = '_blank';
+                        viewLink.className = 'cert-action-link';
+                        viewLink.rel = 'noopener noreferrer';
+                        viewCell.appendChild(viewLink);
+                    } else {
+                        viewCell.textContent = 'N/A';
+                    }
+                    
+                    const downloadCell = row.insertCell(4);
+                    if (cert.file_path) {
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = 'Download';
+                        downloadBtn.className = 'cert-action-btn';
+                        downloadBtn.onclick = () => {
+                            const link = document.createElement('a');
+                            link.href = cert.file_path;
+                            link.download = `certificate_${cert.id || 'unknown'}_${cert.date || 'unknown'}.pdf`;
+                            link.rel = 'noopener noreferrer';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        };
+                        downloadCell.appendChild(downloadBtn);
+                    } else {
+                        downloadCell.textContent = 'N/A';
+                    }
+                });
+            } else {
                 const row = certsTable.insertRow();
-                
-                // Course name
-                row.insertCell(0).textContent = cert.course || cert.class_title || 'N/A';
-                
-                // Date completed
-                row.insertCell(1).textContent = cert.date || 'N/A';
-                
-                // Date issued
-                row.insertCell(2).textContent = new Date(cert.created_at).toLocaleDateString() || 'N/A';
-                
-                // View Certificate Link - in dedicated column
-                const viewCell = row.insertCell(3);
-                if (cert.file_path) {
-                    const viewLink = document.createElement('a');
-                    viewLink.href = cert.file_path;
-                    viewLink.textContent = 'View';
-                    viewLink.target = '_blank';
-                    viewLink.className = 'cert-action-link';
-                    viewCell.appendChild(viewLink);
-                } else {
-                    viewCell.textContent = 'N/A';
-                }
-                
-                // Download Certificate Button - in dedicated column
-                const downloadCell = row.insertCell(4);
-                if (cert.file_path) {
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.textContent = 'Download';
-                    downloadBtn.className = 'cert-action-btn';
-                    downloadBtn.onclick = () => {
-                        const link = document.createElement('a');
-                        link.href = cert.file_path;
-                        link.download = `certificate_${cert.id}_${cert.date}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    };
-                    downloadCell.appendChild(downloadBtn);
-                } else {
-                    downloadCell.textContent = 'N/A';
-                }
-            });
+                const cell = row.insertCell(0);
+                cell.colSpan = 5;
+                cell.textContent = 'No certificates available';
+                cell.style.textAlign = 'center';
+                cell.style.padding = '20px';
+                cell.style.color = '#64748b';
+            }
 
-            document.getElementById('viewProfileModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('modal-open');
+            openModal('viewProfileModal');
         })
         .catch(error => {
             hideLoadingScreen();
             console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: `Error loading profile: ${error.message}`
+                title: 'Failed to Load Profile',
+                text: `Error: ${error.message || 'Could not load student profile'}`,
+                confirmButtonText: 'OK'
             });
         });
 }
 
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-}
-
-// ===================== PRIVATE COMPLETION CERTIFICATE =====================
+// Certificate functions
 function generatePrivateCompletion(enrollmentId, studentName, remarks) {
     if (remarks !== 'Completed') {
         Swal.fire({
             icon: 'warning',
             title: 'Cannot Generate Certificate',
-            text: 'Certificate can only be generated for students with "Completed" status'
+            text: 'Certificate can only be generated for students with "Completed" status',
+            confirmButtonText: 'OK'
         });
         return;
     }
     
     Swal.fire({
         title: 'Generate Certificate of Completion',
-        text: `Generate private completion certificate for ${studentName}?`,
+        html: `<p>Generate private completion certificate for <strong>${studentName}</strong>?</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Generate',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
             generatePrivateCompletionCertificate(enrollmentId, studentName);
@@ -527,7 +833,7 @@ function generatePrivateCompletion(enrollmentId, studentName, remarks) {
 }
 
 function generatePrivateCompletionCertificate(enrollmentId, studentName) {
-    showLoadingScreen('Generating private completion certificate...');
+    showLoadingScreen('Generating certificate...');
     
     const formData = new FormData();
     formData.append('enrollment_id', enrollmentId);
@@ -545,20 +851,27 @@ function generatePrivateCompletionCertificate(enrollmentId, studentName) {
     .then(data => {
         hideLoadingScreen();
         if (data.success) {
-            // Show success message but don't automatically open the file
             Swal.fire({
                 icon: 'success',
-                title: 'Success!',
+                title: 'Certificate Generated!',
                 html: `
                     <p>Private Completion Certificate generated successfully!</p>
-                    <p><small>Certificate ID: ${data.cert_hash ? data.cert_hash.substring(0, 16) + '...' : 'N/A'}</small></p>
+                    ${data.cert_hash ? `<p><small>Certificate ID: ${data.cert_hash.substring(0, 16)}...</small></p>` : ''}
                 `,
-                showConfirmButton: true,
-                confirmButtonText: 'OK'
-            }).then(() => {
-                // Don't try to open the file automatically - let the user download it manually
-                // This prevents the "URL not found" error
-                console.log('Certificate generated successfully:', data);
+                showCancelButton: true,
+                confirmButtonText: 'Download',
+                cancelButtonText: 'Close',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed && data.file_path) {
+                    const link = document.createElement('a');
+                    link.href = data.file_path;
+                    link.download = `certificate_${enrollmentId}_${Date.now()}.pdf`;
+                    link.rel = 'noopener noreferrer';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             });
         } else {
             throw new Error(data.message || 'Unknown error occurred');
@@ -569,13 +882,27 @@ function generatePrivateCompletionCertificate(enrollmentId, studentName) {
         console.error('Error:', error);
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: `Error: ${error.message || 'Failed to generate certificate'}`
+            title: 'Generation Failed',
+            text: `Error: ${error.message || 'Failed to generate certificate'}`,
+            confirmButtonText: 'OK'
         });
     });
 }
 
-// Initialize everything when DOM is loaded
+// Initialize everything
 document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('saved')) {
+        showSuccessToast('Grade saved successfully!');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     init();
+});
+
+// Clean up
+window.addEventListener('beforeunload', function() {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+    }
 });
