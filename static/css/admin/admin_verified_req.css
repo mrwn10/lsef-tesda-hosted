@@ -484,6 +484,71 @@ main {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
+/* Search and Filter */
+.search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-dropdown {
+    position: relative;
+    min-width: 180px;
+}
+
+.filter-dropdown select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    appearance: none;
+    background-color: white;
+    padding-right: 2.5rem;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+.filter-dropdown .dropdown-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #94a3b8;
+}
+
+.search-bar {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+}
+
+.search-bar .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+.search-bar input:focus,
+.filter-dropdown select:focus {
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.1);
+}
+
 /* Loading Spinner */
 .loading-spinner {
     display: flex;
@@ -650,6 +715,23 @@ main {
     transform: translateY(-1px);
 }
 
+.btn-profile {
+    background-color: var(--tesda-blue);
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    margin: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-profile:hover {
+    background-color: var(--tesda-dark-blue);
+    transform: translateY(-1px);
+}
+
 .btn-accept {
     background-color: var(--success-green);
     color: white;
@@ -657,11 +739,46 @@ main {
     font-size: 0.85rem;
     border-radius: 6px;
     font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-accept:hover {
     background-color: #059669;
     transform: translateY(-1px);
+}
+
+/* Student Profile in Table */
+.student-profile-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--tesda-gold);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-name {
+    font-weight: 600;
+    color: var(--tesda-blue);
+    font-size: 0.95rem;
+}
+
+.student-username {
+    font-size: 0.8rem;
+    color: #64748b;
 }
 
 /* Table Section */
@@ -890,6 +1007,104 @@ tbody tr:hover {
 
 .btn-no:hover {
     background-color: #e2e8f0;
+}
+
+/* Student Details Modal Styles */
+#studentDetailsModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.student-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.student-detail-section {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.student-detail-section h4 {
+    margin: 0 0 1rem 0;
+    color: var(--tesda-blue);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--tesda-light-blue);
+}
+
+.student-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.student-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.student-detail-label {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+}
+
+.student-detail-value {
+    font-size: 1rem;
+    color: #334155;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    word-break: break-word;
+}
+
+.student-documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.document-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.document-item:hover {
+    border-color: var(--tesda-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.document-item i {
+    font-size: 1.5rem;
+    color: var(--tesda-blue);
+    margin-bottom: 0.5rem;
+}
+
+.document-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.document-uploaded {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
 }
 
 /* Success Modal Specific Styles */
@@ -1192,6 +1407,12 @@ tbody tr:hover {
         padding: 0.75rem 1rem;
     }
     
+    .student-profile-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
     .documents-list {
         max-width: 200px;
     }
@@ -1218,6 +1439,14 @@ tbody tr:hover {
     .status-message {
         width: 90%;
         min-width: auto;
+    }
+    
+    .student-detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .student-documents-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1344,5 +1573,10 @@ tbody tr:hover {
     
     .documents-list {
         max-width: 150px;
+    }
+    
+    .student-avatar {
+        width: 32px;
+        height: 32px;
     }
 }

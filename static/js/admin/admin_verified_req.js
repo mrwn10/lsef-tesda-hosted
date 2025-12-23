@@ -1,15 +1,25 @@
 // Modal instances
 let fileModal = null;
+let currentStudentId = null;
 
 $(document).ready(function() {
     // Initialize all functionality
     init();
     
-    const modal = $('#fileModal');
+    const fileModal = $('#fileModal');
     const fileViewer = $('#fileViewer');
     const modalTitle = $('#modal-title');
-
+    
+    const studentDetailsModal = $('#studentDetailsModal');
+    const studentProfilePicture = $('#studentProfilePicture');
+    const studentName = $('#studentName');
+    const studentEmail = $('#studentEmail');
+    const studentStatus = $('#studentStatus');
+    const studentDetailsContent = $('#studentDetailsContent');
+    
     let currentPage = 1;
+    let searchQuery = '';
+    let statusFilter = '';
 
     // Load data dynamically
     function loadData(page = 1) {
@@ -17,7 +27,13 @@ $(document).ready(function() {
         $('.stats-overview').hide();
         $('.table-section').hide();
         
-        $.getJSON(window.appUrls.fetchData, { page: page }, function (data) {
+        const params = { 
+            page: page,
+            search: searchQuery,
+            status: statusFilter
+        };
+        
+        $.getJSON(window.appUrls.fetchData, params, function (data) {
             if (data.stats) {
                 updateStats(data.stats);
             } else {
@@ -33,6 +49,7 @@ $(document).ready(function() {
                 $('.loading-spinner').hide();
                 $('.stats-overview').fadeIn();
                 $('.table-section').fadeIn();
+                $('#searchSection').fadeIn();
             }, 500);
         }).fail((xhr, status, error) => {
             console.error('Error loading data:', error);
@@ -40,6 +57,7 @@ $(document).ready(function() {
             $('.loading-spinner').hide();
             $('.stats-overview').show();
             $('.table-section').show();
+            $('#searchSection').show();
             
             // Try to load stats separately if main request fails
             loadStats();
@@ -115,7 +133,7 @@ $(document).ready(function() {
         }, delay);
     }
 
-    // Render table
+    // Render table with profile pictures
     function renderTable(students) {
         const tbody = $('#studentsTableBody');
         tbody.empty();
@@ -166,21 +184,42 @@ $(document).ready(function() {
                 filesHTML += '</div>';
             }
 
-            const actionHTML = s.verified !== 'verified'
-                ? `<button class="btn-accept" data-user="${s.user_id}">
-                    <i class="fas fa-check"></i> Verify
-                   </button>`
-                : `<i class="fas fa-check-circle" style="color:var(--success-green); font-size: 1.5rem;" title="Verified"></i>`;
+            // Get profile picture URL
+            const profilePicture = s.profile_picture || 'default.png';
+            const profilePictureUrl = `${window.appUrls.staticProfilePath}${profilePicture}`;
+            
+            // Student profile cell with picture
+            const profileCell = `
+                <div class="student-profile-cell">
+                    <img src="${profilePictureUrl}" alt="${s.full_name}" class="student-avatar">
+                    <div class="student-info">
+                        <div class="student-name">${s.full_name}</div>
+                        <div class="student-username">${s.username}</div>
+                    </div>
+                </div>
+            `;
+
+            const actionHTML = `
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-profile view-student-details" data-user="${s.user_id}" title="View Student Details">
+                        <i class="fas fa-user-circle"></i> Profile
+                    </button>
+                    ${s.verified !== 'verified' 
+                        ? `<button class="btn-accept" data-user="${s.user_id}" title="Verify Student">
+                            <i class="fas fa-check"></i> Verify
+                           </button>`
+                        : `<i class="fas fa-check-circle" style="color:var(--success-green); font-size: 1.5rem;" title="Verified"></i>`
+                    }
+                </div>
+            `;
 
             tbody.append(`
                 <tr>
-                    <td>
-                        <div style="font-weight:600;">${s.first_name || ''} ${s.middle_name || ''} ${s.last_name || ''}</div>
-                    </td>
+                    <td>${profileCell}</td>
                     <td>${s.email}</td>
                     <td>${statusBadge}</td>
                     <td>${filesHTML}</td>
-                    <td style="text-align:center;">${actionHTML}</td>
+                    <td>${actionHTML}</td>
                 </tr>
             `);
         });
@@ -267,7 +306,7 @@ $(document).ready(function() {
                             </div>
                         `);
                     }
-                    modal.fadeIn();
+                    fileModal.fadeIn();
                 }).fail(() => {
                     showMessage('error', 'Error loading file preview');
                 }).always(() => {
@@ -301,7 +340,7 @@ $(document).ready(function() {
                             </div>
                         `);
                     }
-                    modal.fadeIn();
+                    fileModal.fadeIn();
                 }).fail(() => {
                     showMessage('error', 'Error loading file preview');
                 }).always(() => {
@@ -311,11 +350,22 @@ $(document).ready(function() {
             });
         });
 
+        // View student details
+        $('.view-student-details').on('click', function () {
+            const userId = $(this).data('user');
+            currentStudentId = userId;
+            window.currentStudentId = userId;
+            
+            // Load student details
+            loadStudentDetails(userId);
+        });
+
         // Accept verification
         $('.btn-accept').on('click', function () {
             const userId = $(this).data('user');
             const button = $(this);
-            const studentName = button.closest('tr').find('td:nth-child(1)').text().trim();
+            const studentRow = button.closest('tr');
+            const studentName = studentRow.find('.student-name').text().trim();
             
             if (!confirm(`Are you sure you want to verify ${studentName}? This action cannot be undone.`)) return;
             
@@ -337,18 +387,289 @@ $(document).ready(function() {
                 button.html('<i class="fas fa-check"></i> Verify').prop('disabled', false);
             });
         });
-
-        // Close file modal
-        $('#close-file-modal').on('click', closeFileModal);
-        $('#close-file-modal-header').on('click', closeFileModal);
-        $(window).on('click', (e) => { if ($(e.target).is(modal)) closeFileModal(); });
     }
 
+    // Load student details
+    function loadStudentDetails(userId) {
+        // Show loading state
+        studentDetailsContent.html(`
+            <div class="loading-spinner" style="text-align: center; padding: 2rem;">
+                <div class="spinner" style="margin: 0 auto;"></div>
+                <span>Loading student details...</span>
+            </div>
+        `);
+        
+        // Show verify button only for pending students
+        $('#verifyStudentBtn').hide();
+        
+        studentDetailsModal.fadeIn();
+        
+        $.getJSON(window.appUrls.studentDetails.replace('0', userId), function(response) {
+            if (response.success) {
+                const student = response.student;
+                
+                // Update profile picture
+                const profilePicture = student.profile_picture || 'default.png';
+                studentProfilePicture.attr('src', `${window.appUrls.staticProfilePath}${profilePicture}`);
+                
+                // Update name and email
+                studentName.text(student.full_name);
+                studentEmail.text(student.email);
+                
+                // Update status
+                if (student.verified === 'verified') {
+                    studentStatus.html('<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>');
+                    $('#verifyStudentBtn').hide();
+                } else {
+                    studentStatus.html('<span class="pending-badge"><i class="fas fa-clock"></i> Pending Verification</span>');
+                    $('#verifyStudentBtn').show();
+                }
+                
+                // Build student details HTML
+                let detailsHtml = `
+                    <div class="student-details-content">
+                        <!-- Personal Information -->
+                        <div class="student-detail-section">
+                            <h4><i class="fas fa-id-card"></i> Personal Information</h4>
+                            <div class="student-detail-grid">
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Full Name</div>
+                                    <div class="student-detail-value">${student.full_name}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Gender</div>
+                                    <div class="student-detail-value">${student.gender || 'Not specified'}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Date of Birth</div>
+                                    <div class="student-detail-value">${student.date_of_birth || 'Not specified'}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Contact Number</div>
+                                    <div class="student-detail-value">${student.contact_number || 'Not provided'}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Address</div>
+                                    <div class="student-detail-value">${student.full_address || 'Not provided'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Information -->
+                        <div class="student-detail-section">
+                            <h4><i class="fas fa-user-circle"></i> Account Information</h4>
+                            <div class="student-detail-grid">
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Username</div>
+                                    <div class="student-detail-value">${student.username}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Account Status</div>
+                                    <div class="student-detail-value">${student.account_status === 'active' ? 'Active' : 'Inactive'}</div>
+                                </div>
+                                <div class="student-detail-item">
+                                    <div class="student-detail-label">Verification Status</div>
+                                    <div class="student-detail-value">
+                                        ${student.verified === 'verified' 
+                                            ? '<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>' 
+                                            : '<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Uploaded Documents -->
+                        <div class="student-detail-section">
+                            <h4><i class="fas fa-file-alt"></i> Uploaded Documents (${student.document_count || 0})</h4>
+                `;
+                
+                // Document fields
+                const documentFields = [
+                    {key: 'birth_certificate', name: 'Birth Certificate', icon: 'fa-birthday-cake'},
+                    {key: 'educational_credentials', name: 'Educational Credentials', icon: 'fa-graduation-cap'},
+                    {key: 'id_photos', name: 'ID Photos', icon: 'fa-id-card'},
+                    {key: 'barangay_clearance', name: 'Barangay Clearance', icon: 'fa-file-contract'},
+                    {key: 'medical_certificate', name: 'Medical Certificate', icon: 'fa-file-medical'},
+                    {key: 'marriage_certificate', name: 'Marriage Certificate', icon: 'fa-ring'},
+                    {key: 'valid_id', name: 'Valid ID', icon: 'fa-id-badge'},
+                    {key: 'transcript_form', name: 'Transcript Form', icon: 'fa-file-signature'},
+                    {key: 'good_moral_certificate', name: 'Good Moral Certificate', icon: 'fa-award'},
+                    {key: 'brown_envelope', name: 'Brown Envelope', icon: 'fa-envelope'}
+                ];
+                
+                detailsHtml += '<div class="student-documents-grid">';
+                
+                documentFields.forEach(field => {
+                    if (student[field.key]) {
+                        detailsHtml += `
+                            <div class="document-item">
+                                <i class="fas ${field.icon}"></i>
+                                <p>${field.name}</p>
+                                <button class="btn-view" 
+                                        data-file="${student[field.key]}" 
+                                        data-user="${student.user_id}"
+                                        data-field="${field.key}"
+                                        style="margin-top: 0.5rem; font-size: 0.75rem;">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if (!student.document_count || student.document_count === 0) {
+                    detailsHtml += '<p style="grid-column: 1 / -1; text-align: center; color: #64748b;">No documents uploaded yet</p>';
+                }
+                
+                detailsHtml += `
+                        </div>
+                    </div>
+                    
+                    <!-- Comparison Note -->
+                    <div class="student-detail-section" style="background-color: #fef3c7; border-color: #fbbf24;">
+                        <h4><i class="fas fa-exclamation-triangle" style="color: #92400e;"></i> Verification Note</h4>
+                        <p style="color: #92400e; font-size: 0.9rem;">
+                            <strong>Important:</strong> Compare the ID Photos document with the student's profile picture above 
+                            to verify identity. Check for consistency in facial features and personal information.
+                        </p>
+                    </div>
+                </div>
+                `;
+                
+                studentDetailsContent.html(detailsHtml);
+                
+                // Re-bind document view buttons in the modal
+                $('.document-item .btn-view').on('click', function() {
+                    const filename = $(this).data('file');
+                    const userId = $(this).data('user');
+                    const fieldName = $(this).data('field');
+                    const button = $(this);
+                    
+                    // Add loading state
+                    const originalHtml = button.html();
+                    button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
+                    
+                    $.getJSON(`${window.appUrls.documentInfo.replace('/0/', `/${userId}/`)}${fieldName}`, function(docInfo) {
+                        const documentType = docInfo.document_type || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        modalTitle.text(documentType);
+                        
+                        $.getJSON(`${window.appUrls.previewFile}${filename}?field=${fieldName}`, function (data) {
+                            const ext = filename.split('.').pop().toLowerCase();
+                            const fileUrl = data.file_url;
+
+                            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                                fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
+                            } else if (['pdf'].includes(ext)) {
+                                fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
+                            } else {
+                                fileViewer.html(`
+                                    <div style="text-align: center; padding: 2rem;">
+                                        <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
+                                        <h4>${documentType}</h4>
+                                        <p>This file type cannot be previewed in the browser.</p>
+                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary">
+                                            <i class="fas fa-download"></i> Download File
+                                        </a>
+                                    </div>
+                                `);
+                            }
+                            studentDetailsModal.fadeOut();
+                            fileModal.fadeIn();
+                        }).fail(() => {
+                            showMessage('error', 'Error loading file preview');
+                        }).always(() => {
+                            button.html(originalHtml).prop('disabled', false);
+                        });
+                    }).fail(() => {
+                        button.html(originalHtml).prop('disabled', false);
+                    });
+                });
+                
+            } else {
+                studentDetailsContent.html(`
+                    <div class="error-message" style="text-align: center; padding: 2rem; color: var(--error-red);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Error loading student details: ${response.error || 'Unknown error'}</p>
+                    </div>
+                `);
+            }
+        }).fail(() => {
+            studentDetailsContent.html(`
+                <div class="error-message" style="text-align: center; padding: 2rem; color: var(--error-red);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                    <p>Failed to load student details. Please try again.</p>
+                </div>
+            `);
+        });
+    }
+
+    // Close file modal
     function closeFileModal() {
-        modal.fadeOut();
-        // Reset modal title for next use
+        fileModal.fadeOut();
         modalTitle.text('Document Preview');
     }
+
+    // Close student details modal
+    function closeStudentDetailsModal() {
+        studentDetailsModal.fadeOut();
+        currentStudentId = null;
+    }
+
+    // Verify student from details modal
+    $('#verifyStudentBtn').on('click', function() {
+        if (!currentStudentId) return;
+        
+        const studentNameText = studentName.text();
+        
+        if (!confirm(`Are you sure you want to verify ${studentNameText}? This action cannot be undone.`)) return;
+        
+        const button = $(this);
+        const originalHtml = button.html();
+        
+        // Add loading state
+        button.html('<i class="fas fa-spinner fa-spin"></i> Verifying...').prop('disabled', true);
+        
+        $.post(`/admin/verify/accept/${currentStudentId}`, function (response) {
+            if (response.success) {
+                showMessage('success', `Successfully verified ${studentNameText}`);
+                closeStudentDetailsModal();
+                // Reload both data and stats
+                loadData(currentPage);
+                loadStats();
+            } else {
+                showMessage('error', `Error: ${response.message}`);
+                button.html(originalHtml).prop('disabled', false);
+            }
+        }).fail(() => {
+            showMessage('error', 'Error verifying student');
+            button.html(originalHtml).prop('disabled', false);
+        });
+    });
+
+    // Close modals
+    $('#close-file-modal').on('click', closeFileModal);
+    $('#close-file-modal-header').on('click', closeFileModal);
+    $('#closeStudentDetailsModal').on('click', closeStudentDetailsModal);
+    $('#close-student-details-modal').on('click', closeStudentDetailsModal);
+    
+    $(window).on('click', (e) => { 
+        if ($(e.target).is(fileModal)) closeFileModal();
+        if ($(e.target).is(studentDetailsModal)) closeStudentDetailsModal();
+    });
+
+    // Search and filter functionality
+    $('#search-input').on('input', function() {
+        searchQuery = $(this).val().trim();
+        currentPage = 1;
+        loadData(currentPage);
+    });
+
+    $('#status-filter').on('change', function() {
+        statusFilter = $(this).val();
+        currentPage = 1;
+        loadData(currentPage);
+    });
 
     // Auto-load
     loadData();
@@ -539,8 +860,10 @@ function showMessage(type, text) {
 // Handle window resize
 $(window).on('resize', function() {
     // Adjust modal content if needed
-    const modal = $('#fileModal');
-    if (modal.is(':visible')) {
+    const fileModal = $('#fileModal');
+    const studentDetailsModal = $('#studentDetailsModal');
+    
+    if (fileModal.is(':visible') || studentDetailsModal.is(':visible')) {
         // You can add responsive adjustments here if needed
     }
 });

@@ -6,6 +6,7 @@ import math
 admin_verified_req_bp = Blueprint("admin_verified_req", __name__, url_prefix="/admin/verify")
 
 UPLOAD_FOLDER = os.path.join("static", "uploads", "requirements")
+PROFILE_PICTURE_FOLDER = os.path.join("static", "uploads", "profile_pictures")
 
 # Document type mapping for display names
 DOCUMENT_TYPES = {
@@ -50,7 +51,6 @@ def view_requirements():
         "admin/admin_verified_req.html",
         profile_picture=profile_picture
     )
-
 
 
 # -----------------------------
@@ -113,7 +113,7 @@ def get_statistics():
 
 
 # -----------------------------
-# AJAX DATA FETCH (Search + Pagination + Statistics)
+# AJAX DATA FETCH (Search + Pagination + Statistics) - UPDATED WITH PROFILE PICTURE
 # -----------------------------
 @admin_verified_req_bp.route("/data", methods=["GET"])
 def fetch_data():
@@ -130,10 +130,12 @@ def fetch_data():
     per_page = 10
     offset = (page - 1) * per_page
 
-    # Base query - only show active students
+    # Base query - only show active students WITH PROFILE PICTURE
     query = """
         SELECT sr.*, l.username, l.email, l.account_status, l.verified,
-               pi.first_name, pi.middle_name, pi.last_name
+               pi.first_name, pi.middle_name, pi.last_name,
+               pi.profile_picture,  -- ADDED PROFILE PICTURE
+               pi.contact_number, pi.date_of_birth, pi.gender  -- Additional info
         FROM student_requirements sr
         JOIN login l ON sr.user_id = l.user_id
         LEFT JOIN personal_information pi ON sr.user_id = pi.user_id
@@ -159,6 +161,17 @@ def fetch_data():
 
     cursor.execute(query, tuple(params))
     students = cursor.fetchall()
+
+    # Process profile picture paths
+    for student in students:
+        if student.get('profile_picture'):
+            # Ensure consistent profile picture path
+            student['profile_picture'] = student['profile_picture']
+        else:
+            student['profile_picture'] = 'default.png'
+        
+        # Format full name
+        student['full_name'] = f"{student.get('first_name', '')} {student.get('middle_name', '')} {student.get('last_name', '')}".strip()
 
     # Count total records for pagination
     count_query = """
@@ -198,6 +211,74 @@ def fetch_data():
 
 
 # -----------------------------
+# GET STUDENT DETAILS WITH PROFILE PICTURE - NEW ENDPOINT
+# -----------------------------
+@admin_verified_req_bp.route("/student_details/<int:user_id>", methods=["GET"])
+def get_student_details(user_id):
+    """Get complete student details including profile picture"""
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT 
+                l.user_id, l.username, l.email, l.account_status, l.verified,
+                pi.first_name, pi.middle_name, pi.last_name,
+                pi.profile_picture, pi.contact_number, pi.date_of_birth, 
+                pi.gender, pi.province, pi.municipality, pi.baranggay,
+                sr.birth_certificate, sr.educational_credentials, sr.id_photos,
+                sr.barangay_clearance, sr.medical_certificate, sr.marriage_certificate,
+                sr.valid_id, sr.transcript_form, sr.good_moral_certificate, sr.brown_envelope,
+                sr.date_uploaded
+            FROM login l
+            LEFT JOIN personal_information pi ON l.user_id = pi.user_id
+            LEFT JOIN student_requirements sr ON l.user_id = sr.user_id
+            WHERE l.user_id = %s AND l.role = 'student' AND l.account_status = 'active'
+        """, (user_id,))
+        
+        student = cursor.fetchone()
+        
+        if not student:
+            return jsonify({"error": "Student not found"}), 404
+        
+        # Format profile picture path
+        if student.get('profile_picture'):
+            student['profile_picture'] = student['profile_picture']
+        else:
+            student['profile_picture'] = 'default.png'
+        
+        # Format full name and address
+        student['full_name'] = f"{student.get('first_name', '')} {student.get('middle_name', '')} {student.get('last_name', '')}".strip()
+        student['full_address'] = f"{student.get('baranggay', '')}, {student.get('municipality', '')}, {student.get('province', '')}"
+        
+        # Format date of birth
+        if student.get('date_of_birth'):
+            student['date_of_birth'] = student['date_of_birth'].strftime('%Y-%m-%d')
+        
+        # Count uploaded documents
+        document_fields = [
+            'birth_certificate', 'educational_credentials', 'id_photos',
+            'barangay_clearance', 'medical_certificate', 'marriage_certificate',
+            'valid_id', 'transcript_form', 'good_moral_certificate', 'brown_envelope'
+        ]
+        
+        student['document_count'] = sum(1 for field in document_fields if student.get(field))
+        
+        return jsonify({
+            "success": True,
+            "student": student
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+
+# -----------------------------
 # GET STATISTICS ENDPOINT (Separate endpoint for stats only)
 # -----------------------------
 @admin_verified_req_bp.route("/stats", methods=["GET"])
@@ -230,10 +311,6 @@ def preview_file(filename):
 
 def get_document_type(filename):
     """Extract document type from filename or determine based on field name"""
-    # This function would need to map the filename back to its document type
-    # You might need to query the database to find which field contains this filename
-    # For now, we'll extract from filename pattern or return a generic name
-    
     # Common patterns in filenames
     filename_lower = filename.lower()
     
