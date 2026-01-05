@@ -63,17 +63,20 @@ def view_enrollment_requests():
             co.learning_outcomes, 
             co.course_fee, 
             co.prerequisites AS course_prerequisites,
-            sr.birth_certificate,
-            sr.educational_credentials,
-            sr.id_photos,
             sr.barangay_clearance,
             sr.medical_certificate,
             sr.marriage_certificate,
             sr.valid_id,
             sr.transcript_form,
-            sr.good_moral_certificate,
-            sr.brown_envelope,
-            sr.additional_notes
+            sr.additional_notes,
+            CASE 
+                WHEN sr.barangay_clearance IS NOT NULL 
+                AND sr.medical_certificate IS NOT NULL 
+                AND sr.valid_id IS NOT NULL 
+                AND sr.transcript_form IS NOT NULL 
+                THEN 'complete' 
+                ELSE 'incomplete' 
+            END AS requirements_status
         FROM enrollment e
         JOIN personal_information pi ON e.user_id = pi.user_id
         JOIN login l ON e.user_id = l.user_id
@@ -148,7 +151,20 @@ def get_enrollment_details(enrollment_id):
             l.email,
             cl.class_title, cl.schedule, cl.venue,
             co.course_title, co.course_description,
-            sr.*
+            sr.barangay_clearance,
+            sr.medical_certificate,
+            sr.marriage_certificate,
+            sr.valid_id,
+            sr.transcript_form,
+            sr.additional_notes,
+            CASE 
+                WHEN sr.barangay_clearance IS NOT NULL 
+                AND sr.medical_certificate IS NOT NULL 
+                AND sr.valid_id IS NOT NULL 
+                AND sr.transcript_form IS NOT NULL 
+                THEN 'complete' 
+                ELSE 'incomplete' 
+            END AS requirements_status
         FROM enrollment e
         JOIN personal_information pi ON e.user_id = pi.user_id
         JOIN login l ON e.user_id = l.user_id

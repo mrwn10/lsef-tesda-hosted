@@ -54,7 +54,8 @@ $(document).ready(function() {
                 const startDate = $row.find('.schedule-date').text();
                 
                 const statusBadge = $row.find('.status-badge');
-                const status = statusBadge.hasClass('status-completed') ? 'complete' : 'incomplete';
+                const statusClass = statusBadge.attr('class') || '';
+                const isComplete = statusClass.includes('status-completed');
                 
                 allEnrollments.push({
                     enrollment_id: enrollmentId,
@@ -66,8 +67,8 @@ $(document).ready(function() {
                     schedule: schedule,
                     venue: venue,
                     start_date: startDate,
-                    status: status,
-                    status_class: statusBadge.attr('class')
+                    status: isComplete ? 'complete' : 'incomplete',
+                    status_class: statusClass
                 });
             });
             
@@ -265,7 +266,11 @@ $(document).ready(function() {
                         </div>
                         <div class="mobile-user-detail">
                             <div class="mobile-detail-label">Requirements</div>
-                            <div class="mobile-detail-value"><span class="status-badge ${enroll.status_class}">${enroll.status}</span></div>
+                            <div class="mobile-detail-value">
+                                <span class="status-badge ${enroll.status_class}">
+                                    ${enroll.status === 'complete' ? 'Complete' : 'Incomplete'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="mobile-user-actions">
@@ -355,18 +360,13 @@ $(document).ready(function() {
     function displayStudentDetails(data) {
         const modalContent = $('#student-details-content');
         
-        // Format requirements status
+        // Format requirements status based on ACTUAL database fields
         const requirements = [
-            { name: 'Birth Certificate', value: data.birth_certificate },
-            { name: 'Educational Credentials', value: data.educational_credentials },
-            { name: 'ID Photos', value: data.id_photos },
             { name: 'Barangay Clearance', value: data.barangay_clearance },
             { name: 'Medical Certificate', value: data.medical_certificate },
             { name: 'Marriage Certificate', value: data.marriage_certificate },
             { name: 'Valid ID', value: data.valid_id },
-            { name: 'Transcript Form', value: data.transcript_form },
-            { name: 'Good Moral Certificate', value: data.good_moral_certificate },
-            { name: 'Brown Envelope', value: data.brown_envelope }
+            { name: 'Transcript Form', value: data.transcript_form }
         ];
 
         const requirementsHtml = requirements.map(req => `
@@ -498,8 +498,9 @@ $(document).ready(function() {
                         $buttons.prop('disabled', false).removeClass('loading');
                     }
                 },
-                error: function() {
-                    showMessage(`Error ${actionText}ing enrollment`, 'error');
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    showMessage(`Error ${actionText}ing enrollment: ${error}`, 'error');
                     $buttons.prop('disabled', false).removeClass('loading');
                 }
             });

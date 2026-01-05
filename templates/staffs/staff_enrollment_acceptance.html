@@ -222,7 +222,7 @@
                                 </div>
                             </td>
                             <td>
-                                {% if enroll.birth_certificate and enroll.educational_credentials and enroll.id_photos %}
+                                {% if enroll.requirements_status == 'complete' %}
                                     <span class="status-badge status-completed"><i class="fas fa-check-circle"></i> Complete</span>
                                 {% else %}
                                     <span class="status-badge status-incomplete"><i class="fas fa-exclamation-circle"></i> Incomplete</span>
