@@ -70,6 +70,9 @@
                 <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
                 <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
                 <div class="mobile-nav-divider"></div>
+                <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                <div class="mobile-nav-divider"></div>
                 <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
@@ -96,6 +99,16 @@
                 </div>
             </div>
         </div>
+
+        <!-- Student Grade Management Subnav -->
+        <nav class="grades-subnav">
+            <div class="subnav-right">
+                <a href="{{ url_for('admin_homepage') }}">Dashboard</a>
+                <a href="{{ url_for('admin_user_management') }}">User Management</a>
+                <a href="{{ url_for('admin_class_management.view_active_classes') }}">Class Management</a>
+                <a href="#" class="active">Student Grade Management</a>
+            </div>
+        </nav>
     </div>
 
     <main class="content">
@@ -185,7 +198,7 @@
                         {% set has_all_grades = prelim is not none and midterm is not none and final is not none %}
                         {% if has_all_grades %}
                             {% set avg = (prelim + midterm + final) / 3 %}
-                            {% set auto_remarks = "Competent" if avg >= 75 else "Not yet competent" %}
+                            {% set auto_remarks = "Competent" if avg >= 75 else "Not Yet Competent" %}
                         {% else %}
                             {% set avg = none %}
                             {% set auto_remarks = "Incomplete" %}
@@ -368,7 +381,7 @@
                         </div>
                     </div>
                     <small class="form-text text-muted">
-                        <i class="fas fa-info-circle"></i> Automatic remarks: Average ≥ 75 = Competent, < 75 = Not yet competent, missing grades = Incomplete
+                        <i class="fas fa-info-circle"></i> Automatic remarks: Average ≥ 75 = Competent, < 75 = Not Yet Competent, missing grades = Incomplete
                     </small>
                 </div>
 
@@ -376,7 +389,7 @@
                     <label for="remarks">Final Remarks:</label>
                     <select id="remarks" class="form-input">
                         <option value="Competent">Competent</option>
-                        <option value="Not yet competent">Not yet competent</option>
+                        <option value="Not Yet Competent">Not Yet Competent</option>
                         <option value="Incomplete">Incomplete</option>
                         <option value="Dropped">Dropped</option>
                     </select>

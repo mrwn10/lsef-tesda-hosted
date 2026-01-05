@@ -1,4 +1,4 @@
-// admin_student_grade.js - FIXED VERSION
+// admin_student_grade.js - TESDA THEME CONSISTENT VERSION
 // ===================== GLOBAL VARIABLES =====================
 let currentAutoRemarks = '';
 let debounceTimer = null;
@@ -385,7 +385,8 @@ function uploadBulkGrades() {
             icon: 'warning',
             title: 'No File Selected',
             text: 'Please select an Excel file to upload.',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#f59e0b'
         });
         return;
     }
@@ -398,7 +399,9 @@ function uploadBulkGrades() {
         showCancelButton: true,
         confirmButtonText: 'Upload',
         cancelButtonText: 'Cancel',
-        reverseButtons: true
+        reverseButtons: true,
+        confirmButtonColor: '#065f46',
+        cancelButtonColor: '#64748b'
     }).then((result) => {
         if (result.isConfirmed) {
             const formData = new FormData();
@@ -419,7 +422,8 @@ function uploadBulkGrades() {
                         title: 'Upload Successful!',
                         html: `<p>${data.message}</p>
                                <p><small>${data.updated || 0} records updated</small></p>`,
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#065f46'
                     }).then(() => {
                         location.reload();
                     });
@@ -433,7 +437,8 @@ function uploadBulkGrades() {
                     icon: 'error',
                     title: 'Upload Failed',
                     text: error.message || 'Failed to upload grade sheet',
-                    confirmButtonText: 'OK'
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#b91c1c'
                 });
             });
         }
@@ -441,13 +446,12 @@ function uploadBulkGrades() {
 }
 
 function massCompleteStudents() {
-    // Get selected rows (you can add checkboxes later)
-    // For now, this is a placeholder for mass completion functionality
     Swal.fire({
         title: 'Mass Complete Students',
         text: 'This feature will mark multiple students as Completed. Add checkboxes to enable selection.',
         icon: 'info',
-        confirmButtonText: 'OK'
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#065f46'
     });
 }
 
@@ -747,7 +751,7 @@ function calculateRemarksLocally(prelim, midterm, final) {
     }
     
     const average = (prelim + midterm + final) / 3;
-    return average >= 75 ? 'Competent' : 'Not yet competent';
+    return average >= 75 ? 'Competent' : 'Not Yet Competent';
 }
 
 function updateAutoRemarksDisplay() {
@@ -763,12 +767,10 @@ function updateAutoRemarksDisplay() {
     
     if (currentAutoRemarks === 'Competent') {
         container.classList.add('competent');
-    } else if (currentAutoRemarks === 'Not yet competent') {
+    } else if (currentAutoRemarks === 'Not Yet Competent') {
         container.classList.add('not-competent');
     } else if (currentAutoRemarks === 'Incomplete') {
         container.classList.add('incomplete');
-    } else if (currentAutoRemarks === 'Dropped') {
-        container.classList.add('dropped');
     } else {
         container.classList.add('neutral');
     }
@@ -964,7 +966,7 @@ function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) 
             // Update average with remarks
             if (prelim && midterm && final) {
                 const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
-                const autoRemarks = avg >= 75 ? 'Competent' : 'Not yet competent';
+                const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
                 const avgClass = avg >= 75 ? 'competent' : 'not-competent';
                 avgRemarksCell.innerHTML = `<span class="average-with-remarks ${avgClass}">Average ${avg}, ${autoRemarks}</span>`;
             } else {
@@ -973,7 +975,8 @@ function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) 
             
             // Update remarks
             if (remarks) {
-                remarksCell.innerHTML = `<span class="current-remarks ${remarks.toLowerCase().replace(' ', '-')}">${remarks}</span>`;
+                const remarksClass = remarks.toLowerCase().replace(' ', '-');
+                remarksCell.innerHTML = `<span class="current-remarks ${remarksClass}">${remarks}</span>`;
             } else {
                 remarksCell.innerHTML = `<span class="current-remarks not-set">Not Set</span>`;
             }
@@ -991,7 +994,7 @@ function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) 
             statusCell.innerHTML = `<span class="status-badge status-${displayStatus.toLowerCase()}">${displayStatus}</span>`;
             
             // Update enrollment status attribute
-            row.setAttribute('data-status', displayStatus);
+            row.setAttribute('data-status', displayStatus.toLowerCase());
             
             // Update certificate button
             const certBtn = row.querySelector('.certificate-btn');
@@ -1025,7 +1028,7 @@ function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) 
                 // Update auto remarks attribute
                 if (prelim && midterm && final) {
                     const avg = (parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3;
-                    const autoRemarks = avg >= 75 ? 'Competent' : 'Not yet competent';
+                    const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
                     editBtn.setAttribute('data-auto-remarks', autoRemarks);
                 } else {
                     editBtn.setAttribute('data-auto-remarks', 'Incomplete');
@@ -1237,7 +1240,8 @@ function openProfileModal(userId) {
                 icon: 'error',
                 title: 'Failed to Load Profile',
                 text: `Error: ${error.message || 'Could not load student profile'}`,
-                confirmButtonText: 'OK'
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#b91c1c'
             });
         });
 }
@@ -1252,7 +1256,8 @@ function generateCertificate(enrollmentId, studentName, remarks, enrollmentStatu
             title: 'Cannot Generate Certificate',
             html: `<p>Certificate can only be generated for students with "Competent" status or "completed" enrollment.</p>
                    <p><small>Current: Remarks = "${remarks}", Status = "${enrollmentStatus}"</small></p>`,
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#f59e0b'
         });
         return;
     }
@@ -1264,7 +1269,9 @@ function generateCertificate(enrollmentId, studentName, remarks, enrollmentStatu
         showCancelButton: true,
         confirmButtonText: 'Yes, Generate',
         cancelButtonText: 'Cancel',
-        reverseButtons: true
+        reverseButtons: true,
+        confirmButtonColor: '#065f46',
+        cancelButtonColor: '#64748b'
     }).then((result) => {
         if (result.isConfirmed) {
             generateCertificateFile(enrollmentId, studentName);
@@ -1296,7 +1303,9 @@ function generateCertificateFile(enrollmentId, studentName) {
                 showCancelButton: true,
                 confirmButtonText: 'Download',
                 cancelButtonText: 'Close',
-                reverseButtons: true
+                reverseButtons: true,
+                confirmButtonColor: '#065f46',
+                cancelButtonColor: '#64748b'
             }).then((result) => {
                 if (result.isConfirmed && data.file_path) {
                     const link = document.createElement('a');
@@ -1319,7 +1328,8 @@ function generateCertificateFile(enrollmentId, studentName) {
             icon: 'error',
             title: 'Generation Failed',
             text: `Error: ${error.message || 'Failed to generate certificate'}`,
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#b91c1c'
         });
     });
 }
