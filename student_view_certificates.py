@@ -28,13 +28,13 @@ def student_view_certificates():
     if user and user.get('profile_picture'):
         profile_picture = user['profile_picture']
 
-    # Fetch certificates for this student where remarks is 'Completed'
+    # Fetch certificates for this student where remarks is 'Competent'
     query = """
         SELECT c.course AS class_title, c.date, c.file_path
         FROM certificates c
         JOIN enrollment e ON c.enrollment_id = e.enrollment_id
         JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id
-        WHERE e.user_id = %s AND sg.remarks = 'Completed'
+        WHERE e.user_id = %s AND sg.remarks = 'Competent'
     """
     cursor.execute(query, (user_id,))
     certificates = cursor.fetchall()

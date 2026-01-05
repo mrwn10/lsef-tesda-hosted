@@ -18,6 +18,46 @@
             handleEnrollmentActionUrl: "{{ url_for('staff_enrollment_acceptance.handle_enrollment_action') }}"
         };
     </script>
+    <style>
+        /* Additional styles for conditional requirements */
+        .requirements-note {
+            background-color: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+        
+        .requirements-note i {
+            margin-right: 8px;
+            color: #3b82f6;
+        }
+        
+        .requirement-item.conditional {
+            background-color: #f8fafc;
+            border-left: 3px solid #94a3b8;
+        }
+        
+        .requirement-status.not-required {
+            color: #64748b;
+            background-color: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .requirement-status.not-required i {
+            color: #94a3b8;
+            margin-right: 5px;
+        }
+        
+        .requirement-item.conditional .requirement-name {
+            color: #475569;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
     <!-- Navigation Container -->

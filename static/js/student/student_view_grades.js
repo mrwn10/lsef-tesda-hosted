@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    // Mobile Navigation Functionality
+    // Mobile Navigation Functionality - YOUR EXISTING CODE
     const hamburgerMenu = document.getElementById('hamburgerMenu');
     const mobileNav = document.getElementById('mobileNav');
     const closeMobileNav = document.getElementById('closeMobileNav');
@@ -48,7 +48,7 @@ $(document).ready(function() {
         });
     }
 
-    // Modal Functions - PERFECTLY MATCHED
+    // Modal Functions - YOUR EXISTING CODE
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -62,7 +62,6 @@ $(document).ready(function() {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.style.display = 'none';
-            // Only reset overflow if no other modals are open
             if (!document.querySelector('.modal[style*="display: flex"]')) {
                 document.body.style.overflow = '';
                 document.body.classList.remove('modal-open');
@@ -70,7 +69,7 @@ $(document).ready(function() {
         }
     }
 
-    // Logout Modal Handling - PERFECTLY MATCHED
+    // Logout Modal Handling - YOUR EXISTING CODE
     const logoutModal = document.getElementById('logout-modal');
     const logoutTrigger = document.getElementById('logout-trigger');
     const mobileLogoutTrigger = document.getElementById('mobile-logout-trigger');
@@ -78,7 +77,7 @@ $(document).ready(function() {
     const cancelLogout = document.getElementById('cancel-logout');
     const closeLogoutModal = document.getElementById('close-logout-modal');
 
-    // Show modal when logout is clicked (desktop)
+    // Logout modal event listeners
     if (logoutTrigger) {
         logoutTrigger.addEventListener('click', function(e) {
             e.preventDefault();
@@ -87,96 +86,232 @@ $(document).ready(function() {
         });
     }
 
-    // Show modal when logout is clicked (mobile) - PERFECTLY FIXED
     if (mobileLogoutTrigger) {
         mobileLogoutTrigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            // First close mobile nav properly
             if (mobileNav) {
                 mobileNav.classList.remove('active');
             }
-            // Then open logout modal
             setTimeout(() => {
                 openModal('logout-modal');
             }, 10);
         });
     }
 
-    // Hide modal when cancel is clicked - PERFECTLY FIXED
     if (cancelLogout) {
         cancelLogout.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             closeModal('logout-modal');
-            // Ensure body overflow is properly reset
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         });
     }
 
-    // Hide modal when close button is clicked
     if (closeLogoutModal) {
         closeLogoutModal.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             closeModal('logout-modal');
-            // Ensure body overflow is properly reset
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         });
     }
 
-    // Handle logout confirmation - PERFECTLY FIXED
     if (confirmLogout) {
         confirmLogout.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
-            // Get the logout URL from the data attribute
             const logoutUrl = document.body.getAttribute('data-logout-url');
             if (logoutUrl) {
                 window.location.href = logoutUrl;
             } else {
-                console.error('Logout URL not found');
-                // Fallback to a default URL if needed
                 window.location.href = "/logout";
             }
         });
     }
 
-    // Close modal when clicking outside of it
+    // ===== NEW: Final Average Modal Handling =====
+    const finalModal = document.getElementById('final-average-modal');
+    const closeFinalModal = document.getElementById('close-final-modal');
+    const closeFinalBtn = document.getElementById('close-final-btn');
+    
+    if (closeFinalModal) {
+        closeFinalModal.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal('final-average-modal');
+        });
+    }
+    
+    if (closeFinalBtn) {
+        closeFinalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal('final-average-modal');
+        });
+    }
+
+    // NEW: View Final Average functionality
+    function loadFinalAverage(classId) {
+        // Show loading state
+        $('#final-average-content').html(`
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading final average...</p>
+            </div>
+        `);
+        
+        // Open modal
+        openModal('final-average-modal');
+        
+        // Fetch data from API
+        $.ajax({
+            url: '/student/get_final_average',
+            type: 'GET',
+            data: { class_id: classId },
+            success: function(response) {
+                if (response.success) {
+                    // Display the final average
+                    $('#final-average-content').html(`
+                        <div class="final-average-details">
+                            <div class="final-average-header">
+                                <div class="average-display">
+                                    <div class="average-label">Final Average</div>
+                                    <div class="average-value">${response.final_average}</div>
+                                </div>
+                            </div>
+                            <div class="course-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-book"></i>
+                                    <div>
+                                        <div class="detail-label">Course</div>
+                                        <div class="detail-value">${response.course_title}</div>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <div>
+                                        <div class="detail-label">Class</div>
+                                        <div class="detail-value">${response.class_title}</div>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <div>
+                                        <div class="detail-label">Remarks</div>
+                                        <div class="detail-value competent-value">${response.remarks}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="final-note">
+                                <i class="fas fa-info-circle"></i>
+                                <p>This is your final average for this completed course. Congratulations!</p>
+                            </div>
+                        </div>
+                    `);
+                } else {
+                    $('#final-average-content').html(`
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>Unable to Load Data</h4>
+                            <p>${response.message || 'No competent grade found for this class.'}</p>
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $('#final-average-content').html(`
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>Error Loading Data</h4>
+                        <p>There was an error loading the final average. Please try again.</p>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // NEW: Attach event listeners to all "View Final Average" buttons
+    $(document).on('click', '.view-final-btn, .btn-view-final', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Get class ID from data attribute
+        const classId = $(this).data('class-id');
+        
+        if (classId) {
+            loadFinalAverage(classId);
+        }
+    });
+
+    // NEW: Add click event for completed course cards
+    $(document).on('click', '.completed-course-card', function(e) {
+        if (!$(e.target).closest('.view-final-btn').length && 
+            !$(e.target).is('.view-final-btn')) {
+            const classId = $(this).data('class-id');
+            if (classId) {
+                loadFinalAverage(classId);
+            }
+        }
+    });
+
+    // YOUR EXISTING: Close modal when clicking outside
     window.addEventListener('click', function(event) {
         if (event.target === logoutModal) {
             closeModal('logout-modal');
-            // Ensure body overflow is properly reset
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         }
+        if (event.target === finalModal) {
+            closeModal('final-average-modal');
+        }
     });
 
-    // Close modal with Escape key
+    // YOUR EXISTING: Close modals with Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && logoutModal && logoutModal.style.display === 'flex') {
-            closeModal('logout-modal');
-            // Ensure body overflow is properly reset
-            document.body.style.overflow = '';
-            document.body.classList.remove('modal-open');
+        if (e.key === 'Escape') {
+            if (logoutModal && logoutModal.style.display === 'flex') {
+                closeModal('logout-modal');
+                document.body.style.overflow = '';
+                document.body.classList.remove('modal-open');
+            }
+            if (finalModal && finalModal.style.display === 'flex') {
+                closeModal('final-average-modal');
+            }
         }
     });
 
-    // Initialize any additional functionality for this page
-    console.log('Student Grades View initialized');
-
-    // Add grade highlighting for better visual feedback
+    // YOUR EXISTING: Add grade highlighting
     $('.grade-available').each(function() {
         const grade = $(this).text();
         if (grade !== 'N/A') {
-            // Add subtle animation for available grades
+            const gradeNum = parseFloat(grade);
             $(this).css({
                 'font-weight': '600',
-                'color': '#16a34a'
+                'color': gradeNum >= 75 ? '#16a34a' : gradeNum >= 50 ? '#f59e0b' : '#dc2626'
             });
         }
     });
+
+    // NEW: Highlight completed courses card on hover
+    $('#completed-courses-card').hover(
+        function() {
+            $(this).addClass('pulse-effect');
+        },
+        function() {
+            $(this).removeClass('pulse-effect');
+        }
+    );
+
+    // NEW: Show tooltip for final average
+    $('.average-card').hover(
+        function() {
+            $(this).append('<div class="tooltip">Average of final grades from completed courses</div>');
+        },
+        function() {
+            $(this).find('.tooltip').remove();
+        }
+    );
+
+    console.log('Student Grades View initialized');
 });

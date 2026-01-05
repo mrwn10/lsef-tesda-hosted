@@ -1712,3 +1712,11 @@ body.modal-open {
         width: 100%;
     }
 }
+/* Add this to your existing CSS if not already present */
+.modal-header.danger {
+    background-color: #b91c1c;
+}
+
+.modal-header.danger h3 i {
+    color: #fff;
+}

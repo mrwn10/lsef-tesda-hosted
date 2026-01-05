@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal -->
+    <!-- Logout Confirmation Modal - KEEPING EXACTLY AS IS -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -103,6 +103,24 @@
         </div>
     </div>
 
+    <!-- NEW: Final Average Modal - Matching logout modal style -->
+    <div class="modal" id="final-average-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-line"></i> Final Average</h3>
+                <button class="close-modal" id="close-final-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="final-average-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="close-final-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-content">
         <div class="page-header">
@@ -113,28 +131,71 @@
         </div>
 
         <div class="grades-content">
+            <!-- Summary Cards - Using existing structure, just adding new color classes -->
             <div class="summary-cards">
-                <div class="summary-card">
+                <div class="summary-card completed-card" id="completed-courses-card">
                     <div class="card-icon"><i class="fas fa-check-circle"></i></div>
                     <div class="card-value">{{ completed_courses or 0 }}</div>
-                    <div class="card-label">Completed</div>
+                    <div class="card-label">Completed Courses</div>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card ongoing-card">
                     <div class="card-icon"><i class="fas fa-spinner"></i></div>
                     <div class="card-value">{{ ongoing_courses or 0 }}</div>
-                    <div class="card-label">Ongoing</div>
+                    <div class="card-label">Ongoing Courses</div>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card average-card">
                     <div class="card-icon"><i class="fas fa-calculator"></i></div>
-                    <div class="card-value">{{ average_grade or 'N/A' }}</div>
-                    <div class="card-label">Average</div>
+                    <div class="card-value" id="average-grade">{{ average_grade or 'N/A' }}</div>
+                    <div class="card-label">Final Average</div>
                 </div>
             </div>
 
+            <!-- NEW: Completed Courses Section -->
+            {% if completed_courses_data and completed_courses_data|length > 0 %}
+            <div class="completed-courses-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-trophy"></i> Completed Courses</h2>
+                    <div class="section-subtitle">Courses with "Competent" remarks</div>
+                </div>
+                
+                <div class="completed-courses-grid">
+                    {% for course in completed_courses_data %}
+                    <div class="completed-course-card" data-class-id="{{ course.class_id }}">
+                        <div class="completed-course-header">
+                            <div class="course-code-badge">{{ course.course_code }}</div>
+                            <button class="view-final-btn" data-class-id="{{ course.class_id }}">
+                                <i class="fas fa-eye"></i> View Final Average
+                            </button>
+                        </div>
+                        <div class="completed-course-body">
+                            <h4 class="course-title">{{ course.course_title }}</h4>
+                            <div class="completed-class-info">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>{{ course.class_title or 'No Class Title' }}</span>
+                            </div>
+                            <div class="final-grade-display">
+                                <span class="final-grade-label">Final Grade:</span>
+                                <span class="final-grade-value {% if course.final_grade %}grade-exists{% else %}grade-missing{% endif %}">
+                                    {{ course.final_grade or 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="completed-course-footer">
+                            <div class="remarks-badge competent-badge">
+                                <i class="fas fa-check"></i> {{ course.remarks or 'Competent' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- All Grades Section - Only adding new classes to existing rows -->
             {% if grades %}
             <div class="grades-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-list-alt"></i> Course Grades</h2>
+                    <h2><i class="fas fa-list-alt"></i> All Course Grades</h2>
                     <div class="table-actions">
                         <span class="table-info">Showing {{ grades|length }} course{{ 's' if grades|length != 1 }}</span>
                     </div>
@@ -145,17 +206,24 @@
                         <thead>
                             <tr>
                                 <th><i class="fas fa-book"></i> Course</th>
+                                <th><i class="fas fa-chalkboard-teacher"></i> Class</th>
                                 <th><i class="fas fa-star"></i> Grades</th>
                                 <th><i class="fas fa-info-circle"></i> Status</th>
+                                <th><i class="fas fa-tasks"></i> Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for grade in grades %}
-                            <tr>
+                            <tr class="{% if grade.remarks == 'Competent' %}competent-row{% else %}ongoing-row{% endif %}">
                                 <!-- Course Column -->
                                 <td class="course-info">
                                     <div class="course-code">{{ grade.course_code }}</div>
                                     <div class="course-title">{{ grade.course_title }}</div>
+                                </td>
+                                
+                                <!-- Class Column -->
+                                <td class="class-info">
+                                    <div class="class-title">{{ grade.class_title or 'N/A' }}</div>
                                 </td>
                                 
                                 <!-- Grades Column -->
@@ -184,11 +252,25 @@
                                 
                                 <!-- Status Column -->
                                 <td class="status-info">
-                                    <span class="status-badge {{ 'status-completed' if grade.remarks == 'Completed' else 'status-ongoing' }}">
-                                        {{ grade.remarks or 'Ongoing' }}
+                                    {% if grade.remarks == 'Competent' %}
+                                    <span class="status-badge status-completed">
+                                        <i class="fas fa-check-circle"></i> {{ grade.remarks }}
                                     </span>
-                                    {% if grade.remarks and grade.remarks != 'Completed' %}
-                                    <div class="remarks">{{ grade.remarks }}</div>
+                                    {% else %}
+                                    <span class="status-badge status-ongoing">
+                                        <i class="fas fa-spinner"></i> {{ grade.status|title if grade.status else 'Ongoing' }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- NEW: Action Column with View Final button -->
+                                <td class="action-info">
+                                    {% if grade.remarks == 'Competent' %}
+                                    <button class="btn-view-final" data-class-id="{{ grade.class_id }}">
+                                        <i class="fas fa-chart-line"></i> View Final
+                                    </button>
+                                    {% else %}
+                                    <span class="no-action">-</span>
                                     {% endif %}
                                 </td>
                             </tr>

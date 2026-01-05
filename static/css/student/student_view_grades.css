@@ -1,3 +1,5 @@
+/* ===== YOUR EXISTING CSS - KEEP EVERYTHING AS IS ===== */
+
 /* ===== Global Styles ===== */
 :root {
     --tesda-blue: #003366;
@@ -401,7 +403,7 @@ body.modal-open {
     border-left: 4px solid var(--tesda-blue);
 }
 
-/* Summary Cards */
+/* Summary Cards - YOUR EXISTING STYLE - KEEP AS IS */
 .summary-cards {
     display: flex;
     gap: 1.5rem;
@@ -807,6 +809,15 @@ body.modal-open {
     background-color: #e2e8f0;
 }
 
+.btn-primary {
+    background-color: var(--tesda-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--tesda-dark-blue);
+}
+
 /* Animation */
 @keyframes modalFadeIn {
     from {
@@ -1125,5 +1136,358 @@ body.modal-open {
             width: 30px;
             height: 30px;
         }
+    }
+}
+
+/* ===== NEW FEATURES ONLY - ADD AT THE END OF YOUR CSS ===== */
+
+/* Summary Cards - Color Accents */
+.completed-card {
+    border-left: 4px solid #10b981;
+}
+
+.ongoing-card {
+    border-left: 4px solid #f59e0b;
+}
+
+.average-card {
+    border-left: 4px solid #3b82f6;
+}
+
+/* Card Icon Colors */
+.completed-card .card-icon {
+    color: #10b981;
+}
+
+.ongoing-card .card-icon {
+    color: #f59e0b;
+}
+
+.average-card .card-icon {
+    color: #3b82f6;
+}
+
+/* Completed Courses Section */
+.completed-courses-section {
+    margin-bottom: 40px;
+}
+
+.section-subtitle {
+    color: var(--tesda-text-light);
+    margin-top: 5px;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.completed-courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.completed-course-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.completed-course-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.completed-course-header {
+    background: #10b981;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.course-code-badge {
+    background: white;
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.view-final-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+.view-final-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.completed-course-body {
+    padding: 15px;
+}
+
+.completed-class-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--tesda-text-light);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.final-grade-display {
+    background: #f0fdf4;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 3px solid #10b981;
+}
+
+.final-grade-label {
+    font-weight: 600;
+    color: #065f46;
+    margin-right: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.final-grade-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+}
+
+.grade-exists {
+    color: #065f46;
+}
+
+.grade-missing {
+    color: #9ca3af;
+}
+
+.completed-course-footer {
+    padding: 10px 15px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.competent-badge {
+    background: #10b981;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Table Action Button */
+.btn-view-final {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+.btn-view-final:hover {
+    background: #0da271;
+}
+
+.no-action {
+    color: #9ca3af;
+    font-style: italic;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Table Row Highlights */
+.competent-row {
+    background-color: #f0fdf4 !important;
+}
+
+.competent-row:hover {
+    background-color: #dcfce7 !important;
+}
+
+.ongoing-row:hover {
+    background-color: var(--tesda-light-gray);
+}
+
+/* Final Average Modal Content */
+.loading-state {
+    text-align: center;
+    padding: 30px;
+}
+
+.loading-state i {
+    font-size: 2rem;
+    color: #3b82f6;
+    margin-bottom: 15px;
+}
+
+.loading-state p {
+    color: var(--tesda-text-light);
+    font-family: 'Poppins', sans-serif;
+}
+
+.final-average-details {
+    text-align: center;
+}
+
+.average-display {
+    margin-bottom: 20px;
+}
+
+.average-label {
+    font-size: 0.9rem;
+    color: var(--tesda-text-light);
+    margin-bottom: 5px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.average-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #10b981;
+    font-family: 'Poppins', sans-serif;
+}
+
+.course-details {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-item i {
+    font-size: 1.1rem;
+    color: var(--tesda-text-light);
+    width: 20px;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: var(--tesda-text-light);
+    margin-bottom: 2px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: var(--tesda-text);
+    font-family: 'Poppins', sans-serif;
+}
+
+.competent-value {
+    color: #10b981;
+}
+
+.final-note {
+    background: #f0f9ff;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 15px;
+    color: #0369a1;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.error-state {
+    text-align: center;
+    padding: 20px;
+}
+
+.error-state i {
+    font-size: 2rem;
+    color: #dc2626;
+    margin-bottom: 15px;
+}
+
+.error-state h4 {
+    color: #dc2626;
+    margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.error-state p {
+    color: var(--tesda-text-light);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Pulse Effect Animation */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.pulse-effect {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Responsive for New Features */
+@media (max-width: 768px) {
+    .completed-courses-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .completed-course-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .view-final-btn {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .average-value {
+        font-size: 2rem;
+    }
+    
+    .course-details {
+        padding: 12px;
+    }
+    
+    .detail-item {
+        gap: 8px;
     }
 }

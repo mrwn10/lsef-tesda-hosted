@@ -359,24 +359,73 @@ $(document).ready(function() {
 
     function displayStudentDetails(data) {
         const modalContent = $('#student-details-content');
+        const gender = data.gender ? data.gender.toLowerCase() : '';
+        const hasMarriageCertificate = data.marriage_certificate !== null && data.marriage_certificate !== '';
         
-        // Format requirements status based on ACTUAL database fields
+        // Format requirements status based on gender and marital status
         const requirements = [
-            { name: 'Barangay Clearance', value: data.barangay_clearance },
-            { name: 'Medical Certificate', value: data.medical_certificate },
-            { name: 'Marriage Certificate', value: data.marriage_certificate },
-            { name: 'Valid ID', value: data.valid_id },
-            { name: 'Transcript Form', value: data.transcript_form }
+            { 
+                name: 'Barangay Clearance', 
+                value: data.barangay_clearance,
+                required: true
+            },
+            { 
+                name: 'Medical Certificate', 
+                value: data.medical_certificate,
+                required: true
+            },
+            { 
+                name: 'Valid ID', 
+                value: data.valid_id,
+                required: true
+            },
+            { 
+                name: 'Transcript Form', 
+                value: data.transcript_form,
+                required: true
+            }
         ];
 
-        const requirementsHtml = requirements.map(req => `
-            <div class="requirement-item">
-                <span class="requirement-name">${req.name}:</span>
-                <span class="requirement-status ${req.value ? 'completed' : 'missing'}">
-                    ${req.value ? '<i class="fas fa-check"></i> Submitted' : '<i class="fas fa-times"></i> Missing'}
-                </span>
-            </div>
-        `).join('');
+        // Add marriage certificate conditionally
+        if (gender === 'female' && hasMarriageCertificate) {
+            requirements.push({ 
+                name: 'Marriage Certificate', 
+                value: data.marriage_certificate,
+                required: true,
+                conditional: true
+            });
+        } else if (gender === 'female' && !hasMarriageCertificate) {
+            requirements.push({ 
+                name: 'Marriage Certificate', 
+                value: null,
+                required: false,
+                conditional: true,
+                notRequiredReason: 'Not required for single female applicants'
+            });
+        }
+        // For males, don't add marriage certificate at all
+
+        const requirementsHtml = requirements.map(req => {
+            if (req.conditional && !req.required) {
+                return `
+                    <div class="requirement-item conditional">
+                        <span class="requirement-name">${req.name}:</span>
+                        <span class="requirement-status not-required">
+                            <i class="fas fa-info-circle"></i> ${req.notRequiredReason || 'Not Required'}
+                        </span>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="requirement-item ${req.conditional ? 'conditional' : ''}">
+                    <span class="requirement-name">${req.name}:</span>
+                    <span class="requirement-status ${req.value ? 'completed' : 'missing'}">
+                        ${req.value ? '<i class="fas fa-check"></i> Submitted' : '<i class="fas fa-times"></i> Missing'}
+                    </span>
+                </div>
+            `;
+        }).join('');
 
         modalContent.html(`
             <div class="student-details-grid">
@@ -434,6 +483,10 @@ $(document).ready(function() {
 
                 <div class="detail-section full-width">
                     <h4><i class="fas fa-file-alt"></i> Requirements Status</h4>
+                    <div class="requirements-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Marriage certificate is only required for married female applicants.</span>
+                    </div>
                     <div class="requirements-grid">
                         ${requirementsHtml}
                     </div>

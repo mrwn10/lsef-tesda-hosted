@@ -74,6 +74,7 @@ def view_enrollment_requests():
                 AND sr.medical_certificate IS NOT NULL 
                 AND sr.valid_id IS NOT NULL 
                 AND sr.transcript_form IS NOT NULL 
+                AND (pi.gender != 'female' OR sr.marriage_certificate IS NOT NULL OR pi.gender = 'male')
                 THEN 'complete' 
                 ELSE 'incomplete' 
             END AS requirements_status
@@ -98,15 +99,13 @@ def view_enrollment_requests():
 @staff_enrollment_acceptance_bp.route('/enrollment_acceptance/action', methods=['POST'])
 def handle_enrollment_action():
     if 'user_id' not in session or session.get('role') != 'staff':
-        flash("Unauthorized action.")
-        return redirect(url_for('login.login_page'))
+        return jsonify({'success': False, 'error': 'Unauthorized action.'}), 401
 
     enrollment_id = request.form.get('enrollment_id')
     action = request.form.get('action') 
 
     if not enrollment_id or action not in ['accept', 'reject']:
-        flash("Invalid request.")
-        return redirect(url_for('staff_enrollment_acceptance.view_enrollment_requests'))
+        return jsonify({'success': False, 'error': 'Invalid request.'}), 400
 
     new_status = 'enrolled' if action == 'accept' else 'rejected'
 
@@ -123,16 +122,22 @@ def handle_enrollment_action():
     
     authorized = cursor.fetchone()
     if not authorized:
-        flash("You are not authorized to manage this enrollment.")
-        return redirect(url_for('staff_enrollment_acceptance.view_enrollment_requests'))
+        return jsonify({'success': False, 'error': 'You are not authorized to manage this enrollment.'}), 403
 
+    # Update enrollment status
     cursor.execute("""
         UPDATE enrollment SET status = %s WHERE enrollment_id = %s
     """, (new_status, enrollment_id))
     db.commit()
 
-    flash(f"Enrollment request has been {new_status}.")
-    return redirect(url_for('staff_enrollment_acceptance.view_enrollment_requests'))
+    # Return JSON response for AJAX
+    return jsonify({
+        'success': True,
+        'message': f"Enrollment request has been {new_status} successfully.",
+        'enrollment_id': enrollment_id,
+        'new_status': new_status,
+        'action': action
+    })
 
 @staff_enrollment_acceptance_bp.route('/enrollment_acceptance/details/<int:enrollment_id>')
 def get_enrollment_details(enrollment_id):
@@ -145,12 +150,21 @@ def get_enrollment_details(enrollment_id):
     cursor.execute("""
         SELECT 
             e.*,
-            pi.first_name, pi.middle_name, pi.last_name,
-            pi.date_of_birth, pi.gender, pi.contact_number,
-            pi.province, pi.municipality, pi.baranggay,
+            pi.first_name, 
+            pi.middle_name, 
+            pi.last_name,
+            pi.date_of_birth, 
+            pi.gender, 
+            pi.contact_number,
+            pi.province, 
+            pi.municipality, 
+            pi.baranggay,
             l.email,
-            cl.class_title, cl.schedule, cl.venue,
-            co.course_title, co.course_description,
+            cl.class_title, 
+            cl.schedule, 
+            cl.venue,
+            co.course_title, 
+            co.course_description,
             sr.barangay_clearance,
             sr.medical_certificate,
             sr.marriage_certificate,
@@ -162,6 +176,7 @@ def get_enrollment_details(enrollment_id):
                 AND sr.medical_certificate IS NOT NULL 
                 AND sr.valid_id IS NOT NULL 
                 AND sr.transcript_form IS NOT NULL 
+                AND (pi.gender != 'female' OR sr.marriage_certificate IS NOT NULL)
                 THEN 'complete' 
                 ELSE 'incomplete' 
             END AS requirements_status
