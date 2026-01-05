@@ -144,22 +144,62 @@ $(document).ready(function() {
         }
 
         students.forEach((s, index) => {
+            // Check if student has uploaded requirements
+            if (!s.user_id || s.document_count === 0) {
+                // Student hasn't uploaded requirements yet
+                const statusBadge = s.verified === 'verified'
+                    ? `<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>`
+                    : `<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>`;
+
+                // Get profile picture URL
+                const profilePicture = s.profile_picture || 'default.png';
+                const profilePictureUrl = `${window.appUrls.staticProfilePath}${profilePicture}`;
+                
+                // Student profile cell with picture
+                const profileCell = `
+                    <div class="student-profile-cell">
+                        <img src="${profilePictureUrl}" alt="${s.full_name}" class="student-avatar">
+                        <div class="student-info">
+                            <div class="student-name">${s.full_name}</div>
+                            <div class="student-username">${s.username}</div>
+                        </div>
+                    </div>
+                `;
+                
+                const actionHTML = `
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn-profile view-student-details" data-user="${s.user_id || '0'}" title="View Student Details">
+                            <i class="fas fa-user-circle"></i> Profile
+                        </button>
+                        <span style="color: #64748b; font-size: 0.85rem;">No documents</span>
+                    </div>
+                `;
+
+                tbody.append(`
+                    <tr>
+                        <td>${profileCell}</td>
+                        <td>${s.email}</td>
+                        <td>${statusBadge}</td>
+                        <td><span style="color: #64748b; font-size: 0.85rem;">No documents uploaded yet</span></td>
+                        <td>${actionHTML}</td>
+                    </tr>
+                `);
+                return; // Skip to next student
+            }
+            
+            // Student has uploaded requirements
             const statusBadge = s.verified === 'verified'
                 ? `<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>`
                 : `<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>`;
 
             let filesHTML = '<div class="documents-list">';
+            // Only show fields that actually exist in student_requirements
             const fields = [
-                {key: 'birth_certificate', name: 'Birth Certificate'},
-                {key: 'educational_credentials', name: 'Educational Credentials'},
-                {key: 'id_photos', name: 'ID Photos'},
                 {key: 'barangay_clearance', name: 'Barangay Clearance'},
                 {key: 'medical_certificate', name: 'Medical Certificate'},
-                {key: 'marriage_certificate', name: 'Marriage Certificate'},
                 {key: 'valid_id', name: 'Valid ID'},
                 {key: 'transcript_form', name: 'Transcript Form'},
-                {key: 'good_moral_certificate', name: 'Good Moral Certificate'},
-                {key: 'brown_envelope', name: 'Brown Envelope'}
+                {key: 'marriage_certificate', name: 'Marriage Certificate'}
             ];
             
             let fileCount = 0;
@@ -179,7 +219,7 @@ $(document).ready(function() {
             });
 
             if (fileCount === 0) {
-                filesHTML = '<span style="color:#64748b;font-size:0.85rem;">No documents</span>';
+                filesHTML = '<span style="color:#64748b;font-size:0.85rem;">No documents uploaded</span>';
             } else {
                 filesHTML += '</div>';
             }
@@ -285,46 +325,67 @@ $(document).ready(function() {
                 // Update modal title with the actual document name
                 modalTitle.text(documentType);
                 
-                // Now load the file preview
-                $.getJSON(`${window.appUrls.previewFile}${filename}?field=${fieldName}`, function (data) {
+                // Now load the file preview - use the correct endpoint for files
+                $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
+                    if (data.error) {
+                        showMessage('error', data.error);
+                        return;
+                    }
+                    
                     const ext = filename.split('.').pop().toLowerCase();
                     const fileUrl = data.file_url;
 
-                    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
                         fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
                     } else if (['pdf'].includes(ext)) {
                         fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
+                    } else if (['doc', 'docx'].includes(ext)) {
+                        fileViewer.html(`
+                            <div style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-file-word" style="font-size: 3rem; color: #2b579a; margin-bottom: 1rem;"></i>
+                                <h4>${documentType}</h4>
+                                <p>Word documents cannot be previewed in the browser.</p>
+                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
+                                    <i class="fas fa-download"></i> Download File
+                                </a>
+                            </div>
+                        `);
                     } else {
                         fileViewer.html(`
                             <div style="text-align: center; padding: 2rem;">
                                 <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
                                 <h4>${documentType}</h4>
                                 <p>This file type cannot be previewed in the browser.</p>
-                                <a href="${fileUrl}" target="_blank" class="btn btn-primary">
+                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
                                     <i class="fas fa-download"></i> Download File
                                 </a>
                             </div>
                         `);
                     }
                     fileModal.fadeIn();
-                }).fail(() => {
-                    showMessage('error', 'Error loading file preview');
+                }).fail((xhr, status, error) => {
+                    showMessage('error', 'Error loading file preview: ' + error);
                 }).always(() => {
                     // Reset button state
                     button.html(originalHtml).prop('disabled', false);
                 });
                 
-            }).fail(() => {
+            }).fail((xhr, status, error) => {
                 // Fallback: use field name if document info fails
                 const documentType = fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 modalTitle.text(documentType);
                 
                 // Load file preview with fallback title
-                $.getJSON(`${window.appUrls.previewFile}${filename}?field=${fieldName}`, function (data) {
+                $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
+                    if (data.error) {
+                        showMessage('error', data.error);
+                        return;
+                    }
+                    
                     const ext = filename.split('.').pop().toLowerCase();
                     const fileUrl = data.file_url;
 
-                    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
                         fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
                     } else if (['pdf'].includes(ext)) {
                         fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
@@ -334,15 +395,15 @@ $(document).ready(function() {
                                 <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
                                 <h4>${documentType}</h4>
                                 <p>This file type cannot be previewed in the browser.</p>
-                                <a href="${fileUrl}" target="_blank" class="btn btn-primary">
+                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
                                     <i class="fas fa-download"></i> Download File
                                 </a>
                             </div>
                         `);
                     }
                     fileModal.fadeIn();
-                }).fail(() => {
-                    showMessage('error', 'Error loading file preview');
+                }).fail((xhr, status, error) => {
+                    showMessage('error', 'Error loading file preview: ' + error);
                 }).always(() => {
                     // Reset button state
                     button.html(originalHtml).prop('disabled', false);
@@ -356,8 +417,12 @@ $(document).ready(function() {
             currentStudentId = userId;
             window.currentStudentId = userId;
             
-            // Load student details
-            loadStudentDetails(userId);
+            // Only load details if we have a valid user ID
+            if (userId && userId !== '0') {
+                loadStudentDetails(userId);
+            } else {
+                showMessage('info', 'This student has not uploaded any documents yet.');
+            }
         });
 
         // Accept verification
@@ -484,24 +549,21 @@ $(document).ready(function() {
                             <h4><i class="fas fa-file-alt"></i> Uploaded Documents (${student.document_count || 0})</h4>
                 `;
                 
-                // Document fields
+                // Document fields - only show fields that students actually upload
                 const documentFields = [
-                    {key: 'birth_certificate', name: 'Birth Certificate', icon: 'fa-birthday-cake'},
-                    {key: 'educational_credentials', name: 'Educational Credentials', icon: 'fa-graduation-cap'},
-                    {key: 'id_photos', name: 'ID Photos', icon: 'fa-id-card'},
                     {key: 'barangay_clearance', name: 'Barangay Clearance', icon: 'fa-file-contract'},
                     {key: 'medical_certificate', name: 'Medical Certificate', icon: 'fa-file-medical'},
-                    {key: 'marriage_certificate', name: 'Marriage Certificate', icon: 'fa-ring'},
                     {key: 'valid_id', name: 'Valid ID', icon: 'fa-id-badge'},
                     {key: 'transcript_form', name: 'Transcript Form', icon: 'fa-file-signature'},
-                    {key: 'good_moral_certificate', name: 'Good Moral Certificate', icon: 'fa-award'},
-                    {key: 'brown_envelope', name: 'Brown Envelope', icon: 'fa-envelope'}
+                    {key: 'marriage_certificate', name: 'Marriage Certificate', icon: 'fa-ring'}
                 ];
                 
                 detailsHtml += '<div class="student-documents-grid">';
                 
+                let uploadedDocs = 0;
                 documentFields.forEach(field => {
                     if (student[field.key]) {
+                        uploadedDocs++;
                         detailsHtml += `
                             <div class="document-item">
                                 <i class="fas ${field.icon}"></i>
@@ -518,8 +580,20 @@ $(document).ready(function() {
                     }
                 });
                 
-                if (!student.document_count || student.document_count === 0) {
+                if (uploadedDocs === 0) {
                     detailsHtml += '<p style="grid-column: 1 / -1; text-align: center; color: #64748b;">No documents uploaded yet</p>';
+                }
+                
+                // Add additional notes if they exist
+                if (student.additional_notes) {
+                    detailsHtml += `
+                        <div class="student-detail-section" style="margin-top: 1.5rem;">
+                            <h4><i class="fas fa-sticky-note"></i> Additional Notes</h4>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                                <p style="margin: 0; color: #495057; font-style: italic;">${student.additional_notes}</p>
+                            </div>
+                        </div>
+                    `;
                 }
                 
                 detailsHtml += `
@@ -530,8 +604,8 @@ $(document).ready(function() {
                     <div class="student-detail-section" style="background-color: #fef3c7; border-color: #fbbf24;">
                         <h4><i class="fas fa-exclamation-triangle" style="color: #92400e;"></i> Verification Note</h4>
                         <p style="color: #92400e; font-size: 0.9rem;">
-                            <strong>Important:</strong> Compare the ID Photos document with the student's profile picture above 
-                            to verify identity. Check for consistency in facial features and personal information.
+                            <strong>Important:</strong> Compare the uploaded documents with the student's profile information above. 
+                            Verify that all required documents are present and valid.
                         </p>
                     </div>
                 </div>
@@ -554,21 +628,38 @@ $(document).ready(function() {
                         const documentType = docInfo.document_type || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                         modalTitle.text(documentType);
                         
-                        $.getJSON(`${window.appUrls.previewFile}${filename}?field=${fieldName}`, function (data) {
+                        // Load file preview
+                        $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
+                            if (data.error) {
+                                showMessage('error', data.error);
+                                return;
+                            }
+                            
                             const ext = filename.split('.').pop().toLowerCase();
                             const fileUrl = data.file_url;
 
-                            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
                                 fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
                             } else if (['pdf'].includes(ext)) {
                                 fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
+                            } else if (['doc', 'docx'].includes(ext)) {
+                                fileViewer.html(`
+                                    <div style="text-align: center; padding: 2rem;">
+                                        <i class="fas fa-file-word" style="font-size: 3rem; color: #2b579a; margin-bottom: 1rem;"></i>
+                                        <h4>${documentType}</h4>
+                                        <p>Word documents cannot be previewed in the browser.</p>
+                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
+                                            <i class="fas fa-download"></i> Download File
+                                        </a>
+                                    </div>
+                                `);
                             } else {
                                 fileViewer.html(`
                                     <div style="text-align: center; padding: 2rem;">
                                         <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
                                         <h4>${documentType}</h4>
                                         <p>This file type cannot be previewed in the browser.</p>
-                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary">
+                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
                                             <i class="fas fa-download"></i> Download File
                                         </a>
                                     </div>
@@ -576,8 +667,8 @@ $(document).ready(function() {
                             }
                             studentDetailsModal.fadeOut();
                             fileModal.fadeIn();
-                        }).fail(() => {
-                            showMessage('error', 'Error loading file preview');
+                        }).fail((xhr, status, error) => {
+                            showMessage('error', 'Error loading file preview: ' + error);
                         }).always(() => {
                             button.html(originalHtml).prop('disabled', false);
                         });

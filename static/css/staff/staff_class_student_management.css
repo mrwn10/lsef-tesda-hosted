@@ -1462,3 +1462,108 @@ button i {
         padding: 1rem 1.5rem;
     }
 }
+
+/* Add these styles to your existing CSS file */
+
+/* Average with Remarks styling */
+.average-with-remarks {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+
+.average-with-remarks.competent {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-color: #10b981;
+}
+
+.average-with-remarks.not-competent {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    border-color: #ef4444;
+}
+
+.average-with-remarks.incomplete {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-color: #f59e0b;
+}
+
+/* Auto remarks display */
+.auto-remarks-display.competent {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.auto-remarks-display.not-competent {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    border-left: 4px solid #ef4444;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.auto-remarks-display.incomplete {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+/* Current remarks styling */
+.current-remarks.competent {
+    background-color: #d1fae5;
+    color: #065f46;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.current-remarks.not-yet-competent {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.current-remarks.dropped {
+    background-color: #e5e7eb;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.current-remarks.not-set {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-style: italic;
+}
+
+/* Grade value styling */
+.grade-value {
+    font-weight: 600;
+}
+
+.grade-na {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Disabled remarks select */
+.form-input.disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.7;
+}

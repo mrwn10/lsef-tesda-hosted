@@ -12,21 +12,21 @@
     
     <!-- Define URLs for JavaScript -->
     <script>
-        window.appUrls = {
-            dashboardData: "{{ url_for('admin_homepage') }}",
-            logoutUrl: "{{ url_for('login.logout') }}",
-            previewFile: "{{ url_for('admin_verified_req.preview_file', filename='') }}",
-            documentInfo: "{{ url_for('admin_verified_req.get_document_info', user_id=0, field_name='') }}",
-            fetchData: "{{ url_for('admin_verified_req.fetch_data') }}",
-            getStats: "{{ url_for('admin_verified_req.get_stats') }}",
-            studentDetails: "{{ url_for('admin_verified_req.get_student_details', user_id=0) }}",
-            staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
-            staticRequirementsPath: "{{ url_for('static', filename='uploads/requirements/') }}"
-        };
-        
-        // Store current student ID globally for modal actions
-        window.currentStudentId = null;
-    </script>
+    window.appUrls = {
+        dashboardData: "{{ url_for('admin_homepage') }}",
+        logoutUrl: "{{ url_for('login.logout') }}",
+        previewFile: "{{ url_for('admin_verified_req.get_file', filename='') }}",
+        documentInfo: "{{ url_for('admin_verified_req.get_document_info', user_id=0, field_name='') }}",
+        fetchData: "{{ url_for('admin_verified_req.fetch_data') }}",
+        getStats: "{{ url_for('admin_verified_req.get_stats') }}",
+        studentDetails: "{{ url_for('admin_verified_req.get_student_details', user_id=0) }}",
+        staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
+        staticRequirementsPath: "{{ url_for('static', filename='uploads/requirements/') }}"
+    };
+    
+    // Store current student ID globally for modal actions
+    window.currentStudentId = null;
+</script>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
     <!-- Navigation Container -->
@@ -38,6 +38,7 @@
                     <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
                     <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
                     <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
+                    <a href="{{ url_for('admin_student_grades.view_grades') }}"><i class="fas fa-user-plus"></i> Student Grade</a>
                     <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
                     <a href="{{ url_for('admin_verified_req.view_requirements') }}" class="active"><i class="fas fa-user-check"></i> Verification</a>
                     <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>

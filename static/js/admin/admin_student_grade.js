@@ -1,145 +1,52 @@
-// staff_class_student_management.js - FIXED VERSION
-// ===================== SMOOTH UX FIXES =====================
-// Global variables
+// admin_student_grade.js - FIXED VERSION
+// ===================== GLOBAL VARIABLES =====================
 let currentAutoRemarks = '';
 let debounceTimer = null;
 let isModalClosing = false;
 let currentOpenModal = null;
 let isSaving = false;
+let currentPage = 1;
+const pageSize = 20;
+let allStudents = [];
+let filteredStudents = [];
 
-// Smooth toast notification
-function showSuccessToast(message) {
-    const toast = document.getElementById('success-toast');
-    if (!toast) return;
+// ===================== INITIALIZATION =====================
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    allStudents = Array.from(document.querySelectorAll('#gradesTableBody tr')).map(row => ({
+        element: row,
+        classId: row.getAttribute('data-class-id'),
+        status: row.getAttribute('data-status'),
+        enrollmentId: row.getAttribute('data-enrollment-id')
+    }));
+    filteredStudents = [...allStudents];
     
-    const messageSpan = toast.querySelector('.toast-message');
-    if (messageSpan) {
-        messageSpan.textContent = message;
+    init();
+    updateTableInfo();
+    
+    // Check for success message in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('saved')) {
+        showSuccessToast('Grade saved successfully!');
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
-    
-    toast.style.display = 'flex';
-    
-    // Force reflow for smooth animation
-    toast.offsetHeight;
-    
-    // Show with animation
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-    
-    // Auto hide after 2 seconds
-    setTimeout(() => {
-        hideSuccessToast();
-    }, 2000);
-}
+});
 
-function hideSuccessToast() {
-    const toast = document.getElementById('success-toast');
-    if (!toast) return;
-    
-    toast.classList.remove('show');
-    
-    // Wait for animation to complete before hiding
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 500);
-}
-
-// Improved loading screen
-function showLoadingScreen(message, details = '') {
-    $('#loading-message').text(message);
-    $('#loading-details').text(details);
-    $('#loading-screen').fadeIn(200);
-}
-
-function hideLoadingScreen() {
-    $('#loading-screen').fadeOut(200);
-}
-
-// Debounced auto-remarks calculation
-function debouncedCalculateAutoRemarks() {
-    if (debounceTimer) {
-        clearTimeout(debounceTimer);
-    }
-    
-    const loadingEl = document.getElementById('autoRemarksLoading');
-    if (loadingEl) loadingEl.style.display = 'inline-block';
-    
-    debounceTimer = setTimeout(() => {
-        calculateAutoRemarks();
-    }, 500);
-}
-
-// Calculate auto remarks
-function calculateAutoRemarks() {
-    const prelim = parseFloat(document.getElementById('prelimGrade').value) || null;
-    const midterm = parseFloat(document.getElementById('midtermGrade').value) || null;
-    const final = parseFloat(document.getElementById('finalGrade').value) || null;
-    
-    const loadingEl = document.getElementById('autoRemarksLoading');
-    if (loadingEl) loadingEl.style.display = 'none';
-    
-    let localRemarks = calculateRemarksLocally(prelim, midterm, final);
-    currentAutoRemarks = localRemarks;
-    updateAutoRemarksDisplay();
-    
-    if (document.getElementById('useAutoRemarks').checked) {
-        document.getElementById('remarks').value = currentAutoRemarks;
-    }
-    
-    if (prelim !== null && midterm !== null && final !== null) {
-        const displayElement = document.getElementById('autoRemarksText');
-        const originalText = displayElement.textContent;
-        displayElement.innerHTML = `${localRemarks} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
-        
-        fetch(window.appUrls.autoRemarksUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prelim_grade: prelim,
-                midterm_grade: midterm,
-                final_grade: final
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.auto_remarks !== localRemarks) {
-                currentAutoRemarks = data.auto_remarks;
-                updateAutoRemarksDisplay();
-                
-                if (document.getElementById('useAutoRemarks').checked) {
-                    document.getElementById('remarks').value = currentAutoRemarks;
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error verifying auto remarks:', error);
-        });
-    }
-}
-
-// Local remarks calculation
-function calculateRemarksLocally(prelim, midterm, final) {
-    if (prelim === null || midterm === null || final === null) {
-        return 'Incomplete';
-    }
-    
-    const average = (prelim + midterm + final) / 3;
-    return average >= 75 ? 'Competent' : 'Not Yet Competent';
-}
-
-// Initialize all functionality
+// ===================== MAIN INIT FUNCTION =====================
 function init() {
     initMobileNavigation();
     initModals();
+    initFilters();
     initFileUpload();
     initGradeInputValidation();
+    initPagination();
+    initBulkActions();
     initEditButtons();
     initProfileButtons();
     initCertificateButtons();
 }
 
-// Initialize event listeners for buttons
+// ===================== EVENT HANDLER INITIALIZATION =====================
 function initEditButtons() {
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -152,8 +59,10 @@ function initEditButtons() {
             const finalGrade = this.getAttribute('data-final');
             const remarks = this.getAttribute('data-remarks');
             const autoRemarks = this.getAttribute('data-auto-remarks');
+            const studentName = this.getAttribute('data-student-name');
+            const className = this.getAttribute('data-class-name');
             
-            openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks);
+            openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks, studentName, className);
         });
     });
 }
@@ -170,19 +79,20 @@ function initProfileButtons() {
 }
 
 function initCertificateButtons() {
-    document.querySelectorAll('.completion-btn:not(:disabled)').forEach(button => {
+    document.querySelectorAll('.certificate-btn:not(:disabled)').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             const enrollmentId = this.getAttribute('data-enrollment-id');
             const studentName = this.getAttribute('data-student-name');
             const remarks = this.getAttribute('data-remarks');
-            generatePrivateCompletion(enrollmentId, studentName, remarks);
+            const enrollmentStatus = this.getAttribute('data-enrollment-status');
+            generateCertificate(enrollmentId, studentName, remarks, enrollmentStatus);
         });
     });
 }
 
-// Mobile Navigation Functionality
+// ===================== MOBILE NAVIGATION =====================
 function initMobileNavigation() {
     const hamburgerMenu = document.getElementById('hamburgerMenu');
     const mobileNav = document.getElementById('mobileNav');
@@ -199,25 +109,6 @@ function initMobileNavigation() {
                 closeMobileNavOnly();
             });
         }
-        
-        const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
-        mobileNavHeaders.forEach(header => {
-            header.addEventListener('click', function() {
-                const section = this.getAttribute('data-section');
-                const submenu = document.getElementById(`${section}-submenu`);
-                const chevron = this.querySelector('.chevron-icon');
-                
-                this.classList.toggle('active');
-                
-                if (submenu) {
-                    submenu.classList.toggle('active');
-                }
-                
-                if (chevron) {
-                    chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
-                }
-            });
-        });
         
         const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a:not(.logout-btn)');
         mobileNavLinks.forEach(link => {
@@ -248,48 +139,319 @@ function closeMobileNavOnly() {
     }
 }
 
-// File upload display
-function initFileUpload() {
-    const fileUpload = document.getElementById('file-upload');
-    if (fileUpload) {
-        fileUpload.addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
-            document.getElementById('file-name').textContent = fileName;
+// ===================== FILTERS =====================
+function initFilters() {
+    const applyFilterBtn = document.getElementById('applyFilter');
+    const resetFilterBtn = document.getElementById('resetFilter');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (resetFilterBtn) {
+        resetFilterBtn.addEventListener('click', resetFilters);
+    }
+    
+    if (searchBtn) {
+        searchBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
         });
+    }
+    
+    // Auto-apply filter on select change
+    const classFilter = document.getElementById('classFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    if (classFilter) classFilter.addEventListener('change', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+    const classFilter = document.getElementById('classFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    
+    filteredStudents = allStudents.filter(rowData => {
+        const row = rowData.element;
+        const studentName = row.cells[0].textContent.toLowerCase();
+        const className = row.cells[1].textContent.toLowerCase();
+        const email = row.cells[2].textContent.toLowerCase();
+        
+        // Class filter
+        if (classFilter && rowData.classId !== classFilter) {
+            return false;
+        }
+        
+        // Status filter
+        if (statusFilter) {
+            const rowStatus = rowData.status.toLowerCase();
+            
+            if (statusFilter === 'Competent') {
+                // Check if enrolled status is Competent/completed OR remarks is Competent
+                const remarksCell = row.cells[7];
+                const remarksText = remarksCell.textContent.trim().toLowerCase();
+                const statusCell = row.cells[8];
+                const statusText = statusCell.textContent.trim().toLowerCase();
+                
+                if (!(rowStatus === 'competent' || 
+                      rowStatus === 'completed' || 
+                      remarksText === 'competent' ||
+                      statusText === 'competent' ||
+                      statusText === 'completed')) {
+                    return false;
+                }
+            } else if (statusFilter === 'dropped') {
+                if (!(rowStatus === 'dropped' || rowStatus.includes('dropped'))) {
+                    return false;
+                }
+            } else if (statusFilter === 'enrolled') {
+                // Show active enrollments (not completed, not dropped)
+                if (rowStatus === 'competent' || rowStatus === 'completed' || 
+                    rowStatus === 'dropped' || rowStatus === 'rejected' || 
+                    rowStatus === 'cancelled') {
+                    return false;
+                }
+            } else if (rowStatus !== statusFilter.toLowerCase()) {
+                return false;
+            }
+        }
+        
+        // Search filter
+        if (searchInput && 
+            !studentName.includes(searchInput) && 
+            !className.includes(searchInput) &&
+            !email.includes(searchInput)) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Update display
+    updateTableDisplay();
+    currentPage = 1;
+    updatePagination();
+    updateTableInfo();
+}
+
+function resetFilters() {
+    document.getElementById('classFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    
+    filteredStudents = [...allStudents];
+    updateTableDisplay();
+    currentPage = 1;
+    updatePagination();
+    updateTableInfo();
+}
+
+function updateTableDisplay() {
+    // Hide all rows first
+    allStudents.forEach(rowData => {
+        rowData.element.style.display = 'none';
+    });
+    
+    // Show filtered rows for current page
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const currentStudents = filteredStudents.slice(startIndex, endIndex);
+    
+    currentStudents.forEach(rowData => {
+        rowData.element.style.display = '';
+    });
+}
+
+function updateTableInfo() {
+    const showingCount = Math.min(filteredStudents.length, pageSize);
+    const totalCount = filteredStudents.length;
+    
+    document.getElementById('showingCount').textContent = showingCount;
+    document.getElementById('totalCount').textContent = totalCount;
+}
+
+// ===================== PAGINATION =====================
+function initPagination() {
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    if (prevBtn) prevBtn.addEventListener('click', goToPrevPage);
+    if (nextBtn) nextBtn.addEventListener('click', goToNextPage);
+    
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(filteredStudents.length / pageSize);
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+    
+    if (pageInfo) {
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+    }
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+    
+    updateTableDisplay();
+}
+
+function goToPrevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        updatePagination();
+        updateTableInfo();
     }
 }
 
-// Grade input validation
-function initGradeInputValidation() {
-    const gradeInputs = ['prelimGrade', 'midtermGrade', 'finalGrade'];
+function goToNextPage() {
+    const totalPages = Math.ceil(filteredStudents.length / pageSize);
+    if (currentPage < totalPages) {
+        currentPage++;
+        updatePagination();
+        updateTableInfo();
+    }
+}
+
+// ===================== BULK ACTIONS =====================
+function initBulkActions() {
+    // Download All Grades
+    const downloadAllBtn = document.getElementById('downloadAllGrades');
+    if (downloadAllBtn) {
+        downloadAllBtn.addEventListener('click', downloadAllGrades);
+    }
     
-    gradeInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('blur', function() {
-                validateGradeInput(this);
+    // Upload Bulk Grades
+    const uploadBtn = document.getElementById('uploadBulkGrades');
+    const fileInput = document.getElementById('bulkFileUpload');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            document.getElementById('bulkFileName').textContent = 
+                this.files[0] ? this.files[0].name : 'No file chosen';
+        });
+    }
+    
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', uploadBulkGrades);
+    }
+    
+    // Mass Complete
+    const massCompleteBtn = document.getElementById('massComplete');
+    if (massCompleteBtn) {
+        massCompleteBtn.addEventListener('click', massCompleteStudents);
+    }
+}
+
+function downloadAllGrades() {
+    showLoadingScreen('Preparing download...');
+    
+    // Get current filters
+    const classFilter = document.getElementById('classFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    // Build query string
+    let queryParams = [];
+    if (classFilter) queryParams.push(`class_id=${classFilter}`);
+    if (statusFilter) queryParams.push(`status=${statusFilter}`);
+    
+    const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
+    
+    // Redirect to download endpoint
+    setTimeout(() => {
+        hideLoadingScreen();
+        window.location.href = `${window.appUrls.downloadGradesUrl}${queryString}`;
+    }, 500);
+}
+
+function uploadBulkGrades() {
+    const fileInput = document.getElementById('bulkFileUpload');
+    if (!fileInput.files[0]) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No File Selected',
+            text: 'Please select an Excel file to upload.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Upload Grade Sheet',
+        html: `<p>Upload grades for all students? This will update existing grades.</p>
+               <small class="text-muted">Make sure your Excel file follows the correct format.</small>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Upload',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            showLoadingScreen('Uploading grade sheet...');
+            
+            fetch(window.appUrls.uploadGradesUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoadingScreen();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Upload Successful!',
+                        html: `<p>${data.message}</p>
+                               <p><small>${data.updated || 0} records updated</small></p>`,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            })
+            .catch(error => {
+                hideLoadingScreen();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Failed',
+                    text: error.message || 'Failed to upload grade sheet',
+                    confirmButtonText: 'OK'
+                });
             });
         }
     });
 }
 
-function validateGradeInput(input) {
-    const value = parseFloat(input.value);
-    if (input.value && (isNaN(value) || value < 0 || value > 100)) {
-        input.classList.add('invalid');
-        input.classList.remove('valid');
-        return false;
-    } else if (input.value) {
-        input.classList.add('valid');
-        input.classList.remove('invalid');
-        return true;
-    } else {
-        input.classList.remove('valid', 'invalid');
-        return true;
-    }
+function massCompleteStudents() {
+    // Get selected rows (you can add checkboxes later)
+    // For now, this is a placeholder for mass completion functionality
+    Swal.fire({
+        title: 'Mass Complete Students',
+        text: 'This feature will mark multiple students as Completed. Add checkboxes to enable selection.',
+        icon: 'info',
+        confirmButtonText: 'OK'
+    });
 }
 
-// Initialize all modal functionality
+// ===================== MODAL MANAGEMENT =====================
 function initModals() {
     // Smooth close function
     window.closeModal = function(modalId) {
@@ -473,8 +635,8 @@ function initModals() {
     }
 }
 
-// Open edit modal
-function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks) {
+// ===================== GRADE EDITING =====================
+function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks, studentName, className) {
     if (debounceTimer) {
         clearTimeout(debounceTimer);
         debounceTimer = null;
@@ -485,6 +647,10 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoR
     document.getElementById('midtermGrade').value = midterm || '';
     document.getElementById('finalGrade').value = finalGrade || '';
     document.getElementById('remarks').value = remarks || 'Competent';
+    
+    // Display student info
+    document.getElementById('studentNameDisplay').textContent = studentName;
+    document.getElementById('classNameDisplay').textContent = `Class: ${className}`;
     
     ['prelimGrade', 'midtermGrade', 'finalGrade'].forEach(id => {
         const input = document.getElementById(id);
@@ -502,6 +668,9 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoR
     const loadingEl = document.getElementById('autoRemarksLoading');
     if (loadingEl) loadingEl.style.display = 'none';
     
+    // Calculate initial auto remarks
+    calculateAutoRemarks();
+    
     openModal('editGradeModal');
     
     setTimeout(() => {
@@ -510,6 +679,75 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoR
             firstInput.focus();
         }
     }, 100);
+}
+
+function debouncedCalculateAutoRemarks() {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+    }
+    
+    const loadingEl = document.getElementById('autoRemarksLoading');
+    if (loadingEl) loadingEl.style.display = 'inline-block';
+    
+    debounceTimer = setTimeout(() => {
+        calculateAutoRemarks();
+    }, 500);
+}
+
+function calculateAutoRemarks() {
+    const prelim = parseFloat(document.getElementById('prelimGrade').value) || null;
+    const midterm = parseFloat(document.getElementById('midtermGrade').value) || null;
+    const final = parseFloat(document.getElementById('finalGrade').value) || null;
+    
+    const loadingEl = document.getElementById('autoRemarksLoading');
+    if (loadingEl) loadingEl.style.display = 'none';
+    
+    let localRemarks = calculateRemarksLocally(prelim, midterm, final);
+    currentAutoRemarks = localRemarks;
+    updateAutoRemarksDisplay();
+    
+    if (document.getElementById('useAutoRemarks').checked) {
+        document.getElementById('remarks').value = currentAutoRemarks;
+    }
+    
+    if (prelim !== null && midterm !== null && final !== null) {
+        const displayElement = document.getElementById('autoRemarksText');
+        const originalText = displayElement.textContent;
+        displayElement.innerHTML = `${localRemarks} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
+        
+        fetch(window.appUrls.autoRemarksUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prelim_grade: prelim,
+                midterm_grade: midterm,
+                final_grade: final
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.auto_remarks !== localRemarks) {
+                currentAutoRemarks = data.auto_remarks;
+                updateAutoRemarksDisplay();
+                
+                if (document.getElementById('useAutoRemarks').checked) {
+                    document.getElementById('remarks').value = currentAutoRemarks;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error verifying auto remarks:', error);
+        });
+    }
+}
+
+function calculateRemarksLocally(prelim, midterm, final) {
+    if (prelim === null || midterm === null || final === null) {
+        return 'Incomplete';
+    }
+    
+    const average = (prelim + midterm + final) / 3;
+    return average >= 75 ? 'Competent' : 'Not yet competent';
 }
 
 function updateAutoRemarksDisplay() {
@@ -525,10 +763,12 @@ function updateAutoRemarksDisplay() {
     
     if (currentAutoRemarks === 'Competent') {
         container.classList.add('competent');
-    } else if (currentAutoRemarks === 'Not Yet Competent') {
+    } else if (currentAutoRemarks === 'Not yet competent') {
         container.classList.add('not-competent');
     } else if (currentAutoRemarks === 'Incomplete') {
         container.classList.add('incomplete');
+    } else if (currentAutoRemarks === 'Dropped') {
+        container.classList.add('dropped');
     } else {
         container.classList.add('neutral');
     }
@@ -552,7 +792,6 @@ function toggleRemarksSelect() {
     }
 }
 
-// SMOOTH SUBMIT FUNCTION
 function submitGradeEdit() {
     if (isSaving) return;
     
@@ -589,14 +828,14 @@ function submitGradeEdit() {
     saveBtn.classList.add('btn-saving');
     saveBtn.disabled = true;
 
-    // 1. First, close modal smoothly
+    // 1. Close modal smoothly
     closeModal('editGradeModal');
     
-    // 2. Show loading screen briefly
+    // 2. Show loading screen
     setTimeout(() => {
         showLoadingScreen('Saving grade changes...');
         
-        // 3. Make API call
+        // 3. Make AJAX POST to /student_grades/edit
         setTimeout(() => {
             fetch(window.appUrls.editGradeUrl, {
                 method: 'POST',
@@ -645,7 +884,7 @@ function submitGradeEdit() {
                         saveBtn.disabled = false;
                     }
                     
-                    // Update the specific row in the table without reloading the page
+                    // Update the specific row in the table
                     updateStudentRowLocally(enrollmentId, prelim, midterm, finalGrade, remarks);
                 });
             })
@@ -663,14 +902,19 @@ function submitGradeEdit() {
                     confirmButtonText: 'Try Again',
                     confirmButtonColor: '#b91c1c'
                 }).then(() => {
-                    // Re-open the edit modal so user can try again
+                    // Re-open the edit modal
+                    const studentName = document.getElementById('studentNameDisplay').textContent;
+                    const className = document.getElementById('classNameDisplay').textContent.replace('Class: ', '');
+                    
                     openEditModal(
                         enrollmentId,
                         prelim,
                         midterm,
                         finalGrade,
                         remarks,
-                        currentAutoRemarks
+                        currentAutoRemarks,
+                        studentName,
+                        className
                     );
                     
                     // Restore save button
@@ -685,58 +929,197 @@ function submitGradeEdit() {
     }, 50);
 }
 
-// Update student row locally without page reload
 function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) {
-    // Find the row with matching enrollment_id
-    const rows = document.querySelectorAll('.class-table tbody tr');
+    // Find and update the row
+    const rows = document.querySelectorAll('#gradesTableBody tr');
     rows.forEach(row => {
-        const editBtn = row.querySelector('.edit-btn');
-        if (editBtn && editBtn.getAttribute('data-enrollment-id') === enrollmentId) {
+        if (row.getAttribute('data-enrollment-id') === enrollmentId) {
+            // Update grade cells
+            const prelimCell = row.cells[3];
+            const midtermCell = row.cells[4];
+            const finalCell = row.cells[5];
+            const avgRemarksCell = row.cells[6];
+            const remarksCell = row.cells[7];
+            const statusCell = row.cells[8];
+            
+            // Update individual grades
+            if (prelim) {
+                prelimCell.innerHTML = `<span class="grade-value">${prelim}%</span>`;
+            } else {
+                prelimCell.innerHTML = '<span class="grade-na">N/A</span>';
+            }
+            
+            if (midterm) {
+                midtermCell.innerHTML = `<span class="grade-value">${midterm}%</span>`;
+            } else {
+                midtermCell.innerHTML = '<span class="grade-na">N/A</span>';
+            }
+            
+            if (final) {
+                finalCell.innerHTML = `<span class="grade-value">${final}%</span>`;
+            } else {
+                finalCell.innerHTML = '<span class="grade-na">N/A</span>';
+            }
+            
             // Update average with remarks
-            const avgRemarksCell = row.children[2];
             if (prelim && midterm && final) {
                 const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
-                const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
+                const autoRemarks = avg >= 75 ? 'Competent' : 'Not yet competent';
                 const avgClass = avg >= 75 ? 'competent' : 'not-competent';
                 avgRemarksCell.innerHTML = `<span class="average-with-remarks ${avgClass}">Average ${avg}, ${autoRemarks}</span>`;
             } else {
                 avgRemarksCell.innerHTML = `<span class="average-with-remarks incomplete">Average N/A, Incomplete</span>`;
             }
             
-            // Update current remarks
-            const remarksCell = row.children[3];
+            // Update remarks
             if (remarks) {
                 remarksCell.innerHTML = `<span class="current-remarks ${remarks.toLowerCase().replace(' ', '-')}">${remarks}</span>`;
             } else {
                 remarksCell.innerHTML = `<span class="current-remarks not-set">Not Set</span>`;
             }
             
-            // Update completion button status
-            const completionBtn = row.querySelector('.completion-btn');
-            if (completionBtn) {
-                const shouldEnable = remarks === 'Competent';
-                completionBtn.disabled = !shouldEnable;
-                completionBtn.setAttribute('data-remarks', remarks);
+            // Update enrollment status
+            let displayStatus = remarks;
+            if (remarks === 'Dropped') {
+                displayStatus = 'dropped';
+            } else if (remarks === 'Competent') {
+                displayStatus = 'Competent';
+            } else {
+                displayStatus = 'enrolled';
             }
             
-            // Update the edit button data attributes
-            editBtn.setAttribute('data-prelim', prelim || '');
-            editBtn.setAttribute('data-midterm', midterm || '');
-            editBtn.setAttribute('data-final', final || '');
-            editBtn.setAttribute('data-remarks', remarks || '');
+            statusCell.innerHTML = `<span class="status-badge status-${displayStatus.toLowerCase()}">${displayStatus}</span>`;
             
-            // Update auto remarks attribute
-            if (prelim && midterm && final) {
-                const avg = (parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3;
-                const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
-                editBtn.setAttribute('data-auto-remarks', autoRemarks);
-            } else {
-                editBtn.setAttribute('data-auto-remarks', 'Incomplete');
+            // Update enrollment status attribute
+            row.setAttribute('data-status', displayStatus);
+            
+            // Update certificate button
+            const certBtn = row.querySelector('.certificate-btn');
+            if (certBtn) {
+                const shouldEnable = remarks === 'Competent' || displayStatus === 'completed';
+                certBtn.disabled = !shouldEnable;
+                certBtn.setAttribute('data-remarks', remarks);
+                certBtn.setAttribute('data-enrollment-status', displayStatus);
+                
+                if (shouldEnable) {
+                    certBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const enrollmentId = this.getAttribute('data-enrollment-id');
+                        const studentName = this.getAttribute('data-student-name');
+                        const remarks = this.getAttribute('data-remarks');
+                        const enrollmentStatus = this.getAttribute('data-enrollment-status');
+                        generateCertificate(enrollmentId, studentName, remarks, enrollmentStatus);
+                    });
+                }
+            }
+            
+            // Update button data attributes
+            const editBtn = row.querySelector('.edit-btn');
+            if (editBtn) {
+                editBtn.setAttribute('data-prelim', prelim || '');
+                editBtn.setAttribute('data-midterm', midterm || '');
+                editBtn.setAttribute('data-final', final || '');
+                editBtn.setAttribute('data-remarks', remarks || '');
+                
+                // Update auto remarks attribute
+                if (prelim && midterm && final) {
+                    const avg = (parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3;
+                    const autoRemarks = avg >= 75 ? 'Competent' : 'Not yet competent';
+                    editBtn.setAttribute('data-auto-remarks', autoRemarks);
+                } else {
+                    editBtn.setAttribute('data-auto-remarks', 'Incomplete');
+                }
             }
         }
     });
 }
 
+// ===================== FILE UPLOAD =====================
+function initFileUpload() {
+    const fileInput = document.getElementById('bulkFileUpload');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : 'No file chosen';
+            document.getElementById('bulkFileName').textContent = fileName;
+        });
+    }
+}
+
+// ===================== GRADE VALIDATION =====================
+function initGradeInputValidation() {
+    const gradeInputs = ['prelimGrade', 'midtermGrade', 'finalGrade'];
+    
+    gradeInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('blur', function() {
+                validateGradeInput(this);
+            });
+        }
+    });
+}
+
+function validateGradeInput(input) {
+    const value = parseFloat(input.value);
+    if (input.value && (isNaN(value) || value < 0 || value > 100)) {
+        input.classList.add('invalid');
+        input.classList.remove('valid');
+        return false;
+    } else if (input.value) {
+        input.classList.add('valid');
+        input.classList.remove('invalid');
+        return true;
+    } else {
+        input.classList.remove('valid', 'invalid');
+        return true;
+    }
+}
+
+// ===================== UTILITY FUNCTIONS =====================
+function showSuccessToast(message) {
+    const toast = document.getElementById('success-toast');
+    if (!toast) return;
+    
+    const messageSpan = toast.querySelector('.toast-message');
+    if (messageSpan) {
+        messageSpan.textContent = message;
+    }
+    
+    toast.style.display = 'flex';
+    toast.offsetHeight; // Force reflow
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        hideSuccessToast();
+    }, 2000);
+}
+
+function hideSuccessToast() {
+    const toast = document.getElementById('success-toast');
+    if (!toast) return;
+    
+    toast.classList.remove('show');
+    
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 500);
+}
+
+function showLoadingScreen(message, details = '') {
+    $('#loading-message').text(message);
+    $('#loading-details').text(details);
+    $('#loading-screen').fadeIn(200);
+}
+
+function hideLoadingScreen() {
+    $('#loading-screen').fadeOut(200);
+}
+
+// ===================== PROFILE MODAL =====================
 function openProfileModal(userId) {
     showLoadingScreen('Loading student profile...');
     
@@ -763,7 +1146,6 @@ function openProfileModal(userId) {
             document.getElementById('profileAddress').innerText = 
                 profile.baranggay ? `${profile.baranggay}, ${profile.municipality}, ${profile.province}` : 'Not provided';
             
-            // FIXED: Use same path structure as subnav with proper fallback
             const profilePicture = profile.profile_picture || 'default.png';
             const staticPath = window.appUrls.staticProfilePath || '/static/uploads/profile_pictures/';
             document.getElementById('profilePicture').src = `${staticPath}${profilePicture}`;
@@ -860,13 +1242,16 @@ function openProfileModal(userId) {
         });
 }
 
-// Certificate functions
-function generatePrivateCompletion(enrollmentId, studentName, remarks) {
-    if (remarks !== 'Competent') {
+// ===================== CERTIFICATE GENERATION =====================
+function generateCertificate(enrollmentId, studentName, remarks, enrollmentStatus) {
+    const canGenerate = remarks === 'Competent' || enrollmentStatus === 'completed' || enrollmentStatus === 'Competent';
+    
+    if (!canGenerate) {
         Swal.fire({
             icon: 'warning',
             title: 'Cannot Generate Certificate',
-            text: 'Certificate can only be generated for students with "Competent" status',
+            html: `<p>Certificate can only be generated for students with "Competent" status or "completed" enrollment.</p>
+                   <p><small>Current: Remarks = "${remarks}", Status = "${enrollmentStatus}"</small></p>`,
             confirmButtonText: 'OK'
         });
         return;
@@ -874,7 +1259,7 @@ function generatePrivateCompletion(enrollmentId, studentName, remarks) {
     
     Swal.fire({
         title: 'Generate Certificate of Completion',
-        html: `<p>Generate private completion certificate for <strong>${studentName}</strong>?</p>`,
+        html: `<p>Generate certificate for <strong>${studentName}</strong>?</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Generate',
@@ -882,12 +1267,12 @@ function generatePrivateCompletion(enrollmentId, studentName, remarks) {
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
-            generatePrivateCompletionCertificate(enrollmentId, studentName);
+            generateCertificateFile(enrollmentId, studentName);
         }
     });
 }
 
-function generatePrivateCompletionCertificate(enrollmentId, studentName) {
+function generateCertificateFile(enrollmentId, studentName) {
     showLoadingScreen('Generating certificate...');
     
     const formData = new FormData();
@@ -897,12 +1282,7 @@ function generatePrivateCompletionCertificate(enrollmentId, studentName) {
         method: 'POST',
         body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw err; });
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         hideLoadingScreen();
         if (data.success) {
@@ -910,7 +1290,7 @@ function generatePrivateCompletionCertificate(enrollmentId, studentName) {
                 icon: 'success',
                 title: 'Certificate Generated!',
                 html: `
-                    <p>Private Completion Certificate generated successfully!</p>
+                    <p>Certificate generated successfully!</p>
                     ${data.cert_hash ? `<p><small>Certificate ID: ${data.cert_hash.substring(0, 16)}...</small></p>` : ''}
                 `,
                 showCancelButton: true,
@@ -944,18 +1324,7 @@ function generatePrivateCompletionCertificate(enrollmentId, studentName) {
     });
 }
 
-// Initialize everything
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('saved')) {
-        showSuccessToast('Grade saved successfully!');
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    
-    init();
-});
-
-// Clean up
+// ===================== CLEANUP =====================
 window.addEventListener('beforeunload', function() {
     if (debounceTimer) {
         clearTimeout(debounceTimer);

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 19, 2025 at 06:25 AM
+-- Generation Time: Jan 05, 2026 at 11:33 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,9 +44,10 @@ CREATE TABLE `certificates` (
 --
 
 INSERT INTO `certificates` (`id`, `enrollment_id`, `name`, `course`, `date`, `cert_hash`, `tx_hash`, `file_path`, `created_at`) VALUES
-(142, 18, 'Micheal Seldo', 'ICT 101', '2025-11-27', 'LSEFa8e08c62bfd43a1ac932aada6624fe331ddf4fd6bb65c1684e083c59913bd7', '0x60dea1fc433c284b1c29cb8c5bfc8a1b2d1e8ce5d71724e22a827c7a02ad8e89', 'certs/TESDA_Accreditation_Micheal_Seldo_ICT_101.pdf', '2025-11-27 12:00:09'),
-(143, 18, 'Micheal Seldo', 'ICT 101', '2025-11-27', 'LSEF216acfa12d1fffacceaa545d008481bf205b46836eb725a5f35af6724891ee', '0x69cdfb8ac5af89198109e14b0536bed81329eba7d0b56cee4e73fbdfeadb2a7f', 'certs/Completion_Certificate_Micheal_Seldo_ICT_101.pdf', '2025-11-27 12:00:22'),
-(144, 9, 'Mark John', 'FOOD 102', '2025-12-19', '10e998701ea3e722961c246b2b999e3ee427b983880242b8a4a984f1063b8747', NULL, 'certs/Private_Completion_Mark_John_FOOD_102_SIGNED.pdf', '2025-12-19 05:17:08');
+(150, 9, 'Mark John', 'FOOD 102', '2026-01-05', '7a807bd02f2a7bcb1922bc968f06f8ec880e98d8e0c424c9815893ced8510f2a', NULL, 'certs/Private_Completion_Mark_John_FOOD_102.pdf', '2026-01-05 05:34:07'),
+(158, 12, 'JC Porcopio', 'FOOD 102', '2025-12-20', 'b95a9826da60be17e19227b316bd159716bce5054331cbcf1d7ea154514586e0', NULL, 'certs/Private_Completion_JC_Porcopio_FOOD_102.pdf', '2025-12-20 01:54:45'),
+(159, 17, 'Catherine Cath', 'BOOK 101', '2026-01-03', '08d3429e9ed3de5ed10369b533480eb47e67d7a7c58f0044ac56ca60f4fa330a', NULL, 'certs/Certificate_Catherine_Cath_BOOK_101.pdf', '2026-01-03 06:43:48'),
+(160, 13, 'Marwin Dalin', 'BREAD 101', '2026-01-03', 'f7bc35be1256a1f102e2ffeff0049f5440fbbbd28d2de8b4ce6c378c4b77e88c', NULL, 'certs/Certificate_Marwin_Dalin_BREAD_101.pdf', '2026-01-03 05:36:19');
 
 -- --------------------------------------------------------
 
@@ -89,7 +90,8 @@ INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `b
 (25, 21, 'EIM 101', '2025 - 2026', '2025', 'Thursday 10:00-16:00', '{\"Monday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Tuesday\": {\"start\": \"08:00\", \"end\": \"15:00\"}, \"Thursday\": {\"start\": \"10:00\", \"end\": \"16:00\"}}', 'LSEF TESDA', 25, 10, 'Elon Musk', '2025-11-08', '2026-11-08', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'active', '2025-11-08 11:54:19', '2025-11-08 11:54:48', NULL),
 (26, 21, 'EIM !03', '2026-2027', '2025', 'Monday 6:00 AM-10:00 AM, Thursday 6:00 AM-10:00 AM, Tuesday 6:00 AM-10:00 AM, Wednesday 6:00 AM-10:0', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Thursday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Tuesday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Wednesday\": {\"start\": \"06:00\", \"end\": \"10:00\"}}', 'LSEF', 25, 1, 'Pilip Mansai', '2025-12-10', '2027-12-10', 'Must be able to read and write; basic knowledge of mathematics and electricity is recommended. Some institutions may require completion of a basic electrical course or equivalent experience.', 'active', '2025-11-11 10:56:46', '2025-11-11 10:57:41', NULL),
 (27, 20, 'Fundamentals', '2025-2026', 'batch 2025', 'Thursday 07:00-11:00', '{\"Monday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Tuesday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Wednesday\": {\"start\": \"07:00\", \"end\": \"11:00\"}, \"Thursday\": {\"start\": \"07:00\", \"end\": \"11:00\"}}', 'LSEF ', 25, 10, 'Vincent Octabio', '2025-11-28', '2026-07-29', 'Must be able to read and write; basic computer literacy and knowledge of electronic components are recommended. Some training centers may require completion of a basic ICT-related course.', 'active', '2025-11-27 20:06:09', '2025-11-27 20:08:32', NULL),
-(28, 9, 'Food and Beverages', '2025 - 2026', 'batch 2025', 'Monday 6:00 AM-10:00 AM, Tuesday 6:00 AM-10:00 AM, Wednesday 6:00 AM-10:00 AM, Thursday 6:00 AM-10:0', '{\"Monday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Tuesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Wednesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Thursday\":{\"start\":\"06:00\",\"end\":\"10:00\"}}', 'LSEF sta.cruz', 25, 20, 'Nadine Lustre', '2025-12-20', '2026-06-24', 'Before entering the Food and Beverages field, students should have a basic understanding of food safety, hygiene practices, and customer service. A keen interest in culinary arts, attention to detail, and good communication skills are also essential for success in this area.', 'active', '2025-12-19 11:12:31', NULL, NULL);
+(28, 9, 'Food and Beverages', '2025 - 2026', 'batch 2025', 'Monday 6:00 AM-10:00 AM, Tuesday 6:00 AM-10:00 AM, Wednesday 6:00 AM-10:00 AM, Thursday 6:00 AM-10:0', '{\"Monday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Tuesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Wednesday\":{\"start\":\"06:00\",\"end\":\"10:00\"},\"Thursday\":{\"start\":\"06:00\",\"end\":\"10:00\"}}', 'LSEF sta.cruz', 25, 20, 'Nadine Lustre', '2025-12-20', '2026-06-24', 'Before entering the Food and Beverages field, students should have a basic understanding of food safety, hygiene practices, and customer service. A keen interest in culinary arts, attention to detail, and good communication skills are also essential for success in this area.', 'active', '2025-12-19 11:12:31', NULL, NULL),
+(29, 17, 'Fundamentals', '2025-2027', 'batch 2025', 'Wednesday 06:00-11:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"11:00\"}, \"Tuesday\": {\"start\": \"06:00\", \"end\": \"11:00\"}, \"Wednesday\": {\"start\": \"06:00\", \"end\": \"11:00\"}}', 'LSEF sta.cruz', 25, 90, 'Christine Dela Cruz', '2025-12-22', '2027-07-21', 'Applicants must be able to read and communicate in basic English and Filipino and possess good physical condition to perform housekeeping duties. No previous experience is required, but completion of high school or equivalent is recommended.', 'pending', '2025-12-20 10:28:24', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -151,14 +153,14 @@ CREATE TABLE `enrollment` (
 --
 
 INSERT INTO `enrollment` (`enrollment_id`, `user_id`, `class_id`, `enrollment_date`, `status`) VALUES
-(9, 80, 15, '2025-10-22 19:50:12', 'enrolled'),
-(12, 29, 15, '2025-11-04 09:09:52', 'enrolled'),
-(13, 17, 22, '2025-11-08 12:49:11', 'enrolled'),
-(14, 19, 23, '2025-11-08 14:05:01', 'enrolled'),
+(9, 80, 15, '2025-10-22 19:50:12', 'completed'),
+(12, 29, 15, '2025-11-04 09:09:52', 'completed'),
+(13, 17, 22, '2025-11-08 12:49:11', ''),
+(14, 19, 23, '2025-11-08 14:05:01', 'completed'),
 (15, 18, 23, '2025-11-08 14:06:09', 'rejected'),
 (16, 18, 23, '2025-11-08 14:07:03', 'pending'),
-(17, 27, 23, '2025-11-26 19:35:21', 'enrolled'),
-(18, 85, 24, '2025-11-27 19:50:53', 'enrolled');
+(17, 27, 23, '2025-11-26 19:35:21', 'completed'),
+(18, 85, 24, '2025-11-27 19:50:53', 'completed');
 
 -- --------------------------------------------------------
 
@@ -195,7 +197,7 @@ INSERT INTO `login` (`user_id`, `username`, `password`, `email`, `role`, `accoun
 (26, 'christineterante', 'Christine09!', 'tine@gmail.com', 'student', 'active', 'verified'),
 (27, 'catherinecath', 'Catherine09!', 'cath@gmail.com', 'student', 'active', 'verified'),
 (28, 'longmejia', 'Longmejira09!', 'long@gmail.com', 'student', 'pending', 'pending'),
-(29, 'jcporcopio', 'Junejune2103.', 'jcporcopio03@gmail.com', 'student', 'active', 'verified'),
+(29, 'jcporcopio', 'Junejune2103.', 'jcporcopio03@gmail.com', 'student', 'active', 'pending'),
 (30, 'asantos123', 'Adr!an2025', 'adrian.miguel.santos@example.com', 'student', 'pending', 'pending'),
 (31, 'biancadelgado123', 'Bi@ncA123', 'bianca.rose.delgado@example.com', 'student', 'pending', 'pending'),
 (32, 'carloreyes123', 'Male	C@rloJ202#', 'carlo.james.reyes@gmail.com', 'student', 'pending', 'pending'),
@@ -253,7 +255,9 @@ INSERT INTO `login` (`user_id`, `username`, `password`, `email`, `role`, `accoun
 (86, 'paulominsi', 'Paulominisi123.', 'paulo@gmail.com', 'staff', 'active', 'verified'),
 (87, 'isaacniton', 'Isaac123.', 'Isaac@gmail.com', 'student', 'active', 'pending'),
 (88, 'nolanlimo', 'Nolanlimo123.', 'limo@gmail.com', 'student', 'active', 'pending'),
-(89, 'linlimo', 'Linlin123.', 'lin@gmail.com', 'student', 'active', 'pending');
+(89, 'linlimo', 'Linlin123.', 'lin@gmail.com', 'student', 'active', 'pending'),
+(90, 'Christine', 'Christine123.', 'christine@gmail.com', 'staff', 'active', 'verified'),
+(91, 'mikokulas', 'Mikokulas123.', 'kulas@gmail.com', 'student', 'active', 'pending');
 
 -- --------------------------------------------------------
 
@@ -318,8 +322,8 @@ CREATE TABLE `personal_information` (
 --
 
 INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`, `signature`) VALUES
-(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09474371682', 'Admin', 'M', 'Ako', '2025-06-03', 'male', '1_8b857edd7d394680b7a326ad0235ee5e.jpg', 1, '2025-06-05 22:58:27', NULL),
-(14, 10, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09474371623', 'Niko', 'N', 'Nonoy', '2000-11-05', 'male', '10_e71d136bfa8b4571a3f17304b03efd34.jpg', 1, '2025-06-08 09:55:38', '10_signature_cde4d29aa9cc48d0b85ce6d3a0cf7210.png'),
+(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09474371682', 'Admin', 'M', 'Ako', '2025-06-03', 'male', '1_8b2ec9a12f8e42079e69461f32f360d4.jpg', 1, '2025-06-05 22:58:27', '1_1683365d035b457bbfe3327fbe51064e.png'),
+(14, 10, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09474371623', 'Niko', 'N', 'Nonoy', '2000-11-05', 'male', '10_f45b88d2759c4300b3b0b48bc2e0f517.jpg', 1, '2025-06-08 09:55:38', '10_c9a50b45fc6b461ea678e8d19b9ebbba.png'),
 (29, 17, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Marwin', 'Mejoradaaaa', 'Dalin', '2004-03-01', 'male', '17_f7f4e25350df442582215d422ac9871f.png', 1, '2025-10-12 08:24:29', NULL),
 (30, 18, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Mark', '', 'Capillan', '2004-03-01', 'male', NULL, 1, '2025-10-12 10:29:44', NULL),
 (31, 19, 'Palawan', 'Kalayaan', 'Pag-Asa (Pob.)', '09474371682', 'Piolo', '', 'Pascual', '1988-03-01', 'male', NULL, 1, '2025-10-12 10:31:10', NULL),
@@ -332,7 +336,7 @@ INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipal
 (38, 26, 'Biliran', 'Biliran', 'Sanggalang', '09474371682', 'Christine', '', 'Terante', '2003-06-08', 'female', NULL, 1, '2025-10-12 10:49:25', NULL),
 (39, 27, 'Bohol', 'City of Tagbilaran', 'Poblacion II', '09474371682', 'Catherine', '', 'Cath', '2007-03-29', 'female', NULL, 1, '2025-10-12 10:50:21', NULL),
 (40, 28, 'Biliran', 'Cabucgayan', 'Magbangon (Pob.)', '09474371682', 'Long', '', 'Mejia', '1998-03-20', 'male', NULL, 1, '2025-10-12 10:51:06', NULL),
-(41, 29, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'JC', 'Caayaman', 'Porcopio', '2009-06-16', 'male', '29_59f59b323e89468e82e5b269f86d9507.png', 1, '2025-10-13 07:59:12', NULL),
+(41, 29, 'Laguna', 'Santa Cruz', 'Patimbao', '09108236537', 'JC', 'Caayaman', 'Porcopio', '2009-06-16', 'male', '29_5843c08eef624763acf473369b4645fd.jpg', 1, '2025-10-13 07:59:12', NULL),
 (42, 30, 'Laguna', 'Los Baños', 'Malinta', '09108236537', 'Adrian Miguel Santos', 'Miguel Santos', 'Santos', '2002-07-08', 'male', NULL, 1, '2025-10-13 09:22:13', NULL),
 (43, 31, 'Laguna', 'Los Baños', 'Mayondon', '09108236537', 'Bianca ', 'Rose ', 'Delgado', '2001-07-18', 'female', NULL, 1, '2025-10-13 09:24:18', NULL),
 (44, 32, 'Laguna', 'Santa Cruz', 'Duhat', '09108236537', 'Carlo	', 'James ', '	Reyes', '1999-06-16', 'male', NULL, 1, '2025-10-13 09:26:29', NULL),
@@ -390,7 +394,9 @@ INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipal
 (100, 86, 'Not set', 'Not set', 'Not set', 'Not set', 'Staff', '', 'Member', '2000-01-01', 'other', NULL, 1, '2025-11-27 20:13:36', NULL),
 (101, 87, 'Bataan', 'Mariveles', 'San Carlos', '09108236537', 'Isaac', 'Niro', 'Niton', '2025-12-10', 'male', NULL, 1, '2025-12-19 10:11:50', NULL),
 (102, 88, 'Basilan', 'Hadji Muhtamad', 'Sangbay Big', '09345363644', 'Nolan', 'Maryo', 'Limo', '2002-02-06', 'male', NULL, 1, '2025-12-19 10:21:12', NULL),
-(103, 89, 'Laguna', 'Pagsanjan', 'Layugan', '09345363644', 'Lin', 'Mendoza', 'Limo', '2003-10-09', 'male', '20251219103930_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', 1, '2025-12-19 10:39:30', NULL);
+(103, 89, 'Laguna', 'Pagsanjan', 'Layugan', '09345363644', 'Lin', 'Mendoza', 'Limo', '2003-10-09', 'male', '20251219103930_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', 1, '2025-12-19 10:39:30', NULL),
+(104, 90, 'Laguna', 'Sta.Cruz', 'Calios', '09536575465', 'Christine Dela Cruz', 'Nami', 'Dela Cruz', '2000-06-22', 'female', '90_50bc9f51a46b4fa39139d5e1c03a8a11.jpg', 1, '2025-12-20 10:20:22', '90_d30e279d14ad43c0a99a9d8551c94b47.png'),
+(105, 91, 'Laguna', 'Santa Cruz', 'Bubukal', '09474371682', 'Miko', 'Mino', 'Kulas', '2004-10-14', 'male', '20260102171822_Screenshot_2025-12-22_103048.png', 1, '2026-01-02 17:18:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -404,7 +410,7 @@ CREATE TABLE `student_grades` (
   `prelim_grade` decimal(5,2) DEFAULT NULL,
   `midterm_grade` decimal(5,2) DEFAULT NULL,
   `final_grade` decimal(5,2) DEFAULT NULL,
-  `remarks` enum('Passed','Failed','Completed','Incomplete','Dropped') DEFAULT NULL,
+  `remarks` enum('Competent','Not yet competent','Dropped') DEFAULT NULL,
   `date_recorded` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -413,8 +419,12 @@ CREATE TABLE `student_grades` (
 --
 
 INSERT INTO `student_grades` (`grade_id`, `enrollment_id`, `prelim_grade`, `midterm_grade`, `final_grade`, `remarks`, `date_recorded`) VALUES
-(3, 9, 87.00, 87.00, 87.00, 'Completed', '2025-10-22 19:55:47'),
-(4, 18, 86.00, 82.00, 84.00, 'Completed', '2025-11-27 20:02:39');
+(3, 9, 89.00, 87.00, 85.00, 'Competent', '2026-01-05 13:33:46'),
+(4, 18, 86.00, 82.00, 84.00, 'Dropped', '2026-01-03 13:29:58'),
+(5, 12, 96.00, 94.00, 83.00, 'Not yet competent', '2026-01-03 13:29:49'),
+(6, 17, 86.00, 85.00, 85.00, 'Competent', '2026-01-03 13:30:40'),
+(7, 14, NULL, NULL, NULL, '', '2026-01-03 13:29:41'),
+(8, 13, 86.00, 86.00, 86.00, 'Competent', '2026-01-03 13:36:10');
 
 -- --------------------------------------------------------
 
@@ -425,16 +435,11 @@ INSERT INTO `student_grades` (`grade_id`, `enrollment_id`, `prelim_grade`, `midt
 CREATE TABLE `student_requirements` (
   `requirement_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `birth_certificate` varchar(255) DEFAULT NULL,
-  `educational_credentials` varchar(255) DEFAULT NULL,
-  `id_photos` varchar(255) DEFAULT NULL,
   `barangay_clearance` varchar(255) DEFAULT NULL,
   `medical_certificate` varchar(255) DEFAULT NULL,
   `marriage_certificate` varchar(255) DEFAULT NULL,
   `valid_id` varchar(255) DEFAULT NULL,
   `transcript_form` varchar(255) DEFAULT NULL,
-  `good_moral_certificate` varchar(255) DEFAULT NULL,
-  `brown_envelope` varchar(255) DEFAULT NULL,
   `additional_notes` text DEFAULT NULL,
   `date_uploaded` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -443,11 +448,14 @@ CREATE TABLE `student_requirements` (
 -- Dumping data for table `student_requirements`
 --
 
-INSERT INTO `student_requirements` (`requirement_id`, `user_id`, `birth_certificate`, `educational_credentials`, `id_photos`, `barangay_clearance`, `medical_certificate`, `marriage_certificate`, `valid_id`, `transcript_form`, `good_moral_certificate`, `brown_envelope`, `additional_notes`, `date_uploaded`) VALUES
-(1, 29, '29_birth_certificate_Screenshot_2025-10-12_153544.png', '29_educational_credentials_Screenshot_2025-10-12_151447.png', '29_id_photos_Screenshot_2025-10-01_161648.png', '29_barangay_clearance_Screenshot_2025-10-01_161501.png', '29_medical_certificate_Screenshot_2025-10-12_152355.png', '29_marriage_certificate_Screenshot_2025-07-03_230222.png', '29_valid_id_Screenshot_2025-10-12_154423.png', '29_transcript_form_Screenshot_2025-10-01_161501.png', '29_good_moral_certificate_Screenshot_2025-10-12_173749.png', '29_brown_envelope_Screenshot_2025-10-01_161501.png', '', '2025-10-13 14:13:40'),
-(3, 17, '17_birth_certificate_Screenshot_2025-04-15_131105.png', '17_educational_credentials_Screenshot_2025-10-01_161501.png', '17_id_photos_Screenshot_2025-05-28_170843.png', '17_barangay_clearance_Screenshot_2025-10-12_154941.png', '17_medical_certificate_Screenshot_2025-05-28_171026.png', '17_marriage_certificate_Screenshot_2025-10-12_151447.png', '17_valid_id_Screenshot_2025-07-03_230222.png', '17_transcript_form_Screenshot_2025-10-12_153544.png', '17_good_moral_certificate_Screenshot_2025-09-28_170241.png', '17_brown_envelope_Screenshot_2025-10-12_163427.png', 'to follow po yung iba', '2025-10-13 16:48:20'),
-(4, 80, '80_birth_certificate_Screenshot_from_2025-09-20_08-28-28.png', '80_educational_credentials_Screenshot_from_2025-09-23_22-24-50.png', '80_id_photos_Screenshot_from_2025-09-23_22-47-29.png', '80_barangay_clearance_Screenshot_from_2025-09-23_22-25-32.png', '80_medical_certificate_Screenshot_from_2025-09-24_00-14-04.png', '80_marriage_certificate_Screenshot_from_2025-09-23_22-24-24.png', '80_valid_id_Screenshot_from_2025-09-23_22-25-32.png', '80_transcript_form_Screenshot_from_2025-09-24_09-13-20.png', '80_good_moral_certificate_Screenshot_from_2025-09-23_22-47-58.png', '80_brown_envelope_Screenshot_from_2025-09-24_09-13-20.png', 'pagpunta ko dyan', '2025-10-22 19:38:11'),
-(5, 85, '85_birth_certificate_central_luzon_ppt.jpg', '85_educational_credentials_508497457_1238429944449072_4759415022123866266_n_1.jpg', '85_id_photos_508884083_734705079084048_8964909700600746865_n.jpg', '85_barangay_clearance_508884083_734705079084048_8964909700600746865_n.jpg', '85_medical_certificate_download.jpg', NULL, '85_valid_id_maxresdefault_1.jpg', '85_transcript_form_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', '85_good_moral_certificate_th15_war_67.jpg', '85_brown_envelope_th15_war_67.jpg', '', '2025-11-27 19:47:51');
+INSERT INTO `student_requirements` (`requirement_id`, `user_id`, `barangay_clearance`, `medical_certificate`, `marriage_certificate`, `valid_id`, `transcript_form`, `additional_notes`, `date_uploaded`) VALUES
+(1, 29, '29_barangay_clearance_Screenshot_2025-10-01_161501.png', '29_medical_certificate_Screenshot_2025-10-12_152355.png', '29_marriage_certificate_Screenshot_2025-07-03_230222.png', '29_valid_id_Screenshot_2025-10-12_154423.png', '29_transcript_form_Screenshot_2025-10-01_161501.png', '', '2025-10-13 14:13:40'),
+(3, 17, '17_barangay_clearance_Screenshot_2025-10-12_154941.png', '17_medical_certificate_Screenshot_2025-05-28_171026.png', '17_marriage_certificate_Screenshot_2025-10-12_151447.png', '17_valid_id_Screenshot_2025-07-03_230222.png', '17_transcript_form_Screenshot_2025-10-12_153544.png', 'to follow po yung iba', '2025-10-13 16:48:20'),
+(4, 80, '80_barangay_clearance_Screenshot_from_2025-09-23_22-25-32.png', '80_medical_certificate_Screenshot_from_2025-09-24_00-14-04.png', '80_marriage_certificate_Screenshot_from_2025-09-23_22-24-24.png', '80_valid_id_Screenshot_from_2025-09-23_22-25-32.png', '80_transcript_form_Screenshot_from_2025-09-24_09-13-20.png', 'pagpunta ko dyan', '2025-10-22 19:38:11'),
+(5, 85, '85_barangay_clearance_508884083_734705079084048_8964909700600746865_n.jpg', '85_medical_certificate_download.jpg', NULL, '85_valid_id_maxresdefault_1.jpg', '85_transcript_form_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', '', '2025-11-27 19:47:51'),
+(6, 91, '91_barangay_clearance_Screenshot_2025-07-26_132616.png', '91_medical_certificate_Screenshot_2025-12-13_105448.png', NULL, '91_valid_id_Screenshot_2025-09-28_170241.png', '91_transcript_form_Screenshot_2025-12-13_121217.png', '', '2026-01-02 17:30:44'),
+(7, 29, '29_barangay_clearance_tester_letter.pdf', '29_medical_certificate_tester_letter.docx', NULL, '29_valid_id_ARVIN_GIANAN_PORCOPIO.pdf', '29_transcript_form_Linux_Essentials_certificate_jcporcopio03-gmail-com_02729044-5cd2-4e45-98df-8bb4edca775a_1.pdf', '', '2026-01-05 13:56:57'),
+(8, 29, '29_barangay_clearance_508497457_1238429944449072_4759415022123866266_n_1.jpg', '29_medical_certificate_wall.jpg', NULL, '29_valid_id_front-view-dark-silhouette-of-a-modern-luxury-black-car-isolated-on-black-background-ai-generated-free-photo.jpg', '29_transcript_form_g.jpg', '', '2026-01-05 17:41:42');
 
 -- --------------------------------------------------------
 
@@ -606,13 +614,13 @@ ALTER TABLE `user_archived`
 -- AUTO_INCREMENT for table `certificates`
 --
 ALTER TABLE `certificates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -630,7 +638,7 @@ ALTER TABLE `enrollment`
 -- AUTO_INCREMENT for table `login`
 --
 ALTER TABLE `login`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT for table `materials`
@@ -642,19 +650,19 @@ ALTER TABLE `materials`
 -- AUTO_INCREMENT for table `personal_information`
 --
 ALTER TABLE `personal_information`
-  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT for table `student_grades`
 --
 ALTER TABLE `student_grades`
-  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_requirements`
 --
 ALTER TABLE `student_requirements`
-  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `submissions`

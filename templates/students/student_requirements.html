@@ -105,191 +105,186 @@
 
     <!-- Main Content -->
     <main>
-        <div class="page-header">
-            <h1><i class="fas fa-file-upload"></i> TESDA Enrollment Requirements</h1>
-            <div class="breadcrumb">
-                Home > <span>Requirements</span>
-            </div>
+    <div class="page-header">
+        <h1><i class="fas fa-file-upload"></i> TESDA Enrollment Requirements</h1>
+        <div class="breadcrumb">
+            Home > <span>Requirements</span>
         </div>
+    </div>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert-message alert-{{ 'error' if category == 'error' else 'success' }}">
-                        <div class="alert-content">
-                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
-                            <span>{{ message }}</span>
-                            <button class="alert-close">&times;</button>
+    <!-- Requirements Form -->
+    <div class="requirements-container">
+        <div class="requirements-card">
+            <div class="card-header">
+                <h2><i class="fas fa-list-check"></i> Upload Your Requirements</h2>
+                <p>Please upload all required documents for your TESDA enrollment.
+                    <span class="required-note">* Required fields</span>
+                </p>
+            </div>
+
+            <form id="requirementsForm" method="POST" enctype="multipart/form-data" class="requirements-form">
+
+                <!-- Marital Status -->
+                <div class="form-field full-width marital-status-field">
+                    <label class="field-label">
+                        <i class="fas fa-heart"></i>
+                        Marital Status
+                        <span class="required-star">*</span>
+                    </label>
+                    <div class="marital-status-container">
+                        <select name="marital_status" id="maritalStatus" class="marital-status-select" required>
+                            <option value="">Select your marital status</option>
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                            <option value="widowed">Widowed</option>
+                            <option value="separated">Separated</option>
+                        </select>
+                        <div class="marital-status-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span>
+                                {% if gender == 'female' %}
+                                    Marriage Certificate is required only for female applicants who are married.
+                                {% else %}
+                                    Marriage Certificate is only required for female applicants.
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Requirements Form -->
-        <div class="requirements-container">
-            <div class="requirements-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-list-check"></i> Upload Your Requirements</h2>
-                    <p>Please upload all required documents for your TESDA enrollment. <span class="required-note">* Required fields</span></p>
                 </div>
 
-                <form id="requirementsForm" method="POST" enctype="multipart/form-data" class="requirements-form">
-                    <!-- Marital Status Field -->
-                    <div class="form-field full-width marital-status-field">
+                <div class="form-grid">
+                    {% set required_fields = [
+                        ("barangay_clearance", "Barangay Clearance", "fa-building", false),
+                        ("valid_id", "ID / Valid ID", "fa-id-badge", true),
+                        ("medical_certificate", "Medical Certificate (Physically Fit)", "fa-file-medical", true),
+                        ("transcript_form", "Transcript / Form 137", "fa-file-alt", true)
+                    ] %}
+
+                    {% for field, label, icon, required in required_fields %}
+                    <div class="form-field">
                         <label class="field-label">
-                            <i class="fas fa-heart"></i>
-                            Marital Status
-                            <span class="required-star">*</span>
+                            <i class="fas {{ icon }}"></i>
+                            {{ label }}
+                            {% if required %}<span class="required-star">*</span>{% endif %}
                         </label>
-                        <div class="marital-status-container">
-                            <select name="marital_status" id="maritalStatus" class="marital-status-select" required>
-                                <option value="">Select your marital status</option>
-                                <option value="single">Single</option>
-                                <option value="married">Married</option>
-                                <option value="widowed">Widowed</option>
-                                <option value="separated">Separated</option>
-                            </select>
-                            <div class="marital-status-hint">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Marriage certificate is only required if you are married</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="form-grid">
-                        <!-- Required Fields -->
-                        {% set required_fields = [
-                            ("birth_certificate", "Birth Certificate (PSA/NSO Copy)", "fa-certificate", true),
-                            ("educational_credentials", "Educational Credentials (Diploma / TOR / Form 137)", "fa-graduation-cap", true),
-                            ("id_photos", "ID Photos (1x1 or Passport Size)", "fa-id-card", true),
-                            ("barangay_clearance", "Barangay Clearance", "fa-building", true),
-                            ("medical_certificate", "Medical Certificate", "fa-file-medical", true),
-                            ("valid_id", "Proof of Identity / Valid ID", "fa-id-badge", true),
-                            ("transcript_form", "Transcript / Form 137/138", "fa-file-alt", true),
-                            ("good_moral_certificate", "Good Moral Character Certificate", "fa-award", true),
-                            ("brown_envelope", "Brown Envelope", "fa-envelope", true)
-                        ] %}
-                        
-                        <!-- Render Required Fields -->
-                        {% for field, label, icon, required in required_fields %}
-                        <div class="form-field">
-                            <label class="field-label">
-                                <i class="fas {{ icon }}"></i>
-                                {{ label }}
-                                {% if required %}<span class="required-star">*</span>{% endif %}
-                            </label>
-
-                            {% if existing and existing[field] %}
-                            <div class="upload-status">
-                                <div class="status-success">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Uploaded: 
-                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing[field]) }}" 
+                        <!-- UPDATED: Simplified upload status that JavaScript can update -->
+                        <div class="upload-status" id="upload-status-{{ field }}">
+                            <div class="status-pending" id="status-box-{{ field }}">
+                                <i class="fas fa-clock" id="status-icon-{{ field }}"></i>
+                                <span id="status-text-{{ field }}">
+                                    {% if existing and existing[field] %}
+                                        Uploaded: 
+                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing[field]) }}"
                                            target="_blank" class="file-link">
                                             {{ existing[field] }}
                                         </a>
-                                    </span>
-                                </div>
-                                <button type="button" class="preview-btn" 
-                                        data-filename="{{ existing[field] }}" 
-                                        data-label="{{ label }}">
-                                    <i class="fas fa-eye"></i> Preview
-                                </button>
+                                    {% else %}
+                                        Not uploaded yet
+                                    {% endif %}
+                                </span>
                             </div>
-                            {% else %}
-                            <div class="upload-status">
-                                <div class="status-pending">
-                                    <i class="fas fa-clock"></i>
-                                    <span>Not uploaded yet</span>
-                                </div>
-                            </div>
-                            {% endif %}
-
-                            <div class="file-input-container">
-                                <input type="file" class="file-input" name="{{ field }}" 
-                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" {% if required %}required{% endif %}>
-                                <div class="file-input-overlay">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Choose file</span>
-                                </div>
-                                {% if required %}
-                                <div class="field-required">Required</div>
-                                {% else %}
-                                <div class="field-optional">Optional</div>
-                                {% endif %}
-                            </div>
+                            <button type="button" class="preview-btn {% if not (existing and existing[field]) %}preview-btn-disabled{% endif %}" 
+                                    {% if not (existing and existing[field]) %}disabled{% endif %}
+                                    id="preview-btn-{{ field }}"
+                                    data-field="{{ field }}"
+                                    data-filename="{% if existing and existing[field] %}{{ existing[field] }}{% endif %}"
+                                    data-label="{{ label }}"
+                                    data-uploaded="{% if existing and existing[field] %}true{% else %}false{% endif %}">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
                         </div>
-                        {% endfor %}
 
-                        <!-- Marriage Certificate Field (Conditional) -->
-                        <div class="form-field marriage-certificate-field" id="marriageCertificateField" style="display: none;">
-                            <label class="field-label">
-                                <i class="fas fa-ring"></i>
-                                Marriage Certificate
-                                <span class="required-star">*</span>
-                            </label>
+                        <div class="file-input-container">
+                            <input type="file" class="file-input" name="{{ field }}"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                   {% if required %}required{% endif %}>
+                            <div class="file-input-overlay">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose file</span>
+                            </div>
+                            {% if required %}
+                                <div class="field-required">Required</div>
+                            {% else %}
+                                <div class="field-optional">Optional</div>
+                            {% endif %}
+                        </div>
 
-                            {% if existing and existing.marriage_certificate %}
-                            <div class="upload-status">
-                                <div class="status-success">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Uploaded: 
-                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing.marriage_certificate) }}" 
+                        <!-- Removed the "Important" note for transcript_form -->
+                    </div>
+                    {% endfor %}
+
+                    <!-- Marriage Certificate Field - Only shown if user is female -->
+                    {% if gender == 'female' %}
+                    <div class="form-field marriage-certificate-field" id="marriageCertificateField" style="display: none;">
+                        <label class="field-label">
+                            <i class="fas fa-ring"></i>
+                            Marriage Certificate
+                            <span class="required-star">*</span>
+                        </label>
+
+                        <!-- UPDATED: Simplified upload status for marriage certificate -->
+                        <div class="upload-status" id="upload-status-marriage_certificate">
+                            <div class="status-pending" id="status-box-marriage_certificate">
+                                <i class="fas fa-clock" id="status-icon-marriage_certificate"></i>
+                                <span id="status-text-marriage_certificate">
+                                    {% if existing and existing.marriage_certificate %}
+                                        Uploaded: 
+                                        <a href="{{ url_for('static', filename='uploads/requirements/' + existing.marriage_certificate) }}"
                                            target="_blank" class="file-link">
                                             {{ existing.marriage_certificate }}
                                         </a>
-                                    </span>
-                                </div>
-                                <button type="button" class="preview-btn" 
-                                        data-filename="{{ existing.marriage_certificate }}" 
-                                        data-label="Marriage Certificate">
-                                    <i class="fas fa-eye"></i> Preview
-                                </button>
+                                    {% else %}
+                                        Required for married female applicants
+                                    {% endif %}
+                                </span>
                             </div>
-                            {% else %}
-                            <div class="upload-status">
-                                <div class="status-pending">
-                                    <i class="fas fa-clock"></i>
-                                    <span>Required for married applicants</span>
-                                </div>
-                            </div>
-                            {% endif %}
+                            <button type="button" class="preview-btn {% if not (existing and existing.marriage_certificate) %}preview-btn-disabled{% endif %}" 
+                                    {% if not (existing and existing.marriage_certificate) %}disabled{% endif %}
+                                    id="preview-btn-marriage_certificate"
+                                    data-field="marriage_certificate"
+                                    data-filename="{% if existing and existing.marriage_certificate %}{{ existing.marriage_certificate }}{% endif %}"
+                                    data-label="Marriage Certificate"
+                                    data-uploaded="{% if existing and existing.marriage_certificate %}true{% else %}false{% endif %}">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                        </div>
 
-                            <div class="file-input-container">
-                                <input type="file" class="file-input" name="marriage_certificate" 
-                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" id="marriageCertificateInput">
-                                <div class="file-input-overlay">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Choose marriage certificate</span>
-                                </div>
-                                <div class="field-required">Required if married</div>
+                        <div class="file-input-container">
+                            <input type="file" class="file-input" name="marriage_certificate"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" id="marriageCertificateInput">
+                            <div class="file-input-overlay">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose marriage certificate</span>
                             </div>
+                            <div class="field-required">Required if married</div>
+                        </div>
+                        <div class="system-note">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Required only for married female applicants.
                         </div>
                     </div>
+                    {% endif %}
+                </div>
 
-                    <!-- Additional Notes -->
-                    <div class="form-field full-width">
-                        <label class="field-label">
-                            <i class="fas fa-sticky-note"></i>
-                            Additional Notes (Optional)
-                        </label>
-                        <textarea name="additional_notes" class="notes-textarea" 
-                                  placeholder="Add any remarks or missing requirement info...">{{ existing.additional_notes if existing else "" }}</textarea>
-                    </div>
+                <!-- Submit -->
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Requirements
+                    </button>
+                </div>
 
-                    <!-- Submit Button -->
-                    <div class="form-actions">
-                        <button type="submit" class="submit-btn" id="submitBtn">
-                            <i class="fas fa-paper-plane"></i>
-                            Submit Requirements
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </form>
         </div>
-    </main>
+    </div>
+</main>
+
+<!-- Add gender data to body for JavaScript access -->
+<script>
+    document.body.setAttribute('data-user-gender', '{{ gender }}');
+</script>
+
 
     <!-- Preview Modal -->
     <div class="modal" id="previewModal">

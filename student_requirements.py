@@ -21,139 +21,139 @@ def upload_requirements():
         return redirect(url_for("auth.login"))
 
     db = get_db()
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor(dictionary=True, buffered=True)  # ✅ FIX
     user_id = session["user_id"]
 
     profile_picture = "default.png"
+    gender = None
+
     cursor.execute("""
-        SELECT profile_picture
+        SELECT profile_picture, gender
         FROM personal_information
         WHERE user_id = %s
     """, (user_id,))
     user = cursor.fetchone()
-    if user and user.get("profile_picture"):
-        profile_picture = user["profile_picture"]
+
+    if user:
+        profile_picture = user.get("profile_picture") or profile_picture
+        gender = (user.get("gender") or "").lower()
 
     if request.method == "POST":
         uploaded_files = {}
-        required_fields = [
-            "birth_certificate",
-            "educational_credentials",
-            "id_photos",
-            "barangay_clearance",
-            "medical_certificate",
-            "valid_id",
-            "transcript_form",
-            "good_moral_certificate",
-            "brown_envelope",
-        ]
-        
-        # Marriage certificate is optional
-        optional_fields = ["marriage_certificate"]
 
-        # Check required fields
+        required_fields = [
+            "valid_id",
+            "medical_certificate",
+            "transcript_form",
+        ]
+
+        optional_fields = [
+            "barangay_clearance",
+        ]
+
         missing_required = []
         for field in required_fields:
             file = request.files.get(field)
             if not file or not file.filename:
-                missing_required.append(field.replace('_', ' ').title())
-            elif file and allowed_file(file.filename):
+                missing_required.append(field.replace("_", " ").title())
+            elif allowed_file(file.filename):
                 filename = secure_filename(f"{user_id}_{field}_{file.filename}")
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(file_path)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
                 uploaded_files[field] = filename
-
-        # Handle marriage certificate based on marital status
-        marital_status = request.form.get("marital_status", "")
-        marriage_file = request.files.get("marriage_certificate")
-        
-        if marital_status == "married" and marriage_file and marriage_file.filename:
-            if allowed_file(marriage_file.filename):
-                filename = secure_filename(f"{user_id}_marriage_certificate_{marriage_file.filename}")
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                marriage_file.save(file_path)
-                uploaded_files["marriage_certificate"] = filename
             else:
-                flash("Invalid file type for marriage certificate. Please upload PDF, JPG, PNG, DOC, or DOCX files.", "error")
+                flash(f"Invalid file type for {field.replace('_', ' ')}.", "error")
                 return redirect(url_for("student_requirements.upload_requirements"))
-        elif marital_status == "married" and (not marriage_file or not marriage_file.filename):
-            flash("Please upload your marriage certificate since you indicated you are married.", "error")
-            return redirect(url_for("student_requirements.upload_requirements"))
-        else:
-            # If not married or marital status not specified, set marriage_certificate to NULL
-            uploaded_files["marriage_certificate"] = None
 
-        # Check if any required files are missing
         if missing_required:
-            flash(f"Please upload all required documents: {', '.join(missing_required)}", "error")
+            flash(
+                f"Please upload all required documents: {', '.join(missing_required)}",
+                "error"
+            )
             return redirect(url_for("student_requirements.upload_requirements"))
+
+        for field in optional_fields:
+            file = request.files.get(field)
+            if file and file.filename:
+                if allowed_file(file.filename):
+                    filename = secure_filename(f"{user_id}_{field}_{file.filename}")
+                    file.save(os.path.join(UPLOAD_FOLDER, filename))
+                    uploaded_files[field] = filename
+                else:
+                    flash(f"Invalid file type for {field.replace('_', ' ')}.", "error")
+                    return redirect(url_for("student_requirements.upload_requirements"))
+            else:
+                uploaded_files[field] = None
+
+        marriage_file = request.files.get("marriage_certificate")
+        if gender == "female" and marriage_file and marriage_file.filename:
+            if not allowed_file(marriage_file.filename):
+                flash("Invalid file type for marriage certificate.", "error")
+                return redirect(url_for("student_requirements.upload_requirements"))
+
+            filename = secure_filename(
+                f"{user_id}_marriage_certificate_{marriage_file.filename}"
+            )
+            marriage_file.save(os.path.join(UPLOAD_FOLDER, filename))
+            uploaded_files["marriage_certificate"] = filename
+        else:
+            uploaded_files["marriage_certificate"] = None
 
         additional_notes = request.form.get("additional_notes", "")
 
         try:
-            # Prepare data for database insertion
-            db_data = {
-                "user_id": user_id,
-                "additional_notes": additional_notes,
-                "marital_status": marital_status
-            }
-            
-            # Add file fields to db_data
-            for field in required_fields + optional_fields:
-                db_data[field] = uploaded_files.get(field)
-
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO student_requirements
-                (user_id, birth_certificate, educational_credentials, id_photos,
-                 barangay_clearance, medical_certificate, marriage_certificate, valid_id,
-                 transcript_form, good_moral_certificate, brown_envelope, additional_notes)
-                VALUES (%(user_id)s, %(birth_certificate)s, %(educational_credentials)s, %(id_photos)s,
-                        %(barangay_clearance)s, %(medical_certificate)s, %(marriage_certificate)s, %(valid_id)s,
-                        %(transcript_form)s, %(good_moral_certificate)s, %(brown_envelope)s, %(additional_notes)s)
+                (user_id, barangay_clearance, valid_id, medical_certificate,
+                 transcript_form, marriage_certificate, additional_notes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
-                 birth_certificate = VALUES(birth_certificate),
-                 educational_credentials = VALUES(educational_credentials),
-                 id_photos = VALUES(id_photos),
-                 barangay_clearance = VALUES(barangay_clearance),
-                 medical_certificate = VALUES(medical_certificate),
-                 marriage_certificate = VALUES(marriage_certificate),
-                 valid_id = VALUES(valid_id),
-                 transcript_form = VALUES(transcript_form),
-                 good_moral_certificate = VALUES(good_moral_certificate),
-                 brown_envelope = VALUES(brown_envelope),
-                 additional_notes = VALUES(additional_notes),
-                 date_uploaded = NOW()
-                """,
-                db_data,
-            )
+                    barangay_clearance = VALUES(barangay_clearance),
+                    valid_id = VALUES(valid_id),
+                    medical_certificate = VALUES(medical_certificate),
+                    transcript_form = VALUES(transcript_form),
+                    marriage_certificate = VALUES(marriage_certificate),
+                    additional_notes = VALUES(additional_notes),
+                    date_uploaded = NOW()
+            """, (
+                user_id,
+                uploaded_files.get("barangay_clearance"),
+                uploaded_files.get("valid_id"),
+                uploaded_files.get("medical_certificate"),
+                uploaded_files.get("transcript_form"),
+                uploaded_files.get("marriage_certificate"),
+                additional_notes
+            ))
 
-            cursor.execute(
-                """
-                UPDATE login 
+            cursor.execute("""
+                UPDATE login
                 SET verified = 'pending'
                 WHERE user_id = %s AND role = 'student'
-                """,
-                (user_id,),
-            )
+            """, (user_id,))
 
             db.commit()
-            flash("Your TESDA enrollment requirements have been uploaded successfully and are now pending verification.", "success")
-            
+            flash(
+                "Your TESDA requirements have been uploaded successfully and are pending verification.",
+                "success"
+            )
+
         except Exception as e:
             db.rollback()
-            flash("An error occurred while uploading your requirements. Please try again.", "error")
-            print(f"Error uploading requirements: {str(e)}")
+            print("Upload error:", e)
+            flash("An error occurred while uploading your requirements.", "error")
 
         return redirect(url_for("student_requirements.upload_requirements"))
 
-    cursor.execute("SELECT * FROM student_requirements WHERE user_id = %s", (user_id,))
+    cursor.execute(
+        "SELECT * FROM student_requirements WHERE user_id = %s",
+        (user_id,)
+    )
     existing = cursor.fetchone()
 
-    cursor.close()
+    cursor.close()  # ✅ now SAFE
 
     return render_template(
         "students/student_requirements.html",
         existing=existing,
-        profile_picture=profile_picture
+        profile_picture=profile_picture,
+        gender=gender
     )

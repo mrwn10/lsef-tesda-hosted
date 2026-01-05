@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Class Student Management</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/staff/staff_class_student_management.css') }}">
+    <title>Admin Student Grade Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_student_grade.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
             logoutUrl: "{{ url_for('login.logout') }}",
             staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
-            editGradeUrl: "{{ url_for('staff_class_student_management.edit_student_grade') }}",
-            autoRemarksUrl: "{{ url_for('staff_class_student_management.get_auto_remarks') }}",
-            studentProfileUrl: "{{ url_for('staff_class_student_management.get_student_profile', user_id=0) }}".replace('/0', '/'),
-            generateCertUrl: "{{ url_for('staff_class_student_management.generate_private_completion') }}"
+            editGradeUrl: "{{ url_for('admin_student_grades.edit_student_grade') }}",
+            autoRemarksUrl: "{{ url_for('admin_student_grades.get_auto_remarks') }}",
+            downloadGradesUrl: "{{ url_for('admin_student_grades.download_all_grades') }}",
+            uploadGradesUrl: "{{ url_for('admin_student_grades.upload_bulk_grades') }}",
+            studentProfileUrl: "{{ url_for('admin_student_grades.get_student_profile', user_id=0) }}".replace('/0', '/'),
+            generateCertUrl: "{{ url_for('admin_student_grades.generate_certificate') }}"
         };
     </script>
 </head>
@@ -29,10 +30,14 @@
         <!-- Top Navigation -->
         <div class="top-nav">
             <div class="nav-left">
-                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
-                <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-users"></i> Class Management</a>
-                <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book-open"></i> Courses</a>
-                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
+                <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
+                <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
+                <a href="{{ url_for('admin_student_grades.view_grades') }}" class="active"><i class="fas fa-graduation-cap"></i> Student Grade</a>
+                <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
             </div>
             <div class="nav-right"></div>
             
@@ -56,41 +61,15 @@
                 </button>
             </div>
             <div class="mobile-nav-links">
-                <a href="{{ url_for('staff_homepage') }}"><i class="fas fa-home"></i> Home</a>
-                
-                <!-- Class Management Expandable Section -->
-                <div class="mobile-nav-section">
-                    <div class="mobile-nav-header-link" data-section="classes">
-                        <span><i class="fas fa-users"></i> Class Management</span>
-                        <i class="fas fa-chevron-down chevron-icon"></i>
-                    </div>
-                    <div class="mobile-nav-submenu" id="classes-submenu">
-                        <a href="{{ url_for('staff_class_management') }}"><i class="fas fa-users-cog"></i> Class Management</a>
-                        <a href="{{ url_for('staff_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
-                        <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
-                        <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
-                        <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-user-graduate"></i> Student Management</a>
-                    </div>
-                </div>
-                
-                <!-- Courses Expandable Section -->
-                <div class="mobile-nav-section">
-                    <div class="mobile-nav-header-link" data-section="courses">
-                        <span><i class="fas fa-book-open"></i> Courses</span>
-                        <i class="fas fa-chevron-down chevron-icon"></i>
-                    </div>
-                    <div class="mobile-nav-submenu" id="courses-submenu">
-                        <a href="{{ url_for('staff_courses_creation') }}"><i class="fas fa-book"></i> Courses Creation</a>
-                        <a href="{{ url_for('staff_courses_edit_req.view_active_courses') }}"><i class="fas fa-edit"></i> Courses Edit Request</a>
-                        <a href="{{ url_for('staff_courses_view.view_staff_active_courses') }}"><i class="fas fa-eye"></i> Courses View</a>
-                    </div>
-                </div>
-                
-                <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
-                
+                <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
+                <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
+                <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
+                <a href="{{ url_for('admin_student_grades.view_grades') }}" class="active"><i class="fas fa-graduation-cap"></i> Student Grade</a>
+                <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
+                <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
                 <div class="mobile-nav-divider"></div>
-                <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
-                <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                 <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
@@ -109,8 +88,8 @@
                 <div class="profile-dropdown">
                     <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
-                        <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
+                        <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="#"><i class="fas fa-cog"></i> Settings</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -119,22 +98,56 @@
         </div>
     </div>
 
-    <!-- Class Student Management Subnav -->
-    <nav class="courses-subnav">
-        <div class="subnav-right">
-            <a href="{{ url_for('staff_class_management') }}">Class Management</a>
-            <a href="{{ url_for('staff_class_creation.create_class') }}">Class Creation</a>
-            <a href="{{ url_for('staff_class_edit_req') }}">Class Edit Request</a>
-            <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}">Enrollment Acceptance</a>
-            <a href="#" class="active">Student Management: {{ class_title }}</a>
-        </div>
-    </nav>
-
     <main class="content">
         <div class="container">
             <div class="page-header">
-                <h1><i class="fas fa-user-graduate"></i> Class Student Management</h1>
-                <p class="subtitle">Below is the list of students enrolled in <strong>{{ class_title }}</strong>. You can manage their grades and view their profiles.</p>
+                <h1><i class="fas fa-graduation-cap"></i> Student Grade Management</h1>
+                <p class="subtitle">Manage student grades across all classes. Filter by class or search for specific students.</p>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="classFilter"><i class="fas fa-chalkboard-teacher"></i> Filter by Class:</label>
+                        <select id="classFilter" class="form-select">
+                            <option value="">All Classes</option>
+                            {% for class in classes %}
+                            <option value="{{ class.class_id }}">{{ class.class_title }} - {{ class.school_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="searchInput"><i class="fas fa-search"></i> Search Student:</label>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Search by name or email...">
+                            <button id="searchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="statusFilter"><i class="fas fa-filter"></i> Filter by Status:</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="enrolled">Enrolled/Active</option>
+                            <option value="Competent">Competent/Completed</option>
+                            <option value="dropped">Dropped</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button id="applyFilter" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <button id="resetFilter" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -148,24 +161,23 @@
             {% endwith %}
 
             <div class="table-container">
-                {% if students|length == 0 %}
-                <div class="no-data-message">
-                    <i class="fas fa-user-graduate"></i>
-                    <h3>No Students Found</h3>
-                    <p>No students are currently enrolled in this class. Students will appear here once they enroll.</p>
-                </div>
-                {% else %}
-                <table class="class-table">
+                <table class="grades-table">
                     <thead>
                         <tr>
                             <th>Student Name</th>
+                            <th>Class</th>
                             <th>Email</th>
+                            <th>Prelim Grade</th>
+                            <th>Midterm Grade</th>
+                            <th>Final Grade</th>
                             <th>Average with Remarks</th>
                             <th>Current Remarks</th>
+                            <th>Enrollment Status</th>
+                            <th>Instructor</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="gradesTableBody">
                         {% for student in students %}
                         {% set prelim = student.prelim_grade %}
                         {% set midterm = student.midterm_grade %}
@@ -173,14 +185,45 @@
                         {% set has_all_grades = prelim is not none and midterm is not none and final is not none %}
                         {% if has_all_grades %}
                             {% set avg = (prelim + midterm + final) / 3 %}
-                            {% set auto_remarks = "Competent" if avg >= 75 else "Not Yet Competent" %}
+                            {% set auto_remarks = "Competent" if avg >= 75 else "Not yet competent" %}
                         {% else %}
                             {% set avg = none %}
                             {% set auto_remarks = "Incomplete" %}
                         {% endif %}
-                        <tr>
+                        
+                        {# Determine display status #}
+                        {% set display_status = student.enrollment_status %}
+                        {% if student.remarks == 'Competent' %}
+                            {% set display_status = 'Competent' %}
+                        {% elif student.remarks == 'Dropped' %}
+                            {% set display_status = 'dropped' %}
+                        {% endif %}
+                        
+                        <tr data-class-id="{{ student.class_id }}" data-status="{{ display_status }}" data-enrollment-id="{{ student.enrollment_id }}">
                             <td>{{ student.first_name }} {{ student.last_name }}</td>
+                            <td>{{ student.class_title }}</td>
                             <td>{{ student.email }}</td>
+                            <td>
+                                {% if student.prelim_grade %}
+                                    <span class="grade-value">{{ student.prelim_grade }}%</span>
+                                {% else %}
+                                    <span class="grade-na">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if student.midterm_grade %}
+                                    <span class="grade-value">{{ student.midterm_grade }}%</span>
+                                {% else %}
+                                    <span class="grade-na">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if student.final_grade %}
+                                    <span class="grade-value">{{ student.final_grade }}%</span>
+                                {% else %}
+                                    <span class="grade-na">N/A</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if has_all_grades %}
                                     <span class="average-with-remarks {% if avg >= 75 %}competent{% else %}not-competent{% endif %}">
@@ -195,6 +238,12 @@
                                     {{ student.remarks or 'Not Set' }}
                                 </span>
                             </td>
+                            <td>
+                                <span class="status-badge status-{{ display_status|lower|replace(' ', '-') }}">
+                                    {{ display_status|title if display_status else 'N/A' }}
+                                </span>
+                            </td>
+                            <td>{{ student.instructor_name }}</td>
                             <td class="action-buttons">
                                 <button class="edit-btn" 
                                         data-enrollment-id="{{ student.enrollment_id }}"
@@ -202,17 +251,20 @@
                                         data-midterm="{{ student.midterm_grade if student.midterm_grade is not none else '' }}"
                                         data-final="{{ student.final_grade if student.final_grade is not none else '' }}"
                                         data-remarks="{{ student.remarks or '' }}"
-                                        data-auto-remarks="{{ auto_remarks }}">
+                                        data-auto-remarks="{{ auto_remarks }}"
+                                        data-student-name="{{ student.first_name }} {{ student.last_name }}"
+                                        data-class-name="{{ student.class_title }}">
                                     <i class="fas fa-edit"></i> Edit Grade
                                 </button>
                                 <button class="profile-btn" data-user-id="{{ student.user_id }}">
                                     <i class="fas fa-user"></i> Profile
                                 </button>
-                                <button class="completion-btn" 
+                                <button class="certificate-btn" 
                                         data-enrollment-id="{{ student.enrollment_id }}"
                                         data-student-name="{{ student.first_name }} {{ student.last_name }}"
                                         data-remarks="{{ student.remarks or '' }}"
-                                        {% if student.remarks != 'Competent' and student.enrollment_status != 'completed' %}disabled{% endif %}>
+                                        data-enrollment-status="{{ display_status }}"
+                                        {% if student.remarks != 'Competent' and display_status != 'completed' %}disabled{% endif %}>
                                     <i class="fas fa-file-certificate"></i> Certificate
                                 </button>
                             </td>
@@ -220,32 +272,55 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                
+                {% if students|length == 0 %}
+                <div class="no-data-message">
+                    <i class="fas fa-user-graduate"></i>
+                    <h3>No Students Found</h3>
+                    <p>No student grades are available to display. Try adjusting your filters or add grades to students.</p>
+                </div>
                 {% endif %}
+                
+                <div class="table-footer">
+                    <div class="table-info">
+                        Showing <span id="showingCount">{{ students|length }}</span> of <span id="totalCount">{{ students|length }}</span> students
+                    </div>
+                    <div class="pagination">
+                        <button id="prevPage" class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+                        <span id="pageInfo">Page 1 of 1</span>
+                        <button id="nextPage" class="page-btn" disabled><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
             </div>
 
-            {% if students|length > 0 %}
+            <!-- Bulk Actions -->
             <div class="bulk-actions">
                 <h3><i class="fas fa-tasks"></i> Bulk Actions</h3>
                 <div class="bulk-actions-container">
-                    <a href="{{ url_for('staff_class_student_management.download_grade_sheet', class_id=class_id) }}" class="quick-action-btn primary">
-                        <i class="fas fa-file-excel"></i> Download Grade Sheet (Excel)
-                    </a>
-
-                    <form action="{{ url_for('staff_class_student_management.upload_grade_sheet', class_id=class_id) }}" method="post" enctype="multipart/form-data" class="upload-form">
-                        <div class="file-input-container">
-                            <label for="file-upload" class="file-upload-label">
-                                <i class="fas fa-cloud-upload-alt"></i> Choose Excel File
-                            </label>
-                            <input id="file-upload" type="file" name="file" required>
-                            <span id="file-name">No file chosen</span>
-                        </div>
-                        <button type="submit" class="quick-action-btn secondary">
-                            <i class="fas fa-upload"></i> Upload Grade Sheet
-                        </button>
-                    </form>
+                    <button class="quick-action-btn primary" id="downloadAllGrades">
+                        <i class="fas fa-file-excel"></i> Download All Grades (Excel)
+                    </button>
+                    
+                    <div class="upload-section">
+                        <form id="bulkUploadForm" enctype="multipart/form-data" class="upload-form">
+                            <div class="file-input-container">
+                                <label for="bulkFileUpload" class="file-upload-label">
+                                    <i class="fas fa-cloud-upload-alt"></i> Choose Excel File
+                                </label>
+                                <input id="bulkFileUpload" type="file" name="file" accept=".xlsx,.xls">
+                                <span id="bulkFileName">No file chosen</span>
+                            </div>
+                            <button type="button" class="quick-action-btn secondary" id="uploadBulkGrades">
+                                <i class="fas fa-upload"></i> Upload Grade Sheet
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <button class="quick-action-btn warning" id="massComplete" data-toggle="tooltip" title="Mark selected students as Completed">
+                        <i class="fas fa-check-circle"></i> Mass Complete
+                    </button>
                 </div>
             </div>
-            {% endif %}
         </div>
     </main>
 
@@ -260,6 +335,11 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editEnrollmentId">
+                <div class="student-info">
+                    <h4 id="studentNameDisplay"></h4>
+                    <p id="classNameDisplay" class="text-muted"></p>
+                </div>
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label for="prelimGrade">Prelim Grade:</label>
@@ -288,7 +368,7 @@
                         </div>
                     </div>
                     <small class="form-text text-muted">
-                        <i class="fas fa-info-circle"></i> Automatic remarks: Average ≥ 75 = Competent, < 75 = Not Yet Competent, missing grades = Incomplete
+                        <i class="fas fa-info-circle"></i> Automatic remarks: Average ≥ 75 = Competent, < 75 = Not yet competent, missing grades = Incomplete
                     </small>
                 </div>
 
@@ -296,7 +376,7 @@
                     <label for="remarks">Final Remarks:</label>
                     <select id="remarks" class="form-input">
                         <option value="Competent">Competent</option>
-                        <option value="Not Yet Competent">Not Yet Competent</option>
+                        <option value="Not yet competent">Not yet competent</option>
                         <option value="Incomplete">Incomplete</option>
                         <option value="Dropped">Dropped</option>
                     </select>
@@ -449,6 +529,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/staff/staff_class_student_management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/admin_student_grade.js') }}"></script>
 </body>
 </html>

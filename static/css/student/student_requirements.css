@@ -509,11 +509,27 @@ main {
     border: 1px solid #ffeaa7;
 }
 
+/* File name truncation */
+.file-name-truncate {
+    display: inline-block;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
 .file-link {
     color: var(--tesda-blue);
     text-decoration: none;
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
+    display: inline-block;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
 }
 
 .file-link:hover {
@@ -534,10 +550,23 @@ main {
     transition: background-color 0.3s ease;
     font-family: 'Poppins', sans-serif;
     white-space: nowrap;
+    min-width: 90px;
+    justify-content: center;
 }
 
-.preview-btn:hover {
+.preview-btn:hover:not(.preview-btn-disabled) {
     background: var(--tesda-dark-blue);
+}
+
+.preview-btn-disabled {
+    background: #cbd5e0;
+    color: #718096;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.preview-btn-disabled:hover {
+    background: #cbd5e0;
 }
 
 /* ===== File Input Styling ===== */
@@ -1074,6 +1103,11 @@ main {
     .logo-container {
         gap: 15px;
     }
+    
+    .file-name-truncate,
+    .file-link {
+        max-width: 180px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1217,6 +1251,11 @@ main {
     .marriage-certificate-field {
         padding: 1rem;
     }
+    
+    .file-name-truncate,
+    .file-link {
+        max-width: 220px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1305,6 +1344,11 @@ main {
     .preview-iframe {
         height: 300px;
     }
+    
+    .file-name-truncate,
+    .file-link {
+        max-width: 150px;
+    }
 }
 
 /* Extra small devices */
@@ -1324,5 +1368,10 @@ main {
     .profile-img {
         width: 30px;
         height: 30px;
+    }
+    
+    .file-name-truncate,
+    .file-link {
+        max-width: 120px;
     }
 }

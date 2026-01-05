@@ -56,6 +56,7 @@ from admin_enrollment import admin_enrollment_bp
 from admin_verified_req import admin_verified_req_bp
 from admin_create_staff import admin_create_staff_bp
 from admin_materials import admin_materials_bp
+from admin_student_grade import admin_student_grades_bp
 
 #Admin BP
 app.register_blueprint(admin_homepage_bp)
@@ -78,6 +79,7 @@ app.register_blueprint(admin_enrollment_bp)
 app.register_blueprint(admin_verified_req_bp)
 app.register_blueprint(admin_create_staff_bp)
 app.register_blueprint(admin_materials_bp)
+app.register_blueprint(admin_student_grades_bp, url_prefix='/admin/student_grades')
 
 #Staff BP
 from staff_profile import staff_profile_bp
@@ -284,6 +286,8 @@ def admin_class_approval():
 @app.route("/admin_class_edit_req")
 def admin_class_edit_req():
     return render_template("admin/admin_class_edit_req.html")
+
+
 
 #Students
 @app.route("/student_homepage")
