@@ -1,14 +1,32 @@
 // Modal instances
-let fileModal = null;
 let currentStudentId = null;
+let currentDocument = null;
+
+// Format date from GMT string to readable format
+function formatDate(dateString) {
+    if (!dateString) return 'Not specified';
+    
+    try {
+        // Try to parse the date string
+        const date = new Date(dateString);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return dateString; // Return original if invalid
+        }
+        
+        // Format to "Month Day, Year"
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString; // Return original if error
+    }
+}
 
 $(document).ready(function() {
     // Initialize all functionality
     init();
-    
-    const fileModal = $('#fileModal');
-    const fileViewer = $('#fileViewer');
-    const modalTitle = $('#modal-title');
     
     const studentDetailsModal = $('#studentDetailsModal');
     const studentProfilePicture = $('#studentProfilePicture');
@@ -16,10 +34,22 @@ $(document).ready(function() {
     const studentEmail = $('#studentEmail');
     const studentStatus = $('#studentStatus');
     const studentDetailsContent = $('#studentDetailsContent');
+    const documentList = $('#documentList');
+    const documentViewer = $('#documentViewer');
+    const documentPreviewContainer = $('#documentPreviewContainer');
+    const verificationActions = $('#verificationActions');
+    
+    // Tab elements
+    const documentTabs = $('.document-tab');
+    const previewTab = $('#previewTab');
+    const listTab = $('#listTab');
+    const documentCount = $('#documentCount');
+    const uploadedCount = $('#uploadedCount');
     
     let currentPage = 1;
     let searchQuery = '';
     let statusFilter = '';
+    let uploadedDocumentsCount = 0;
 
     // Load data dynamically
     function loadData(page = 1) {
@@ -74,6 +104,7 @@ $(document).ready(function() {
             updateStats({
                 pending: 0,
                 verified: 0,
+                rejected: 0,
                 total: 0
             });
         });
@@ -87,13 +118,15 @@ $(document).ready(function() {
             // Ensure we have numbers, not undefined
             const pending = parseInt(stats.pending) || 0;
             const verified = parseInt(stats.verified) || 0;
+            const rejected = parseInt(stats.rejected) || 0;
             const total = parseInt(stats.total) || 0;
             
-            console.log(`Parsed stats - Pending: ${pending}, Verified: ${verified}, Total: ${total}`);
+            console.log(`Parsed stats - Pending: ${pending}, Verified: ${verified}, Rejected: ${rejected}, Total: ${total}`);
             
             animateValue('pending-count', pending, 0);
             animateValue('verified-count', verified, 100);
-            animateValue('total-count', total, 200);
+            animateValue('rejected-count', rejected, 200);
+            animateValue('total-count', total, 300);
             
             // Show stats container
             $('.stats-overview').show();
@@ -144,13 +177,20 @@ $(document).ready(function() {
         }
 
         students.forEach((s, index) => {
+            // Get status badge based on verification status
+            let statusBadge = '';
+            if (s.verified === 'verified') {
+                statusBadge = `<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>`;
+            } else if (s.verified === 'rejected') {
+                statusBadge = `<span class="rejected-badge"><i class="fas fa-times-circle"></i> Rejected</span>`;
+            } else {
+                statusBadge = `<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>`;
+            }
+
             // Check if student has uploaded requirements
             if (!s.user_id || s.document_count === 0) {
                 // Student hasn't uploaded requirements yet
-                const statusBadge = s.verified === 'verified'
-                    ? `<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>`
-                    : `<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>`;
-
+                
                 // Get profile picture URL
                 const profilePicture = s.profile_picture || 'default.png';
                 const profilePictureUrl = `${window.appUrls.staticProfilePath}${profilePicture}`;
@@ -165,15 +205,27 @@ $(document).ready(function() {
                         </div>
                     </div>
                 `;
-                
-                const actionHTML = `
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button class="btn-profile view-student-details" data-user="${s.user_id || '0'}" title="View Student Details">
-                            <i class="fas fa-user-circle"></i> Profile
-                        </button>
-                        <span style="color: #64748b; font-size: 0.85rem;">No documents</span>
-                    </div>
-                `;
+
+                // Only show profile button for rejected students
+                let actionHTML = '';
+                if (s.verified === 'rejected') {
+                    actionHTML = `
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn-profile view-student-details" data-user="${s.user_id || '0'}" title="View Student Details">
+                                <i class="fas fa-user-circle"></i> Profile
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionHTML = `
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn-profile view-student-details" data-user="${s.user_id || '0'}" title="View Student Details">
+                                <i class="fas fa-user-circle"></i> Profile
+                            </button>
+                            <span style="color: #64748b; font-size: 0.85rem;">No documents</span>
+                        </div>
+                    `;
+                }
 
                 tbody.append(`
                     <tr>
@@ -188,10 +240,6 @@ $(document).ready(function() {
             }
             
             // Student has uploaded requirements
-            const statusBadge = s.verified === 'verified'
-                ? `<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>`
-                : `<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>`;
-
             let filesHTML = '<div class="documents-list">';
             // Only show fields that actually exist in student_requirements
             const fields = [
@@ -239,17 +287,12 @@ $(document).ready(function() {
                 </div>
             `;
 
+            // SIMPLIFIED: Only show profile button in table
             const actionHTML = `
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="action-buttons">
                     <button class="btn-profile view-student-details" data-user="${s.user_id}" title="View Student Details">
                         <i class="fas fa-user-circle"></i> Profile
                     </button>
-                    ${s.verified !== 'verified' 
-                        ? `<button class="btn-accept" data-user="${s.user_id}" title="Verify Student">
-                            <i class="fas fa-check"></i> Verify
-                           </button>`
-                        : `<i class="fas fa-check-circle" style="color:var(--success-green); font-size: 1.5rem;" title="Verified"></i>`
-                    }
                 </div>
             `;
 
@@ -307,110 +350,6 @@ $(document).ready(function() {
 
     // Bind events
     function bindTableEvents() {
-        // File preview
-        $('.btn-view').on('click', function () {
-            const filename = $(this).data('file');
-            const userId = $(this).data('user');
-            const fieldName = $(this).data('field');
-            const button = $(this);
-            
-            // Add loading state
-            const originalHtml = button.html();
-            button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
-            
-            // First, get document information to determine the document type
-            $.getJSON(`${window.appUrls.documentInfo.replace('/0/', `/${userId}/`)}${fieldName}`, function(docInfo) {
-                const documentType = docInfo.document_type || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                
-                // Update modal title with the actual document name
-                modalTitle.text(documentType);
-                
-                // Now load the file preview - use the correct endpoint for files
-                $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
-                    if (data.error) {
-                        showMessage('error', data.error);
-                        return;
-                    }
-                    
-                    const ext = filename.split('.').pop().toLowerCase();
-                    const fileUrl = data.file_url;
-
-                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
-                        fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
-                    } else if (['pdf'].includes(ext)) {
-                        fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
-                    } else if (['doc', 'docx'].includes(ext)) {
-                        fileViewer.html(`
-                            <div style="text-align: center; padding: 2rem;">
-                                <i class="fas fa-file-word" style="font-size: 3rem; color: #2b579a; margin-bottom: 1rem;"></i>
-                                <h4>${documentType}</h4>
-                                <p>Word documents cannot be previewed in the browser.</p>
-                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
-                                    <i class="fas fa-download"></i> Download File
-                                </a>
-                            </div>
-                        `);
-                    } else {
-                        fileViewer.html(`
-                            <div style="text-align: center; padding: 2rem;">
-                                <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
-                                <h4>${documentType}</h4>
-                                <p>This file type cannot be previewed in the browser.</p>
-                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
-                                    <i class="fas fa-download"></i> Download File
-                                </a>
-                            </div>
-                        `);
-                    }
-                    fileModal.fadeIn();
-                }).fail((xhr, status, error) => {
-                    showMessage('error', 'Error loading file preview: ' + error);
-                }).always(() => {
-                    // Reset button state
-                    button.html(originalHtml).prop('disabled', false);
-                });
-                
-            }).fail((xhr, status, error) => {
-                // Fallback: use field name if document info fails
-                const documentType = fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                modalTitle.text(documentType);
-                
-                // Load file preview with fallback title
-                $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
-                    if (data.error) {
-                        showMessage('error', data.error);
-                        return;
-                    }
-                    
-                    const ext = filename.split('.').pop().toLowerCase();
-                    const fileUrl = data.file_url;
-
-                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
-                        fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
-                    } else if (['pdf'].includes(ext)) {
-                        fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
-                    } else {
-                        fileViewer.html(`
-                            <div style="text-align: center; padding: 2rem;">
-                                <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
-                                <h4>${documentType}</h4>
-                                <p>This file type cannot be previewed in the browser.</p>
-                                <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
-                                    <i class="fas fa-download"></i> Download File
-                                </a>
-                            </div>
-                        `);
-                    }
-                    fileModal.fadeIn();
-                }).fail((xhr, status, error) => {
-                    showMessage('error', 'Error loading file preview: ' + error);
-                }).always(() => {
-                    // Reset button state
-                    button.html(originalHtml).prop('disabled', false);
-                });
-            });
-        });
-
         // View student details
         $('.view-student-details').on('click', function () {
             const userId = $(this).data('user');
@@ -425,37 +364,24 @@ $(document).ready(function() {
             }
         });
 
-        // Accept verification
-        $('.btn-accept').on('click', function () {
+        // Document view buttons in table (small view)
+        $('.btn-view').on('click', function(e) {
+            e.stopPropagation();
             const userId = $(this).data('user');
-            const button = $(this);
-            const studentRow = button.closest('tr');
-            const studentName = studentRow.find('.student-name').text().trim();
+            currentStudentId = userId;
+            window.currentStudentId = userId;
             
-            if (!confirm(`Are you sure you want to verify ${studentName}? This action cannot be undone.`)) return;
-            
-            // Add loading state
-            button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
-            
-            $.post(`/admin/verify/accept/${userId}`, function (response) {
-                if (response.success) {
-                    showMessage('success', `Successfully verified ${studentName}`);
-                    // Reload both data and stats
-                    loadData(currentPage);
-                    loadStats();
-                } else {
-                    showMessage('error', `Error: ${response.message}`);
-                    button.html('<i class="fas fa-check"></i> Verify').prop('disabled', false);
-                }
-            }).fail(() => {
-                showMessage('error', 'Error verifying student');
-                button.html('<i class="fas fa-check"></i> Verify').prop('disabled', false);
-            });
+            if (userId && userId !== '0') {
+                loadStudentDetails(userId, {
+                    filename: $(this).data('file'),
+                    fieldName: $(this).data('field')
+                });
+            }
         });
     }
 
     // Load student details
-    function loadStudentDetails(userId) {
+    function loadStudentDetails(userId, documentToPreview = null) {
         // Show loading state
         studentDetailsContent.html(`
             <div class="loading-spinner" style="text-align: center; padding: 2rem;">
@@ -464,8 +390,16 @@ $(document).ready(function() {
             </div>
         `);
         
-        // Show verify button only for pending students
-        $('#verifyStudentBtn').hide();
+        // Reset document preview
+        documentList.empty();
+        documentViewer.hide();
+        $('.no-document-selected').show();
+        
+        // Hide verification actions initially
+        verificationActions.hide();
+        
+        // Reset tab to preview tab by default
+        switchTab('preview');
         
         studentDetailsModal.fadeIn();
         
@@ -484,198 +418,86 @@ $(document).ready(function() {
                 // Update status
                 if (student.verified === 'verified') {
                     studentStatus.html('<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>');
-                    $('#verifyStudentBtn').hide();
+                } else if (student.verified === 'rejected') {
+                    studentStatus.html('<span class="rejected-badge"><i class="fas fa-times-circle"></i> Rejected</span>');
                 } else {
                     studentStatus.html('<span class="pending-badge"><i class="fas fa-clock"></i> Pending Verification</span>');
-                    $('#verifyStudentBtn').show();
+                    // Show verification actions only for pending status
+                    verificationActions.show();
                 }
                 
-                // Build student details HTML
+                // Format date of birth
+                const formattedDateOfBirth = formatDate(student.date_of_birth);
+                
+                // Build student details HTML - REMOVED Account Information section
                 let detailsHtml = `
-                    <div class="student-details-content">
-                        <!-- Personal Information -->
-                        <div class="student-detail-section">
-                            <h4><i class="fas fa-id-card"></i> Personal Information</h4>
-                            <div class="student-detail-grid">
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Full Name</div>
-                                    <div class="student-detail-value">${student.full_name}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Gender</div>
-                                    <div class="student-detail-value">${student.gender || 'Not specified'}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Date of Birth</div>
-                                    <div class="student-detail-value">${student.date_of_birth || 'Not specified'}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Contact Number</div>
-                                    <div class="student-detail-value">${student.contact_number || 'Not provided'}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Address</div>
-                                    <div class="student-detail-value">${student.full_address || 'Not provided'}</div>
-                                </div>
+                    <!-- Personal Information -->
+                    <div class="student-detail-section">
+                        <h4><i class="fas fa-id-card"></i> Personal Information</h4>
+                        <div class="student-detail-grid">
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Full Name</div>
+                                <div class="student-detail-value">${student.full_name}</div>
                             </div>
-                        </div>
-                        
-                        <!-- Account Information -->
-                        <div class="student-detail-section">
-                            <h4><i class="fas fa-user-circle"></i> Account Information</h4>
-                            <div class="student-detail-grid">
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Username</div>
-                                    <div class="student-detail-value">${student.username}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Account Status</div>
-                                    <div class="student-detail-value">${student.account_status === 'active' ? 'Active' : 'Inactive'}</div>
-                                </div>
-                                <div class="student-detail-item">
-                                    <div class="student-detail-label">Verification Status</div>
-                                    <div class="student-detail-value">
-                                        ${student.verified === 'verified' 
-                                            ? '<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>' 
-                                            : '<span class="pending-badge"><i class="fas fa-clock"></i> Pending</span>'
-                                        }
-                                    </div>
-                                </div>
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Gender</div>
+                                <div class="student-detail-value">${student.gender || 'Not specified'}</div>
                             </div>
-                        </div>
-                        
-                        <!-- Uploaded Documents -->
-                        <div class="student-detail-section">
-                            <h4><i class="fas fa-file-alt"></i> Uploaded Documents (${student.document_count || 0})</h4>
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Date of Birth</div>
+                                <div class="student-detail-value">${formattedDateOfBirth}</div>
+                            </div>
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Contact Number</div>
+                                <div class="student-detail-value">${student.contact_number || 'Not provided'}</div>
+                            </div>
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Address</div>
+                                <div class="student-detail-value">${student.full_address || 'Not provided'}</div>
+                            </div>
                 `;
                 
-                // Document fields - only show fields that students actually upload
-                const documentFields = [
-                    {key: 'barangay_clearance', name: 'Barangay Clearance', icon: 'fa-file-contract'},
-                    {key: 'medical_certificate', name: 'Medical Certificate', icon: 'fa-file-medical'},
-                    {key: 'valid_id', name: 'Valid ID', icon: 'fa-id-badge'},
-                    {key: 'transcript_form', name: 'Transcript Form', icon: 'fa-file-signature'},
-                    {key: 'marriage_certificate', name: 'Marriage Certificate', icon: 'fa-ring'}
-                ];
-                
-                detailsHtml += '<div class="student-documents-grid">';
-                
-                let uploadedDocs = 0;
-                documentFields.forEach(field => {
-                    if (student[field.key]) {
-                        uploadedDocs++;
-                        detailsHtml += `
-                            <div class="document-item">
-                                <i class="fas ${field.icon}"></i>
-                                <p>${field.name}</p>
-                                <button class="btn-view" 
-                                        data-file="${student[field.key]}" 
-                                        data-user="${student.user_id}"
-                                        data-field="${field.key}"
-                                        style="margin-top: 0.5rem; font-size: 0.75rem;">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
+                // Add username if available
+                if (student.username) {
+                    detailsHtml += `
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Username</div>
+                                <div class="student-detail-value">${student.username}</div>
                             </div>
-                        `;
-                    }
-                });
-                
-                if (uploadedDocs === 0) {
-                    detailsHtml += '<p style="grid-column: 1 / -1; text-align: center; color: #64748b;">No documents uploaded yet</p>';
+                    `;
                 }
                 
-                // Add additional notes if they exist
-                if (student.additional_notes) {
+                // Add account status if available
+                if (student.account_status) {
                     detailsHtml += `
-                        <div class="student-detail-section" style="margin-top: 1.5rem;">
-                            <h4><i class="fas fa-sticky-note"></i> Additional Notes</h4>
-                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #0d6efd;">
-                                <p style="margin: 0; color: #495057; font-style: italic;">${student.additional_notes}</p>
+                            <div class="student-detail-item">
+                                <div class="student-detail-label">Account Status</div>
+                                <div class="student-detail-value">${student.account_status === 'active' ? 'Active' : 'Inactive'}</div>
                             </div>
-                        </div>
                     `;
                 }
                 
                 detailsHtml += `
                         </div>
                     </div>
-                    
-                    <!-- Comparison Note -->
-                    <div class="student-detail-section" style="background-color: #fef3c7; border-color: #fbbf24;">
-                        <h4><i class="fas fa-exclamation-triangle" style="color: #92400e;"></i> Verification Note</h4>
-                        <p style="color: #92400e; font-size: 0.9rem;">
-                            <strong>Important:</strong> Compare the uploaded documents with the student's profile information above. 
-                            Verify that all required documents are present and valid.
-                        </p>
-                    </div>
-                </div>
                 `;
+                
+                // Add additional notes if they exist
+                if (student.additional_notes) {
+                    detailsHtml += `
+                        <div class="student-detail-section">
+                            <h4><i class="fas fa-sticky-note"></i> Additional Notes</h4>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #0d6efd; max-height: 200px; overflow-y: auto;">
+                                <p style="margin: 0; color: #495057; white-space: pre-line;">${student.additional_notes}</p>
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 studentDetailsContent.html(detailsHtml);
                 
-                // Re-bind document view buttons in the modal
-                $('.document-item .btn-view').on('click', function() {
-                    const filename = $(this).data('file');
-                    const userId = $(this).data('user');
-                    const fieldName = $(this).data('field');
-                    const button = $(this);
-                    
-                    // Add loading state
-                    const originalHtml = button.html();
-                    button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
-                    
-                    $.getJSON(`${window.appUrls.documentInfo.replace('/0/', `/${userId}/`)}${fieldName}`, function(docInfo) {
-                        const documentType = docInfo.document_type || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        modalTitle.text(documentType);
-                        
-                        // Load file preview
-                        $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
-                            if (data.error) {
-                                showMessage('error', data.error);
-                                return;
-                            }
-                            
-                            const ext = filename.split('.').pop().toLowerCase();
-                            const fileUrl = data.file_url;
-
-                            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
-                                fileViewer.html(`<img src="${fileUrl}" alt="${documentType}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;">`);
-                            } else if (['pdf'].includes(ext)) {
-                                fileViewer.html(`<iframe src="${fileUrl}" frameborder="0" style="width: 100%; height: 70vh;"></iframe>`);
-                            } else if (['doc', 'docx'].includes(ext)) {
-                                fileViewer.html(`
-                                    <div style="text-align: center; padding: 2rem;">
-                                        <i class="fas fa-file-word" style="font-size: 3rem; color: #2b579a; margin-bottom: 1rem;"></i>
-                                        <h4>${documentType}</h4>
-                                        <p>Word documents cannot be previewed in the browser.</p>
-                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
-                                            <i class="fas fa-download"></i> Download File
-                                        </a>
-                                    </div>
-                                `);
-                            } else {
-                                fileViewer.html(`
-                                    <div style="text-align: center; padding: 2rem;">
-                                        <i class="fas fa-file-download" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
-                                        <h4>${documentType}</h4>
-                                        <p>This file type cannot be previewed in the browser.</p>
-                                        <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
-                                            <i class="fas fa-download"></i> Download File
-                                        </a>
-                                    </div>
-                                `);
-                            }
-                            studentDetailsModal.fadeOut();
-                            fileModal.fadeIn();
-                        }).fail((xhr, status, error) => {
-                            showMessage('error', 'Error loading file preview: ' + error);
-                        }).always(() => {
-                            button.html(originalHtml).prop('disabled', false);
-                        });
-                    }).fail(() => {
-                        button.html(originalHtml).prop('disabled', false);
-                    });
-                });
+                // Load documents list
+                loadDocumentsList(student, documentToPreview);
                 
             } else {
                 studentDetailsContent.html(`
@@ -695,57 +517,234 @@ $(document).ready(function() {
         });
     }
 
-    // Close file modal
-    function closeFileModal() {
-        fileModal.fadeOut();
-        modalTitle.text('Document Preview');
+    // Switch between tabs
+    function switchTab(tabName) {
+        // Update tab buttons
+        documentTabs.removeClass('active');
+        $(`.document-tab[data-tab="${tabName}"]`).addClass('active');
+        
+        // Update tab content
+        $('.tab-pane').removeClass('active');
+        $(`#${tabName}Tab`).addClass('active');
+        
+        // If switching to preview tab and a document is selected, show it
+        if (tabName === 'preview' && currentDocument) {
+            // Preview will be shown automatically since document is already selected
+        }
+    }
+
+    // Load documents list
+    function loadDocumentsList(student, documentToPreview = null) {
+        documentList.empty();
+        uploadedDocumentsCount = 0;
+        
+        // Document fields - only show fields that students actually upload
+        const documentFields = [
+            {key: 'barangay_clearance', name: 'Barangay Clearance', icon: 'fa-file-contract'},
+            {key: 'medical_certificate', name: 'Medical Certificate', icon: 'fa-file-medical'},
+            {key: 'valid_id', name: 'Valid ID', icon: 'fa-id-badge'},
+            {key: 'transcript_form', name: 'Transcript Form', icon: 'fa-file-signature'},
+            {key: 'marriage_certificate', name: 'Marriage Certificate', icon: 'fa-ring'}
+        ];
+        
+        documentFields.forEach(field => {
+            if (student[field.key]) {
+                uploadedDocumentsCount++;
+                const docItem = $(`
+                    <div class="document-item" data-file="${student[field.key]}" data-field="${field.key}">
+                        <div class="document-info">
+                            <div class="document-icon">
+                                <i class="fas ${field.icon}"></i>
+                            </div>
+                            <div class="document-details">
+                                <h5>${field.name}</h5>
+                                <p>${student[field.key].split('/').pop()}</p>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-primary btn-view-document" 
+                                    data-file="${student[field.key]}" 
+                                    data-field="${field.key}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                `);
+                
+                documentList.append(docItem);
+                
+                // Bind click event for document item
+                docItem.on('click', function(e) {
+                    if (!$(e.target).closest('.btn-view-document').length) {
+                        const filename = $(this).data('file');
+                        const fieldName = $(this).data('field');
+                        previewDocument(filename, fieldName, student);
+                        switchTab('preview');
+                    }
+                });
+                
+                // Bind click event for view button
+                docItem.find('.btn-view-document').on('click', function(e) {
+                    e.stopPropagation();
+                    const filename = $(this).data('file');
+                    const fieldName = $(this).data('field');
+                    previewDocument(filename, fieldName, student);
+                    switchTab('preview');
+                });
+            }
+        });
+        
+        // Update document counts
+        documentCount.text(uploadedDocumentsCount);
+        uploadedCount.text(`${uploadedDocumentsCount} document${uploadedDocumentsCount !== 1 ? 's' : ''}`);
+        
+        if (uploadedDocumentsCount === 0) {
+            documentList.html('<p style="text-align: center; color: #64748b; padding: 2rem;">No documents uploaded yet</p>');
+        }
+        
+        // Auto-preview document if specified
+        if (documentToPreview && documentToPreview.filename) {
+            setTimeout(() => {
+                previewDocument(documentToPreview.filename, documentToPreview.fieldName, student);
+            }, 500);
+        }
+    }
+
+    // Preview document within the modal
+    function previewDocument(filename, fieldName, student) {
+        if (!filename) return;
+        
+        // Show loading state
+        documentViewer.html(`
+            <div class="loading-spinner" style="text-align: center; padding: 2rem;">
+                <div class="spinner" style="margin: 0 auto;"></div>
+                <span>Loading document...</span>
+            </div>
+        `).show();
+        $('.no-document-selected').hide();
+        
+        // Highlight active document item
+        $('.document-item').removeClass('active');
+        $(`.document-item[data-file="${filename}"]`).addClass('active');
+        
+        // Store current document
+        currentDocument = { filename, fieldName };
+        
+        // First, get document information to determine the document type
+        $.getJSON(`${window.appUrls.documentInfo.replace('/0/', `/${student.user_id}/`)}${fieldName}`, function(docInfo) {
+            const documentType = docInfo.document_type || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            // Now load the file preview
+            $.getJSON(`${window.appUrls.previewFile}${filename}`, function (data) {
+                if (data.error) {
+                    documentViewer.html(`
+                        <div class="document-fallback">
+                            <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                            <h4>Error Loading Document</h4>
+                            <p>${data.error}</p>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                const ext = filename.split('.').pop().toLowerCase();
+                const fileUrl = data.file_url;
+
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
+                    documentViewer.html(`<img src="${fileUrl}" alt="${documentType}" class="document-image">`);
+                } else if (['pdf'].includes(ext)) {
+                    documentViewer.html(`<iframe src="${fileUrl}" title="${documentType}" class="document-iframe"></iframe>`);
+                } else if (['doc', 'docx'].includes(ext)) {
+                    documentViewer.html(`
+                        <div class="document-fallback">
+                            <i class="fas fa-file-word" style="color: #2b579a;"></i>
+                            <h4>${documentType}</h4>
+                            <p>Word documents cannot be previewed in the browser.</p>
+                            <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
+                                <i class="fas fa-download"></i> Download File
+                            </a>
+                        </div>
+                    `);
+                } else {
+                    documentViewer.html(`
+                        <div class="document-fallback">
+                            <i class="fas fa-file-download" style="color: var(--tesda-blue);"></i>
+                            <h4>${documentType}</h4>
+                            <p>This file type cannot be previewed in the browser.</p>
+                            <a href="${fileUrl}" target="_blank" class="btn btn-primary" style="margin: 10px;">
+                                <i class="fas fa-download"></i> Download File
+                            </a>
+                        </div>
+                    `);
+                }
+            }).fail((xhr, status, error) => {
+                documentViewer.html(`
+                    <div class="document-fallback">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                        <h4>Error Loading Document</h4>
+                        <p>Failed to load document preview.</p>
+                    </div>
+                `);
+            });
+            
+        }).fail(() => {
+            // Fallback if document info fails
+            const documentType = fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            documentViewer.html(`
+                <div class="document-fallback">
+                    <i class="fas fa-file-alt" style="color: var(--tesda-blue);"></i>
+                    <h4>${documentType}</h4>
+                    <p>Loading document preview...</p>
+                </div>
+            `);
+        });
     }
 
     // Close student details modal
     function closeStudentDetailsModal() {
         studentDetailsModal.fadeOut();
         currentStudentId = null;
+        currentDocument = null;
+        
+        // Reset to preview tab
+        switchTab('preview');
+        documentViewer.hide();
+        $('.no-document-selected').show();
+        $('.document-item').removeClass('active');
     }
 
     // Verify student from details modal
     $('#verifyStudentBtn').on('click', function() {
         if (!currentStudentId) return;
         
-        const studentNameText = studentName.text();
-        
-        if (!confirm(`Are you sure you want to verify ${studentNameText}? This action cannot be undone.`)) return;
-        
-        const button = $(this);
-        const originalHtml = button.html();
-        
-        // Add loading state
-        button.html('<i class="fas fa-spinner fa-spin"></i> Verifying...').prop('disabled', true);
-        
-        $.post(`/admin/verify/accept/${currentStudentId}`, function (response) {
-            if (response.success) {
-                showMessage('success', `Successfully verified ${studentNameText}`);
-                closeStudentDetailsModal();
-                // Reload both data and stats
-                loadData(currentPage);
-                loadStats();
-            } else {
-                showMessage('error', `Error: ${response.message}`);
-                button.html(originalHtml).prop('disabled', false);
-            }
-        }).fail(() => {
-            showMessage('error', 'Error verifying student');
-            button.html(originalHtml).prop('disabled', false);
-        });
+        // Show approval confirmation modal
+        $('#approvalModal').fadeIn();
     });
 
-    // Close modals
-    $('#close-file-modal').on('click', closeFileModal);
-    $('#close-file-modal-header').on('click', closeFileModal);
+    // Reject student from details modal
+    $('#rejectStudentBtn').on('click', function() {
+        if (!currentStudentId) return;
+        
+        // Reset rejection reason textarea
+        $('#rejectionReasonTextarea').val('');
+        $('#charCount').text('0');
+        $('#rejectionValidation').hide();
+        
+        // Show rejection reason modal
+        $('#rejectionReasonModal').fadeIn();
+    });
+
+    // Tab switching
+    documentTabs.on('click', function() {
+        const tabName = $(this).data('tab');
+        switchTab(tabName);
+    });
+
+    // Close student details modal
     $('#closeStudentDetailsModal').on('click', closeStudentDetailsModal);
     $('#close-student-details-modal').on('click', closeStudentDetailsModal);
     
     $(window).on('click', (e) => { 
-        if ($(e.target).is(fileModal)) closeFileModal();
         if ($(e.target).is(studentDetailsModal)) closeStudentDetailsModal();
     });
 
@@ -770,6 +769,7 @@ $(document).ready(function() {
 function init() {
     initMobileNavigation();
     initModals();
+    initRejectionReasonHandlers();
 }
 
 // Mobile Navigation Functionality
@@ -925,16 +925,97 @@ function initModals() {
     $('.close-modal').click(function() {
         closeAllModals();
     });
+
+    // Approval Modal
+    $('#close-approval-modal').click(function() {
+        $('#approvalModal').fadeOut();
+    });
+
+    $('#cancelApproval').click(function() {
+        $('#approvalModal').fadeOut();
+    });
+
+    $('#confirmApproval').click(function() {
+        approveStudent();
+    });
+
+    // Rejection Reason Modal
+    $('#close-rejection-reason-modal').click(function() {
+        $('#rejectionReasonModal').fadeOut();
+    });
+
+    $('#cancelRejectionReason').click(function() {
+        $('#rejectionReasonModal').fadeOut();
+    });
+
+    $('#confirmRejectionWithReason').click(function() {
+        rejectStudentWithReason();
+    });
+
+    // Rejection Success Modal
+    $('#close-rejection-success-modal').click(function() {
+        $('#rejectionSuccessModal').fadeOut();
+        loadData();
+    });
+
+    $('#closeRejectionSuccessModal').click(function() {
+        $('#rejectionSuccessModal').fadeOut();
+        loadData();
+    });
+
+    // Success Modal
+    $('#close-success-modal').click(function() {
+        $('#success-modal').fadeOut();
+        loadData();
+    });
+
+    // Error Modal
+    $('#close-error-modal').click(function() {
+        $('#error-modal').fadeOut();
+    });
+
+    // Info Modal
+    $('#close-info-modal').click(function() {
+        $('#info-modal').fadeOut();
+    });
+}
+
+// Initialize rejection reason handlers
+function initRejectionReasonHandlers() {
+    // Character counter for rejection reason textarea
+    $('#rejectionReasonTextarea').on('input', function() {
+        const text = $(this).val();
+        const charCount = text.length;
+        $('#charCount').text(charCount);
+        
+        // Update validation
+        const validationMessage = $('#rejectionValidation');
+        if (charCount === 0) {
+            validationMessage.show().find('#validationText').text('Please provide a rejection reason');
+            $('#confirmRejectionWithReason').prop('disabled', true);
+        } else if (charCount < 10) {
+            validationMessage.show().find('#validationText').text('Please provide a more detailed reason (minimum 10 characters)');
+            $('#confirmRejectionWithReason').prop('disabled', true);
+        } else {
+            validationMessage.hide();
+            $('#confirmRejectionWithReason').prop('disabled', false);
+        }
+    });
 }
 
 // Unified Modal Handling - CONSISTENT WITH PROFILE PAGE
-function showMessage(type, text) {
+function showMessage(type, text, showEmailNotification = false) {
     // Hide all modals first
     $('.modal').fadeOut();
     
     switch(type) {
         case 'success':
             $('#success-message').text(text);
+            if (showEmailNotification) {
+                $('#success-email-notification').show();
+            } else {
+                $('#success-email-notification').hide();
+            }
             $('#success-modal').fadeIn();
             break;
         case 'error':
@@ -948,13 +1029,144 @@ function showMessage(type, text) {
     }
 }
 
+// Show loading modal
+function showLoading(message) {
+    $('#loadingMessage').text(message || 'Processing...');
+    $('#loadingModal').fadeIn();
+}
+
+// Hide loading modal
+function hideLoading() {
+    $('#loadingModal').fadeOut();
+}
+
+// Approve student function
+function approveStudent() {
+    if (!window.currentStudentId) return;
+    
+    const button = $('#confirmApproval');
+    const originalHtml = button.html();
+    
+    // Add loading state
+    button.addClass('loading').prop('disabled', true);
+    
+    showLoading('Approving student and sending email...');
+    
+    $.ajax({
+        url: window.appUrls.acceptVerification.replace('0', window.currentStudentId),
+        type: 'POST',
+        success: function(response) {
+            hideLoading();
+            button.removeClass('loading').prop('disabled', false);
+            
+            if (response.success) {
+                // Show success modal with email notification
+                $('#approvalModal').fadeOut();
+                $('#studentDetailsModal').fadeOut();
+                showMessage('success', response.message, response.email_sent);
+                
+                // Reload data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage('error', response.message || 'Error verifying student');
+                $('#approvalModal').fadeOut();
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            button.removeClass('loading').prop('disabled', false);
+            
+            let errorMessage = 'Error verifying student';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage += ': ' + xhr.responseJSON.message;
+            } else {
+                errorMessage += ': ' + error;
+            }
+            
+            showMessage('error', errorMessage);
+            $('#approvalModal').fadeOut();
+        }
+    });
+}
+
+// Reject student with reason function
+function rejectStudentWithReason() {
+    if (!window.currentStudentId) return;
+    
+    const rejectionReason = $('#rejectionReasonTextarea').val().trim();
+    
+    if (!rejectionReason || rejectionReason.length < 10) {
+        $('#rejectionValidation').show().find('#validationText').text('Please provide a detailed rejection reason (minimum 10 characters)');
+        return;
+    }
+    
+    const button = $('#confirmRejectionWithReason');
+    const originalHtml = button.html();
+    
+    // Add loading state
+    button.addClass('loading').prop('disabled', true);
+    
+    showLoading('Rejecting verification and sending email...');
+    
+    $.ajax({
+        url: window.appUrls.rejectVerification.replace('0', window.currentStudentId),
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            rejection_reason: rejectionReason
+        }),
+        success: function(response) {
+            hideLoading();
+            button.removeClass('loading').prop('disabled', false);
+            
+            if (response.success) {
+                // Show rejection success modal
+                $('#rejectionReasonModal').fadeOut();
+                $('#studentDetailsModal').fadeOut();
+                
+                // Update rejection success message
+                $('#rejectionSuccessMessage').text(response.message);
+                if (response.email_sent) {
+                    $('#rejection-email-notification').show();
+                } else {
+                    $('#rejection-email-notification').hide();
+                }
+                $('#rejectionSuccessModal').fadeIn();
+                
+                // Reload data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage('error', response.message || 'Error rejecting verification');
+                $('#rejectionReasonModal').fadeOut();
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            button.removeClass('loading').prop('disabled', false);
+            
+            let errorMessage = 'Error rejecting verification';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage += ': ' + xhr.responseJSON.message;
+            } else {
+                errorMessage += ': ' + error;
+            }
+            
+            showMessage('error', errorMessage);
+            $('#rejectionReasonModal').fadeOut();
+        }
+    });
+}
+
 // Handle window resize
 $(window).on('resize', function() {
     // Adjust modal content if needed
-    const fileModal = $('#fileModal');
     const studentDetailsModal = $('#studentDetailsModal');
     
-    if (fileModal.is(':visible') || studentDetailsModal.is(':visible')) {
+    if (studentDetailsModal.is(':visible')) {
         // You can add responsive adjustments here if needed
     }
 });

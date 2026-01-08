@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash, send_from_directory
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash, send_from_directory, current_app
 from database import get_db
 import os
 import math
@@ -17,6 +17,123 @@ DOCUMENT_TYPES = {
     'transcript_form': 'Transcript Form',
     'marriage_certificate': 'Marriage Certificate'
 }
+
+# -----------------------------
+# EMAIL FUNCTIONS (ADDED)
+# -----------------------------
+def send_verification_email(email, username, student_name):
+    """Send email notification when verification is approved"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            current_app.logger.error("Mail extension not found")
+            return False
+            
+        msg = Message(
+            subject="LSEF TESDA - Document Verification Approved",
+            sender=("LSEF TESDA", current_app.config['MAIL_USERNAME']), 
+            recipients=[email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #0056b3; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">LSEF TESDA</h1>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <h2 style="color: #0056b3;">Document Verification Approved</h2>
+                    <p>Dear {student_name},</p>
+                    
+                    <p>We are pleased to inform you that your submitted documents have been <strong>successfully verified</strong> by our administration team at <strong>LSEF TESDA</strong>.</p>
+                    
+                    <div style="background-color: #f0f8ff; padding: 15px; border-left: 4px solid #0056b3; margin: 15px 0;">
+                        <p style="margin: 0; font-weight: bold;">✅ All requirements have been approved</p>
+                        <p style="margin: 5px 0 0 0;">You can now proceed to enroll in courses and access all student features.</p>
+                    </div>
+                    
+                    <p>If you have any questions or need further assistance, please don't hesitate to contact our support team.</p>
+                    
+                    <p>Thank you for your patience during the verification process.</p>
+                    
+                    <p>Best regards,</p>
+                    <p><strong>LSEF TESDA Administration Team</strong></p>
+                </div>
+                
+                <div style="background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 12px;">
+                    <p>This is an automated message. Please do not reply directly to this email.</p>
+                </div>
+            </div>
+            """
+        )
+        mail.send(msg)
+        current_app.logger.info(f"Verification approval email sent successfully to {email}")
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending verification approval email to {email}: {str(e)}")
+        return False
+
+def send_rejection_email(email, username, student_name, rejection_reason):
+    """Send email notification when verification is rejected with reason"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            current_app.logger.error("Mail extension not found")
+            return False
+            
+        msg = Message(
+            subject="LSEF TESDA - Document Verification Update",
+            sender=("LSEF TESDA", current_app.config['MAIL_USERNAME']), 
+            recipients=[email],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #0056b3; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">LSEF TESDA</h1>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <h2 style="color: #0056b3;">Document Verification Update</h2>
+                    <p>Dear {student_name},</p>
+                    
+                    <p>We regret to inform you that your submitted documents <strong>require further attention</strong>.</p>
+                    
+                    <div style="background-color: #fff0f0; padding: 15px; border-left: 4px solid #b30000; margin: 15px 0;">
+                        <p style="margin: 0; font-weight: bold;">⚠️ Verification Status: <span style="color: #b30000;">Rejected</span></p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold;">Reason for Rejection:</p>
+                        <p style="margin: 5px 0 0 0; padding: 10px; background-color: #fff5f5; border-radius: 4px;">
+                            {rejection_reason}
+                        </p>
+                    </div>
+                    
+                    <p><strong>Next Steps:</strong></p>
+                    <ul style="margin: 10px 0 20px 20px; padding: 0;">
+                        <li>Review the rejection reason above</li>
+                        <li>Correct the issues with your submitted documents</li>
+                        <li>Resubmit your documents through your student portal</li>
+                        <li>Contact support if you need clarification</li>
+                    </ul>
+                    
+                    <p>Please note that you cannot enroll in courses until your documents are verified.</p>
+                    
+                    <p>If you have any questions about the rejection reason, please contact our support team for assistance.</p>
+                    
+                    <p>Sincerely,</p>
+                    <p><strong>LSEF TESDA Administration Team</strong></p>
+                </div>
+                
+                <div style="background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 12px;">
+                    <p>This is an automated message. Please do not reply directly to this email.</p>
+                </div>
+            </div>
+            """
+        )
+        mail.send(msg)
+        current_app.logger.info(f"Verification rejection email sent successfully to {email}")
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending verification rejection email to {email}: {str(e)}")
+        return False
+
+# Import Message from flask_mail
+from flask_mail import Message
 
 # -----------------------------
 # MAIN PAGE
@@ -45,7 +162,7 @@ def view_requirements():
 
 
 # -----------------------------
-# STATISTICS (SAFE)
+# STATISTICS (UPDATED WITH REJECTED)
 # -----------------------------
 def get_statistics():
     db = get_db()
@@ -70,14 +187,26 @@ def get_statistics():
             SELECT COUNT(*) pending 
             FROM login 
             WHERE role='student' AND account_status='active'
-            AND (verified IS NULL OR verified!='verified')
+            AND (verified='pending' OR verified IS NULL)
         """)
         pending = cursor.fetchone()["pending"]
 
-        return {"total": total, "verified": verified, "pending": pending}
+        cursor.execute("""
+            SELECT COUNT(*) rejected 
+            FROM login 
+            WHERE role='student' AND account_status='active' AND verified='rejected'
+        """)
+        rejected = cursor.fetchone()["rejected"]
+
+        return {
+            "total": total, 
+            "verified": verified, 
+            "pending": pending,
+            "rejected": rejected
+        }
     except Exception as e:
         print(f"Error getting statistics: {e}")
-        return {"total": 0, "verified": 0, "pending": 0}
+        return {"total": 0, "verified": 0, "pending": 0, "rejected": 0}
     finally:
         cursor.close()
 
@@ -94,7 +223,7 @@ def get_stats():
 
 
 # -----------------------------
-# FETCH DATA (SAFE)
+# FETCH DATA (UPDATED WITH REJECTED STATUS)
 # -----------------------------
 @admin_verified_req_bp.route("/data", methods=["GET"])
 def fetch_data():
@@ -112,7 +241,6 @@ def fetch_data():
         offset = (page - 1) * per_page
 
         # Build address field by concatenating individual address components
-        # Based on your schema: province, municipality, baranggay
         query = """
             SELECT 
                 sr.user_id,
@@ -157,10 +285,13 @@ def fetch_data():
             query += " AND (pi.first_name LIKE %s OR pi.last_name LIKE %s OR l.email LIKE %s OR l.username LIKE %s)"
             params += [search_pattern, search_pattern, search_pattern, search_pattern]
 
+        # Updated status filtering with 'rejected' option
         if status == "verified":
             query += " AND l.verified='verified'"
         elif status == "pending":
-            query += " AND (l.verified IS NULL OR l.verified!='verified')"
+            query += " AND (l.verified='pending' OR l.verified IS NULL)"
+        elif status == "rejected":
+            query += " AND l.verified='rejected'"
 
         query += " ORDER BY COALESCE(sr.date_uploaded, '1970-01-01') DESC LIMIT %s OFFSET %s"
         params += [per_page, offset]
@@ -181,11 +312,27 @@ def fetch_data():
                         count += 1
                 student['document_count'] = count
 
-        cursor.execute("""
+        # Get total count for pagination with the same filters
+        count_query = """
             SELECT COUNT(*) total
             FROM login l
+            LEFT JOIN personal_information pi ON l.user_id = pi.user_id
             WHERE l.role='student' AND l.account_status='active'
-        """)
+        """
+        count_params = []
+        
+        if search:
+            count_query += " AND (pi.first_name LIKE %s OR pi.last_name LIKE %s OR l.email LIKE %s OR l.username LIKE %s)"
+            count_params += [search_pattern, search_pattern, search_pattern, search_pattern]
+        
+        if status == "verified":
+            count_query += " AND l.verified='verified'"
+        elif status == "pending":
+            count_query += " AND (l.verified='pending' OR l.verified IS NULL)"
+        elif status == "rejected":
+            count_query += " AND l.verified='rejected'"
+        
+        cursor.execute(count_query, count_params)
         total_records = cursor.fetchone()["total"]
 
         return jsonify({
@@ -324,7 +471,7 @@ def get_student_details(user_id):
 
 
 # -----------------------------
-# ACCEPT VERIFICATION
+# ACCEPT VERIFICATION (WITH EMAIL)
 # -----------------------------
 @admin_verified_req_bp.route("/accept/<int:user_id>", methods=["POST"])
 def accept_verification(user_id):
@@ -332,28 +479,176 @@ def accept_verification(user_id):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
 
     try:
-        # First check if student exists
+        # Start transaction
+        db.start_transaction()
+        
+        # Get student info for email
         cursor.execute("""
-            SELECT user_id FROM login 
-            WHERE user_id=%s AND role='student' AND account_status='active'
+            SELECT l.username, l.email, l.verified, pi.first_name, pi.last_name
+            FROM login l
+            LEFT JOIN personal_information pi ON l.user_id = pi.user_id
+            WHERE l.user_id=%s AND l.role='student' AND l.account_status='active'
         """, (user_id,))
         
-        if not cursor.fetchone():
+        student_info = cursor.fetchone()
+        if not student_info:
+            db.rollback()
             return jsonify({"success": False, "message": "Student not found"}), 404
         
+        # Send approval email
+        student_name = f"{student_info['first_name']} {student_info['last_name']}"
+        email_sent = send_verification_email(
+            student_info['email'], 
+            student_info['username'], 
+            student_name
+        )
+        
+        if not email_sent:
+            db.rollback()
+            current_app.logger.error(f"Failed to send verification email for student {user_id}")
+            return jsonify({
+                "success": False, 
+                "message": "Failed to send approval email. Verification not completed.",
+                "email_sent": False
+            }), 500
+
         # Update verification status
         cursor.execute("""
             UPDATE login SET verified='verified'
             WHERE user_id=%s AND role='student'
         """, (user_id,))
+        
+        db.commit()
+        return jsonify({
+            "success": True,
+            "message": "Student verified successfully and notification email sent",
+            "email_sent": True
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Error in accept_verification: {e}")
+        traceback.print_exc()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+
+
+# -----------------------------
+# REJECT VERIFICATION (UPDATED WITH REASON AND EMAIL)
+# -----------------------------
+@admin_verified_req_bp.route("/reject/<int:user_id>", methods=["POST"])
+def reject_verification(user_id):
+    if session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    rejection_reason = data.get('rejection_reason', '').strip() if data else ''
+    
+    if not rejection_reason:
+        return jsonify({
+            "success": False, 
+            "message": "Rejection reason is required"
+        }), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        # Start transaction
+        db.start_transaction()
+        
+        # Get student info for email
+        cursor.execute("""
+            SELECT l.username, l.email, l.verified, pi.first_name, pi.last_name
+            FROM login l
+            LEFT JOIN personal_information pi ON l.user_id = pi.user_id
+            WHERE l.user_id=%s AND l.role='student' AND l.account_status='active'
+        """, (user_id,))
+        
+        student_info = cursor.fetchone()
+        if not student_info:
+            db.rollback()
+            return jsonify({"success": False, "message": "Student not found"}), 404
+        
+        # Send rejection email with reason
+        student_name = f"{student_info['first_name']} {student_info['last_name']}"
+        email_sent = send_rejection_email(
+            student_info['email'], 
+            student_info['username'], 
+            student_name,
+            rejection_reason
+        )
+        
+        if not email_sent:
+            db.rollback()
+            current_app.logger.error(f"Failed to send rejection email for student {user_id}")
+            return jsonify({
+                "success": False, 
+                "message": "Failed to send rejection email. Verification status not updated.",
+                "email_sent": False
+            }), 500
+
+        # Update verification status to 'rejected'
+        cursor.execute("""
+            UPDATE login SET verified='rejected'
+            WHERE user_id=%s AND role='student'
+        """, (user_id,))
+        
+        db.commit()
+        return jsonify({
+            "success": True,
+            "message": "Verification rejected successfully and notification email sent",
+            "email_sent": True
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Error in reject_verification: {e}")
+        traceback.print_exc()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+
+
+# -----------------------------
+# REOPEN/REMOVE REJECTION (ALLOW RESUBMISSION)
+# -----------------------------
+@admin_verified_req_bp.route("/reopen/<int:user_id>", methods=["POST"])
+def reopen_verification(user_id):
+    """Change status from 'rejected' back to 'pending' to allow resubmission"""
+    if session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # First check if student exists and is rejected
+        cursor.execute("""
+            SELECT user_id, verified FROM login 
+            WHERE user_id=%s AND role='student' AND account_status='active'
+        """, (user_id,))
+        
+        student = cursor.fetchone()
+        if not student:
+            return jsonify({"success": False, "message": "Student not found"}), 404
+        
+        if student[1] != 'rejected':
+            return jsonify({"success": False, "message": "Student is not in rejected status"}), 400
+        
+        # Update verification status back to 'pending'
+        cursor.execute("""
+            UPDATE login SET verified='pending'
+            WHERE user_id=%s AND role='student'
+        """, (user_id,))
+        
         db.commit()
         return jsonify({"success": True})
     except Exception as e:
         db.rollback()
-        print(f"Error in accept_verification: {e}")
+        print(f"Error in reopen_verification: {e}")
         traceback.print_exc()
         return jsonify({"success": False, "message": str(e)}), 500
     finally:

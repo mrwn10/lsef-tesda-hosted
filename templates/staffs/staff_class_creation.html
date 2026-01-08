@@ -211,11 +211,14 @@
                             <h2><i class="fas fa-user-tie"></i> Instructor Information</h2>
                             
                             <div class="form-group">
-                                <label for="instructor_name">Instructor Name</label>
+                                <label>Instructor Name</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-user"></i>
-                                    <input type="text" id="instructor_name" name="instructor_name" placeholder="Enter instructor name" required>
+                                    <input type="text" id="instructor_name_display" value="{{ instructor_name or 'Instructor name not found' }}" readonly disabled class="readonly-input">
                                 </div>
+                                <small class="form-text">Your name is automatically assigned as the instructor</small>
+                                <!-- Hidden field for form submission -->
+                                <input type="hidden" id="instructor_name" name="instructor_name" value="{{ instructor_name or '' }}">
                             </div>
 
                             <div class="form-group">

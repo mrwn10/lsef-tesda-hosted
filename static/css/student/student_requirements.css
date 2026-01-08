@@ -1375,3 +1375,115 @@ main {
         max-width: 120px;
     }
 }
+
+/* ===== NEW: Rejection Alert Styles ===== */
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    color: #856404;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    animation: slideInDown 0.4s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-warning .alert-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+}
+
+.alert-warning i {
+    font-size: 1.8rem;
+    color: #ffc107;
+    margin-top: 2px;
+}
+
+.alert-text {
+    flex: 1;
+}
+
+.alert-text strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: #856404;
+}
+
+.alert-text p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #856404;
+    opacity: 0.9;
+}
+
+.alert-close {
+    background: none;
+    border: none;
+    color: #856404;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.alert-close:hover {
+    background-color: rgba(133, 100, 4, 0.1);
+}
+
+/* ===== Status Colors for Rejected State ===== */
+.status-rejected {
+    background-color: #f8d7da;
+    color: var(--error-red);
+    border: 1px solid #f5c6cb;
+}
+
+.status-rejected i {
+    color: var(--error-red);
+}
+
+/* ===== Submit Button States ===== */
+.submit-btn.resubmit {
+    background: linear-gradient(135deg, var(--tesda-maroon), #a80000);
+}
+
+.submit-btn.resubmit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a80000, #8b0000);
+}
+
+/* ===== Responsive Alert ===== */
+@media (max-width: 768px) {
+    .alert-warning .alert-content {
+        padding: 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .alert-warning i {
+        align-self: center;
+    }
+    
+    .alert-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+}

@@ -930,6 +930,12 @@ tbody tr:hover {
     max-width: 95%;
 }
 
+.extra-large-modal {
+    width: 1200px;
+    max-width: 95%;
+    max-height: 90vh;
+}
+
 .modal-header {
     padding: 15px 20px;
     background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
@@ -972,7 +978,8 @@ tbody tr:hover {
 
 .modal-body {
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    max-height: calc(90vh - 130px);
+    overflow: hidden;
 }
 
 .modal-body p {
@@ -1009,16 +1016,70 @@ tbody tr:hover {
     background-color: #e2e8f0;
 }
 
-/* Student Details Modal Styles */
-#studentDetailsModal .modal-body {
-    max-height: 70vh;
-    overflow-y: auto;
+/* ===== STUDENT DETAILS MODAL STYLES ===== */
+.student-details-container {
+    display: flex;
+    gap: 2rem;
+    height: 60vh;
+    max-height: 60vh;
+    overflow: hidden;
 }
 
+.student-profile-column {
+    flex: 1;
+    min-width: 400px;
+    overflow-y: auto;
+    padding-right: 1rem;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Profile Header */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--tesda-light-blue);
+    flex-shrink: 0;
+}
+
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--tesda-blue);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-info h3 {
+    color: var(--tesda-blue);
+    margin: 0 0 0.25rem 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.profile-info p {
+    color: #64748b;
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+/* Student Details Content */
 .student-details-content {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    padding-bottom: 1rem;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .student-detail-section {
@@ -1026,6 +1087,7 @@ tbody tr:hover {
     border-radius: 8px;
     padding: 1.5rem;
     border: 1px solid #e2e8f0;
+    flex-shrink: 0;
 }
 
 .student-detail-section h4 {
@@ -1068,11 +1130,234 @@ tbody tr:hover {
     word-break: break-word;
 }
 
-.student-documents-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+/* Sticky Verification Actions */
+.verification-actions {
+    margin-top: auto;
+    padding: 1.5rem;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), #ffffff);
+    border-radius: 8px 8px 0 0;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.actions-header {
+    margin-bottom: 1rem;
+}
+
+.actions-header h4 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actions-buttons {
+    display: flex;
     gap: 1rem;
-    margin-top: 1rem;
+}
+
+.actions-buttons .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Document Preview Column - UPDATED FOR TABS */
+.document-preview-column {
+    flex: 1;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Document Tabs */
+.document-tabs {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.document-tab {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    position: relative;
+}
+
+.document-tab:hover {
+    background-color: #f1f5f9;
+    color: var(--tesda-blue);
+}
+
+.document-tab.active {
+    background-color: white;
+    color: var(--tesda-blue);
+    border-bottom-color: var(--tesda-blue);
+}
+
+.document-count {
+    background-color: var(--tesda-blue);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: white;
+}
+
+.tab-pane {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-pane.active {
+    display: flex;
+}
+
+/* Document Preview Container */
+.document-preview-container {
+    flex: 1;
+    background: #f8fafc;
+    overflow: auto;
+    padding: 1rem;
+}
+
+.no-document-selected {
+    text-align: center;
+    color: #64748b;
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-document-selected i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #cbd5e1;
+}
+
+.no-document-selected h5 {
+    margin: 0 0 0.5rem 0;
+    color: #475569;
+    font-size: 1.1rem;
+}
+
+.no-document-selected p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.document-viewer {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.document-viewer img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.document-viewer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.document-viewer .document-fallback {
+    text-align: center;
+    padding: 2rem;
+}
+
+.document-viewer .document-fallback i {
+    font-size: 3rem;
+    color: var(--tesda-blue);
+    margin-bottom: 1rem;
+}
+
+/* Document List Container */
+.document-list-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.document-list-header {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.document-list-header h4 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.document-summary {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.document-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .document-item {
@@ -1080,31 +1365,112 @@ tbody tr:hover {
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     padding: 1rem;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     transition: all 0.3s ease;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .document-item:hover {
     border-color: var(--tesda-blue);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f0f7ff;
+    transform: translateY(-2px);
 }
 
-.document-item i {
-    font-size: 1.5rem;
+.document-item.active {
+    border-color: var(--tesda-blue);
+    background-color: #e6f0fa;
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.1);
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--tesda-light-blue);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--tesda-blue);
-    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
-.document-item p {
+.document-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-details h5 {
+    margin: 0 0 0.25rem 0;
+    color: #334155;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.document-details p {
     margin: 0;
-    font-size: 0.85rem;
     color: #64748b;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.document-uploaded {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    margin-top: 0.25rem;
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.document-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* Simple scrollbar styling */
+.student-profile-column::-webkit-scrollbar,
+.student-details-content::-webkit-scrollbar,
+.document-preview-container::-webkit-scrollbar,
+.document-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.student-profile-column::-webkit-scrollbar-track,
+.student-details-content::-webkit-scrollbar-track,
+.document-preview-container::-webkit-scrollbar-track,
+.document-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.student-profile-column::-webkit-scrollbar-thumb,
+.student-details-content::-webkit-scrollbar-thumb,
+.document-preview-container::-webkit-scrollbar-thumb,
+.document-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.student-profile-column::-webkit-scrollbar-thumb:hover,
+.student-details-content::-webkit-scrollbar-thumb:hover,
+.document-preview-container::-webkit-scrollbar-thumb:hover,
+.document-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* Success Modal Specific Styles */
@@ -1181,32 +1547,6 @@ tbody tr:hover {
 
 #logout-modal .btn-no:hover {
     background-color: #e2e8f0;
-}
-
-/* File Viewer Styles */
-#fileViewer {
-    text-align: center;
-}
-
-#fileViewer img {
-    max-width: 100%;
-    max-height: 600px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#fileViewer iframe {
-    width: 100%;
-    height: 600px;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#fileViewer p {
-    padding: 2rem;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
 }
 
 /* Animation */
@@ -1294,6 +1634,198 @@ tbody tr:hover {
     opacity: 1;
 }
 
+/* ===== NEW REJECTION REASON MODAL STYLES ===== */
+#rejectionReasonModal .modal-content {
+    width: 500px;
+    max-width: 95%;
+}
+
+#rejectionReasonModal .modal-header {
+    background-color: var(--error-red);
+}
+
+#rejectionReasonModal .modal-header i {
+    color: #fecaca;
+}
+
+#rejectionReasonModal .modal-body {
+    padding: 25px;
+}
+
+.rejection-reason-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.rejection-reason-label {
+    font-size: 1rem;
+    color: #334155;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rejection-reason-label i {
+    color: var(--tesda-blue);
+}
+
+.rejection-reason-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.3s ease;
+}
+
+.rejection-reason-textarea:focus {
+    outline: none;
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+.rejection-reason-textarea::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.rejection-reason-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.character-counter {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-family: 'Poppins', sans-serif;
+}
+
+.character-counter span {
+    font-weight: 600;
+    color: var(--tesda-blue);
+}
+
+.validation-message {
+    font-size: 0.85rem;
+    color: var(--error-red);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+.validation-message i {
+    font-size: 0.9rem;
+}
+
+#rejectionReasonModal .btn-danger {
+    background-color: var(--error-red);
+    color: white;
+    border: none;
+}
+
+#rejectionReasonModal .btn-danger:hover {
+    background-color: #991b1b;
+}
+
+#rejectionReasonModal .btn-danger:disabled {
+    background-color: #f87171;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#rejectionReasonModal .btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+#rejectionReasonModal .btn-secondary:hover {
+    background-color: #e2e8f0;
+}
+
+/* Email Notification Styles */
+.email-notification {
+    padding: 10px 15px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    color: #065f46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.email-notification i {
+    font-size: 1rem;
+}
+
+/* Loading Modal Styles */
+#loadingModal .modal-content {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+#loadingModal .modal-body {
+    background: transparent;
+    border: none;
+    padding: 2rem;
+}
+
+/* Button loading state */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Approval Modal Specific Styles */
+#approvalModal .modal-header {
+    background-color: var(--success-green);
+}
+
+#approvalModal .modal-header i {
+    color: #bbf7d0;
+}
+
+/* Rejection Success Modal Specific Styles */
+#rejectionSuccessModal .modal-header {
+    background-color: var(--error-red);
+}
+
+#rejectionSuccessModal .modal-header i {
+    color: #fecaca;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
     .top-nav a {
@@ -1311,6 +1843,36 @@ tbody tr:hover {
     
     .logo-container {
         gap: 15px;
+    }
+    
+    .extra-large-modal {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .student-details-container {
+        flex-direction: column;
+        height: auto;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .student-profile-column {
+        min-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        padding-right: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+    
+    .document-preview-column {
+        min-width: 100%;
+    }
+    
+    .verification-actions {
+        position: static;
+        margin-top: 1.5rem;
     }
 }
 
@@ -1422,9 +1984,10 @@ tbody tr:hover {
         margin: 10% auto;
     }
     
-    #fileViewer img,
-    #fileViewer iframe {
-        height: 400px;
+    .extra-large-modal {
+        width: 98%;
+        margin: 2% auto;
+        max-height: 95vh;
     }
     
     .modal-footer {
@@ -1445,8 +2008,37 @@ tbody tr:hover {
         grid-template-columns: 1fr;
     }
     
-    .student-documents-grid {
-        grid-template-columns: 1fr;
+    .actions-buttons {
+        flex-direction: column;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-info {
+        text-align: center;
+    }
+    
+    .document-tab {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .verification-actions {
+        position: static;
+    }
+    
+    /* Rejection Reason Modal Mobile */
+    #rejectionReasonModal .modal-content {
+        width: 90%;
+    }
+    
+    .rejection-reason-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
     }
 }
 
@@ -1542,6 +2134,24 @@ tbody tr:hover {
         padding: 6px 10px;
         min-width: 35px;
     }
+    
+    .student-details-container {
+        gap: 1rem;
+    }
+    
+    .document-tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .document-count {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+    
+    .verification-actions {
+        padding: 1rem;
+    }
 }
 
 /* Extra small devices */
@@ -1579,4 +2189,100 @@ tbody tr:hover {
         width: 32px;
         height: 32px;
     }
+    
+    .profile-picture {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .document-tab {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .document-tab i {
+        margin: 0;
+    }
+    
+    .verification-actions {
+        padding: 0.75rem;
+    }
+    
+    .actions-buttons .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ===== Additional CSS for Verification Page ===== */
+
+/* Rejection Card */
+.rejected-card {
+    border-left-color: var(--error-red);
+}
+
+.rejected-card .stat-icon {
+    background-color: #fee2e2;
+    color: var(--error-red);
+}
+
+/* Status Badges */
+.rejected-badge {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Action Buttons */
+.btn-reject {
+    background-color: var(--error-red);
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-reject:hover {
+    background-color: #991b1b;
+    transform: translateY(-1px);
+}
+
+/* Action Button Container */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Add this to the CSS file - ensures rejection modal appears on top */
+#rejectionReasonModal {
+    z-index: 2100; /* Higher than student details modal which is 2000 */
+}
+
+#approvalModal {
+    z-index: 2100; /* Same for approval modal */
+}
+
+#rejectionSuccessModal,
+#success-modal,
+#error-modal,
+#info-modal {
+    z-index: 2200; /* Success/error modals should be highest */
 }

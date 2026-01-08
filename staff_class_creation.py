@@ -13,8 +13,8 @@ def validate_time_format(time_str):
         hours, minutes = map(int, time_str.split(':'))
         return 6 <= hours <= 18 and minutes == 0 
     except (ValueError, AttributeError):
-        return 
-    
+        return False
+
 def check_staff_verification(cursor, user_id):
     """
     Returns:
@@ -51,6 +51,27 @@ def has_uploaded_signature(cursor, user_id):
     row = cursor.fetchone()
     return row and row.get('signature')
 
+def get_instructor_name(cursor, user_id):
+    """Fetch the full name of the instructor from personal_information table"""
+    cursor.execute("""
+        SELECT first_name, middle_name, last_name
+        FROM personal_information
+        WHERE user_id = %s
+    """, (user_id,))
+    row = cursor.fetchone()
+    
+    if row:
+        # Combine first, middle, and last name
+        name_parts = []
+        if row.get('first_name'):
+            name_parts.append(row['first_name'])
+        if row.get('middle_name'):
+            name_parts.append(row['middle_name'])
+        if row.get('last_name'):
+            name_parts.append(row['last_name'])
+        
+        return ' '.join(name_parts)
+    return None
 
 @staff_class_creation_bp.route('/class/create', methods=['GET', 'POST'])
 def create_class():
@@ -59,7 +80,10 @@ def create_class():
 
     user_id = session.get('user_id')
     profile_picture = 'default.png'
+    instructor_name = None
+    
     if user_id:
+        # Get profile picture
         cursor.execute("""
             SELECT profile_picture
             FROM personal_information
@@ -68,6 +92,9 @@ def create_class():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
+        
+        # Get instructor name automatically
+        instructor_name = get_instructor_name(cursor, user_id)
 
     if request.method == 'GET':
         try:
@@ -78,7 +105,8 @@ def create_class():
             return render_template(
                 'staffs/staff_class_creation.html',
                 courses=courses,
-                profile_picture=profile_picture
+                profile_picture=profile_picture,
+                instructor_name=instructor_name  # Pass to template
             )
 
         except Exception as e:
@@ -97,7 +125,6 @@ def create_class():
                     'message': error_message,
                     'redirect': '/staff/profile'  
                 }), 403
-
             
             if not has_uploaded_signature(cursor, instructor_id):
                 return jsonify({
@@ -105,7 +132,6 @@ def create_class():
                     'message': 'Please upload your signature in your profile before creating a class.',
                     'redirect': '/staff/profile'
                 }), 403
-
 
             data = request.form  
 
@@ -119,7 +145,11 @@ def create_class():
             start_date = data.get('start_date')
             end_date = data.get('end_date')
             days_of_week = data.get('days_of_week')
-            instructor_name = data.get('instructor_name')
+            
+            # Get instructor name automatically
+            instructor_name = get_instructor_name(cursor, instructor_id)
+            if not instructor_name:
+                return jsonify({'status': 'error', 'message': 'Instructor name not found. Please complete your profile.'}), 400
 
             required_fields = {
                 'course_id': 'Course',
@@ -130,8 +160,7 @@ def create_class():
                 'max_students': 'Maximum Students',
                 'start_date': 'Start Date',
                 'end_date': 'End Date',
-                'days_of_week': 'Days of Week',
-                'instructor_name': 'Instructor Name'
+                'days_of_week': 'Days of Week'
             }
 
             missing_fields = [field for field in required_fields if not data.get(field)]

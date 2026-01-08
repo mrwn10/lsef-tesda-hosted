@@ -167,8 +167,24 @@ $(document).ready(function() {
     // ===== CLASS CREATION FORM FUNCTIONALITY =====
     
     function initClassCreationForm() {
-        const fetchCoursesUrl = "/api/courses";
         const createClassUrl = "/class/create";
+        
+        // Check if instructor name exists
+        const instructorNameField = document.getElementById('instructor_name');
+        const instructorNameDisplay = document.getElementById('instructor_name_display');
+        
+        if (instructorNameField && !instructorNameField.value.trim()) {
+            showMessage('Please complete your profile to get your instructor name. You cannot create a class without a valid instructor name.', 'error', true);
+            
+            // Disable form submission if no instructor name
+            document.getElementById('classCreationForm').addEventListener('submit', function(e) {
+                if (!instructorNameField.value.trim()) {
+                    e.preventDefault();
+                    showMessage('Cannot create class: Instructor name not found. Please complete your profile first.', 'error');
+                    return false;
+                }
+            });
+        }
         
         // Template for day time slot
         function createDaySlot(day) {
@@ -247,7 +263,10 @@ $(document).ready(function() {
                 const day = daySlot.dataset.day;
                 
                 // Uncheck the corresponding checkbox
-                document.querySelector(`.day-selector[value="${day}"]`).checked = false;
+                const checkbox = document.querySelector(`.day-selector[value="${day}"]`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
                 
                 // Remove from set and update display
                 daySlots.delete(day);
@@ -291,7 +310,7 @@ $(document).ready(function() {
                 const currentTime = e.target.value;
                 const otherTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="${otherType}"]`);
                 
-                if (currentTime && otherTimeInput.value) {
+                if (currentTime && otherTimeInput && otherTimeInput.value) {
                     if (type === 'start' && currentTime >= otherTimeInput.value) {
                         showMessage('Start time must be before end time', 'error');
                         e.target.value = '';
@@ -304,38 +323,49 @@ $(document).ready(function() {
         });
 
         // Date validation to ensure end date is after start date
-        document.getElementById('end_date').addEventListener('change', function() {
-            const startDate = new Date(document.getElementById('start_date').value);
-            const endDate = new Date(this.value);
-            
-            if (startDate && endDate && endDate < startDate) {
-                showMessage('End date must be after start date', 'error');
-                this.value = '';
-            }
-        });
+        const endDateField = document.getElementById('end_date');
+        if (endDateField) {
+            endDateField.addEventListener('change', function() {
+                const startDateField = document.getElementById('start_date');
+                if (startDateField && startDateField.value) {
+                    const startDate = new Date(startDateField.value);
+                    const endDate = new Date(this.value);
+                    
+                    if (startDate && endDate && endDate < startDate) {
+                        showMessage('End date must be after start date', 'error');
+                        this.value = '';
+                    }
+                }
+            });
+        }
 
         // Set minimum end date based on start date
-        document.getElementById('start_date').addEventListener('change', function() {
-            const startDate = new Date(this.value);
-            const endDateField = document.getElementById('end_date');
-            
-            if (this.value) {
-                startDate.setDate(startDate.getDate() + 1);
-                const minEndDate = startDate.toISOString().split('T')[0];
-                endDateField.min = minEndDate;
+        const startDateField = document.getElementById('start_date');
+        if (startDateField) {
+            startDateField.addEventListener('change', function() {
+                const endDateField = document.getElementById('end_date');
                 
-                if (endDateField.value && new Date(endDateField.value) < startDate) {
-                    endDateField.value = '';
+                if (this.value && endDateField) {
+                    const startDate = new Date(this.value);
+                    startDate.setDate(startDate.getDate() + 1);
+                    const minEndDate = startDate.toISOString().split('T')[0];
+                    endDateField.min = minEndDate;
+                    
+                    if (endDateField.value && new Date(endDateField.value) < startDate) {
+                        endDateField.value = '';
+                    }
+                } else if (endDateField) {
+                    endDateField.min = '';
                 }
-            } else {
-                endDateField.min = '';
-            }
-        });
+            });
+        }
 
         // Show message function
-        function showMessage(message, type = 'success') {
+        function showMessage(message, type = 'success', permanent = false) {
             const messageContainer = document.getElementById('message-container');
             const messageContent = document.getElementById('message-content');
+            
+            if (!messageContainer || !messageContent) return;
             
             messageContent.textContent = message;
             messageContent.className = 'message ' + type;
@@ -344,142 +374,169 @@ $(document).ready(function() {
             // Scroll to message
             messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             
-            // Hide message after 5 seconds
-            setTimeout(() => {
-                messageContainer.style.display = 'none';
-            }, 5000);
+            // Hide message after 5 seconds unless permanent
+            if (!permanent) {
+                setTimeout(() => {
+                    messageContainer.style.display = 'none';
+                }, 5000);
+            }
         }
 
         // Form submission
-        document.getElementById('classCreationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate at least one day is selected
-            if (daySlots.size === 0) {
-                showMessage('Please select at least one day', 'error');
-                return;
-            }
-            
-            // Validate all day slots have times
-            let allTimesValid = true;
-            const dayInputs = document.querySelectorAll('.day-time-input');
-            
-            dayInputs.forEach(input => {
-                if (!input.value) {
-                    allTimesValid = false;
-                    input.classList.add('error');
-                } else {
-                    input.classList.remove('error');
+        const form = document.getElementById('classCreationForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Check instructor name first
+                const instructorName = instructorNameField ? instructorNameField.value.trim() : '';
+                if (!instructorName) {
+                    showMessage('Cannot create class: Instructor name not found. Please complete your profile first.', 'error');
+                    return;
                 }
-            });
-            
-            if (!allTimesValid) {
-                showMessage('Please provide both start and end times for all selected days', 'error');
-                return;
-            }
-            
-            // Validate date range
-            const startDate = new Date(document.getElementById('start_date').value);
-            const endDate = new Date(document.getElementById('end_date').value);
-            
-            if (!startDate || !endDate) {
-                showMessage('Please provide both start and end dates', 'error');
-                return;
-            }
-            
-            if (endDate < startDate) {
-                showMessage('End date must be after start date', 'error');
-                return;
-            }
-            
-            // Validate instructor name
-            const instructorName = document.getElementById('instructor_name').value.trim();
-            if (!instructorName) {
-                showMessage('Please enter the instructor name', 'error');
-                return;
-            }
-            
-            // Create days_of_week JSON and schedule text
-            const daysData = {};
-            let scheduleText = '';
-            
-            Array.from(daySlots).forEach(day => {
-                const startTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`).value;
-                const endTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`).value;
                 
-                daysData[day] = {
-                    start: startTime,
-                    end: endTime
-                };
-                
-                // Format time for display (convert 24h to 12h)
-                const startHour = parseInt(startTime.split(':')[0]);
-                const endHour = parseInt(endTime.split(':')[0]);
-                
-                const startAmPm = startHour >= 12 ? 'PM' : 'AM';
-                const endAmPm = endHour >= 12 ? 'PM' : 'AM';
-                
-                const startHour12 = startHour % 12 || 12;
-                const endHour12 = endHour % 12 || 12;
-                
-                if (scheduleText) scheduleText += ", ";
-                scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
-            });
-            
-            // Set the hidden field values
-            document.getElementById('days_of_week').value = JSON.stringify(daysData);
-            document.getElementById('schedule').value = scheduleText;
-            
-            // Create form data
-            const formData = new FormData(this);
-            
-            // Show loading state
-            document.getElementById('classCreationForm').classList.add('loading');
-            
-            // Submit the form
-            fetch(createClassUrl, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showMessage(data.message, 'success');
-                    document.getElementById('classCreationForm').reset();
-                    daySlots.clear();
-                    updateDaySlotsDisplay();
-                } else {
-                    showMessage(data.message, 'error');
+                // Validate at least one day is selected
+                if (daySlots.size === 0) {
+                    showMessage('Please select at least one day', 'error');
+                    return;
                 }
-            })
-            .catch(error => {
-                showMessage('Error creating class. Please try again.', 'error');
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                document.getElementById('classCreationForm').classList.remove('loading');
+                
+                // Validate all day slots have times
+                let allTimesValid = true;
+                const dayInputs = document.querySelectorAll('.day-time-input');
+                
+                dayInputs.forEach(input => {
+                    if (!input.value) {
+                        allTimesValid = false;
+                        input.classList.add('error');
+                    } else {
+                        input.classList.remove('error');
+                    }
+                });
+                
+                if (!allTimesValid) {
+                    showMessage('Please provide both start and end times for all selected days', 'error');
+                    return;
+                }
+                
+                // Validate date range
+                const startDate = startDateField ? new Date(startDateField.value) : null;
+                const endDate = endDateField ? new Date(endDateField.value) : null;
+                
+                if (!startDate || !endDate) {
+                    showMessage('Please provide both start and end dates', 'error');
+                    return;
+                }
+                
+                if (endDate < startDate) {
+                    showMessage('End date must be after start date', 'error');
+                    return;
+                }
+                
+                // Create days_of_week JSON and schedule text
+                const daysData = {};
+                let scheduleText = '';
+                
+                Array.from(daySlots).forEach(day => {
+                    const startTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`);
+                    const endTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`);
+                    
+                    if (startTimeInput && endTimeInput && startTimeInput.value && endTimeInput.value) {
+                        daysData[day] = {
+                            start: startTimeInput.value,
+                            end: endTimeInput.value
+                        };
+                        
+                        // Format time for display (convert 24h to 12h)
+                        const startHour = parseInt(startTimeInput.value.split(':')[0]);
+                        const endHour = parseInt(endTimeInput.value.split(':')[0]);
+                        
+                        const startAmPm = startHour >= 12 ? 'PM' : 'AM';
+                        const endAmPm = endHour >= 12 ? 'PM' : 'AM';
+                        
+                        const startHour12 = startHour % 12 || 12;
+                        const endHour12 = endHour % 12 || 12;
+                        
+                        if (scheduleText) scheduleText += ", ";
+                        scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
+                    }
+                });
+                
+                // Set the hidden field values
+                document.getElementById('days_of_week').value = JSON.stringify(daysData);
+                document.getElementById('schedule').value = scheduleText;
+                
+                // Create form data
+                const formData = new FormData(this);
+                
+                // Show loading state
+                form.classList.add('loading');
+                
+                // Submit the form
+                fetch(createClassUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showMessage(data.message, 'success');
+                        form.reset();
+                        daySlots.clear();
+                        updateDaySlotsDisplay();
+                        
+                        // Reset date fields
+                        if (startDateField) startDateField.value = '';
+                        if (endDateField) endDateField.value = '';
+                        
+                        // Keep instructor name
+                        if (instructorNameDisplay) {
+                            instructorNameDisplay.value = instructorName;
+                        }
+                        
+                        // Scroll to top
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        showMessage(data.message, 'error');
+                        
+                        // Handle redirect for profile completion
+                        if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 2000);
+                        }
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error creating class. Please try again.', 'error');
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    form.classList.remove('loading');
+                });
             });
-        });
+        }
 
         // Force maximum students to 25 and disable input
         const maxStudentsInput = document.getElementById('max_students');
-        
-        // Set fixed value and disable input
-        maxStudentsInput.value = 25;
-        maxStudentsInput.readOnly = true;
-        
-        // Additional protection - reset to 25 if value changes
-        maxStudentsInput.addEventListener('input', function() {
-            if (this.value !== '25') {
+        if (maxStudentsInput) {
+            // Set fixed value and disable input
+            maxStudentsInput.value = 25;
+            maxStudentsInput.readOnly = true;
+            
+            // Additional protection - reset to 25 if value changes
+            maxStudentsInput.addEventListener('input', function() {
+                if (this.value !== '25') {
+                    this.value = 25;
+                    showMessage('Maximum students is fixed at 25', 'info');
+                }
+            });
+            
+            // Also handle change event for additional protection
+            maxStudentsInput.addEventListener('change', function() {
                 this.value = 25;
-                showMessage('Maximum students is fixed at 25', 'info');
-            }
-        });
-        
-        // Also handle change event for additional protection
-        maxStudentsInput.addEventListener('change', function() {
-            this.value = 25;
-        });
+            });
+        }
     }
     
     // Initialize everything

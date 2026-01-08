@@ -1,4 +1,4 @@
-// register.js - Simplified Version (Only Inline Errors, No Duplicate Toasts)
+// register.js - Updated with AJAX form submission and success modal
 
 document.addEventListener('DOMContentLoaded', function() {
     // Set max date for date of birth (must be in the past)
@@ -30,6 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Track if we're currently checking
     let isCheckingEmail = false;
     let isCheckingUsername = false;
+
+    // Modal instances
+    let successModal = null;
+    const successModalElement = document.getElementById('successModal');
+    if (successModalElement) {
+        successModal = new bootstrap.Modal(successModalElement);
+    }
 
     // Initialize form steps
     function updateFormSteps() {
@@ -688,6 +695,203 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ==============================================
+    // SUCCESS MODAL FUNCTIONALITY
+    // ==============================================
+
+    // Show success modal
+    function showSuccessModal(message, title = 'Registration Successful') {
+        if (successModal) {
+            const modalTitle = document.getElementById('successModalLabel');
+            const modalMessage = document.getElementById('successMessage');
+            
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalMessage) modalMessage.textContent = message;
+            
+            successModal.show();
+            
+            // Reset form after showing modal
+            resetForm();
+        }
+    }
+
+    // Reset form after successful registration
+    function resetForm() {
+        const registrationForm = document.getElementById('registrationForm');
+        if (registrationForm) {
+            registrationForm.reset();
+            
+            // Reset form steps
+            currentStep = 1;
+            updateFormSteps();
+            
+            // Reset profile picture preview
+            immediatePreview.style.display = 'none';
+            uploadZone.style.display = 'block';
+            uploadStatus.style.display = 'none';
+            
+            // Reset username suggestions
+            hideSuggestions();
+            
+            // Reset availability messages
+            const availabilityMessages = document.querySelectorAll('.availability-message');
+            availabilityMessages.forEach(el => el.textContent = '');
+            
+            // Reset password validation
+            validatePasswordStrength('');
+            document.getElementById('password-match').textContent = '';
+            
+            // Reset review section
+            reviewProfilePicture.src = '';
+            reviewProfilePicture.style.display = 'none';
+            
+            // Reset terms checkbox
+            const termsCheckbox = document.getElementById('terms');
+            if (termsCheckbox) {
+                termsCheckbox.checked = false;
+                termsRead = false;
+            }
+            
+            // Reset submit button
+            const submitBtn = document.querySelector('.submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('loading');
+            }
+            
+            // Reset error classes
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            
+            // Reset location dropdowns
+            if (window.resetLocationDropdowns) {
+                window.resetLocationDropdowns();
+            }
+        }
+    }
+
+    // ==============================================
+    // AJAX FORM SUBMISSION
+    // ==============================================
+
+    // Form submission with AJAX
+    const registrationForm = document.getElementById('registrationForm');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('.submit-btn');
+            
+            // Show loading
+            submitBtn.classList.add('loading');
+            
+            try {
+                // Final validation checks
+                const password = document.getElementById('password').value;
+                const confirm = document.getElementById('confirm_password').value;
+                
+                if (password !== confirm) {
+                    submitBtn.classList.remove('loading');
+                    document.getElementById('password-match').textContent = 'Passwords do not match';
+                    document.getElementById('password-match').className = 'validation-message error';
+                    document.getElementById('confirm_password').classList.add('error');
+                    document.getElementById('confirm_password').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                
+                if (!termsCheckbox.checked || !termsRead) {
+                    submitBtn.classList.remove('loading');
+                    if (termsModal) {
+                        termsModal.show();
+                    }
+                    return;
+                }
+                
+                if (!profilePictureInput.files.length) {
+                    submitBtn.classList.remove('loading');
+                    showUploadStatus('error', 'Please upload a profile picture');
+                    document.getElementById('profile_picture').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                
+                // FINAL RE-CHECK of email and username
+                
+                // Check email
+                const emailAvailable = await forceCheckEmail();
+                if (!emailAvailable) {
+                    submitBtn.classList.remove('loading');
+                    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                
+                // Check username
+                const usernameAvailable = await forceCheckUsername();
+                if (!usernameAvailable) {
+                    submitBtn.classList.remove('loading');
+                    document.getElementById('username').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                
+                // Create FormData object
+                const formData = new FormData(registrationForm);
+                
+                // Send AJAX request
+                const response = await fetch(registrationForm.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Remove loading state
+                submitBtn.classList.remove('loading');
+                
+                if (data.success) {
+                    // Show success modal
+                    showSuccessModal(data.message, data.modal_title || 'Registration Successful');
+                } else {
+                    // Show error message
+                    showUploadStatus('error', data.message || 'Registration failed');
+                    
+                    // Scroll to top to show error
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                
+            } catch (error) {
+                submitBtn.classList.remove('loading');
+                console.error('Form submission error:', error);
+                showUploadStatus('error', 'An error occurred. Please try again.');
+            }
+        });
+    }
+
+    // ==============================================
+    // SUCCESS MODAL BUTTON HANDLERS
+    // ==============================================
+
+    // OK button handler
+    const successOkBtn = document.getElementById('successOkBtn');
+    if (successOkBtn) {
+        successOkBtn.addEventListener('click', function() {
+            // Modal will close automatically via data-bs-dismiss
+            // Form is already reset when modal was shown
+        });
+    }
+
+    // Redirect to login button
+    const redirectToLoginBtn = document.getElementById('redirectToLoginBtn');
+    if (redirectToLoginBtn) {
+        redirectToLoginBtn.addEventListener('click', function() {
+            if (successModal) {
+                successModal.hide();
+            }
+            // Get login URL from the auth links
+            const loginLink = document.querySelector('.auth-links a[href*="login"]');
+            if (loginLink && loginLink.href) {
+                window.location.href = loginLink.href;
+            }
+        });
+    }
+
+    // ==============================================
     // EXISTING FUNCTIONALITY WITH ORIGINAL BACKEND CALLS
     // ==============================================
 
@@ -714,15 +918,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Form submission loading state
-    const registrationForm = document.getElementById('registrationForm');
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', function() {
-            const submitBtn = this.querySelector('.submit-btn');
-            submitBtn.classList.add('loading');
-        });
-    }
-
     // Username suggestion functionality
     const firstNameInput = document.getElementById('first_name');
     const middleNameInput = document.getElementById('middle_name');
@@ -1003,77 +1198,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Form submission validation with final re-check
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = this.querySelector('.submit-btn');
-            
-            // Show loading
-            submitBtn.classList.add('loading');
-            
-            try {
-                // Final validation checks
-                const password = document.getElementById('password').value;
-                const confirm = document.getElementById('confirm_password').value;
-                
-                if (password !== confirm) {
-                    submitBtn.classList.remove('loading');
-                    document.getElementById('password-match').textContent = 'Passwords do not match';
-                    document.getElementById('password-match').className = 'validation-message error';
-                    document.getElementById('confirm_password').classList.add('error');
-                    document.getElementById('confirm_password').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                
-                if (!termsCheckbox.checked || !termsRead) {
-                    submitBtn.classList.remove('loading');
-                    if (termsModal) {
-                        termsModal.show();
-                    }
-                    return;
-                }
-                
-                if (!profilePictureInput.files.length) {
-                    submitBtn.classList.remove('loading');
-                    showUploadStatus('error', 'Please upload a profile picture');
-                    document.getElementById('profile_picture').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                
-                // FINAL RE-CHECK of email and username
-                
-                // Check email
-                const emailAvailable = await forceCheckEmail();
-                if (!emailAvailable) {
-                    submitBtn.classList.remove('loading');
-                    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                
-                // Check username
-                const usernameAvailable = await forceCheckUsername();
-                if (!usernameAvailable) {
-                    submitBtn.classList.remove('loading');
-                    document.getElementById('username').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                
-                // All checks passed - submit the form
-                setTimeout(() => {
-                    registrationForm.submit();
-                }, 500);
-                
-            } catch (error) {
-                submitBtn.classList.remove('loading');
-                console.error('Form submission error:', error);
-            }
-        });
-    }
-
     // Initialize form
     updateFormSteps();
 
-    console.log('Registration form JavaScript loaded successfully');
+    console.log('Registration form JavaScript loaded successfully with modal support');
 });

@@ -201,28 +201,19 @@ def register_user():
 
             db.commit()
 
-            flash(
-                "Registration successful! Your account is pending approval.",
-                'success'
-            )
-
-            return render_template(
-                'all/register.html',
-                datetime=datetime,
-                date=date,
-                form_data={},
-                registration_success=True
-            )
+            # Return JSON response for modal display
+            return jsonify({
+                'success': True,
+                'message': 'Registration successful! Your account is pending approval.',
+                'modal_title': 'Registration Successful'
+            })
 
         except Exception as e:
             db.rollback()
-            flash(f"Registration failed: {str(e)}", 'danger')
-            return render_template(
-                'all/register.html',
-                datetime=datetime,
-                date=date,
-                form_data=form_data
-            )
+            return jsonify({
+                'success': False,
+                'message': f'Registration failed: {str(e)}'
+            })
 
         finally:
             cursor.close()

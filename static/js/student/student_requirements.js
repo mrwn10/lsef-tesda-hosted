@@ -135,6 +135,17 @@ $(document).ready(function() {
     initializeRequirementsPage();
 });
 
+// NEW: Function to close rejection alert
+function closeRejectionAlert() {
+    const alert = document.getElementById('rejectionAlert');
+    if (alert) {
+        alert.style.opacity = '0';
+        setTimeout(() => {
+            alert.style.display = 'none';
+        }, 300);
+    }
+}
+
 // Requirements Page Specific Functionality
 function initializeRequirementsPage() {
     console.log('Initializing Requirements Page...');
@@ -145,8 +156,9 @@ function initializeRequirementsPage() {
     const marriageCertificateField = document.getElementById("marriageCertificateField");
     const marriageCertificateInput = document.getElementById("marriageCertificateInput");
 
-    // Get user gender from data attribute or variable
+    // Get user gender and verification status from data attributes
     const userGender = document.body.getAttribute('data-user-gender') || '';
+    const verifiedStatus = document.body.getAttribute('data-verified-status') || '';
 
     // Check if elements exist
     if (!form) {
@@ -154,8 +166,13 @@ function initializeRequirementsPage() {
         return;
     }
 
+    // NEW: Add special styling for resubmission if rejected
+    if (verifiedStatus === 'rejected' && submitBtn) {
+        submitBtn.classList.add('resubmit');
+    }
+
     // Auto-hide flash messages after 5 seconds (if any exist)
-    document.querySelectorAll('.alert-message').forEach(alert => {
+    document.querySelectorAll('.alert-message:not(#rejectionAlert)').forEach(alert => {
         setTimeout(() => {
             alert.style.opacity = '0';
             setTimeout(() => {
@@ -224,7 +241,8 @@ function initializeRequirementsPage() {
     // File input styling and validation
     document.querySelectorAll('.file-input').forEach(input => {
         // Set initial state for file inputs that might have existing values
-        if (input.files.length > 0) {
+        // NEW: Don't pre-fill if status is rejected
+        if (input.files.length > 0 && verifiedStatus !== 'rejected') {
             const overlay = input.nextElementSibling;
             if (overlay) {
                 overlay.querySelector('span').textContent = input.files[0].name;
@@ -273,7 +291,7 @@ function initializeRequirementsPage() {
                     updateUploadStatus(this);
                 } else {
                     overlay.classList.remove('has-file');
-                    // Reset to "Not uploaded yet"
+                    // Reset to default message
                     resetUploadStatus(this);
                 }
                 
@@ -300,16 +318,18 @@ function initializeRequirementsPage() {
         
         if (fileName) {
             // Update status box to success style
-            statusBox.className = 'status-success';
+            statusBox.className = verifiedStatus === 'rejected' ? 'status-pending' : 'status-success';
             
             // Update icon
             if (statusIcon) {
-                statusIcon.className = 'fas fa-check-circle';
+                statusIcon.className = verifiedStatus === 'rejected' ? 'fas fa-clock' : 'fas fa-check-circle';
             }
             
             // Update text
             if (statusText) {
-                statusText.innerHTML = `Selected: <span class="file-link">${fileName}</span>`;
+                statusText.innerHTML = verifiedStatus === 'rejected' 
+                    ? `Selected: <span class="file-link">${fileName}</span>` 
+                    : `Selected: <span class="file-link">${fileName}</span>`;
             }
             
             // Update preview button
@@ -344,6 +364,7 @@ function initializeRequirementsPage() {
     // Function to reset upload status when no file is selected
     function resetUploadStatus(fileInput) {
         const fieldName = fileInput.name;
+        const verifiedStatus = document.body.getAttribute('data-verified-status') || '';
         
         // Get elements using IDs
         const statusBox = document.getElementById(`status-box-${fieldName}`);
@@ -353,36 +374,37 @@ function initializeRequirementsPage() {
         
         if (!statusBox || !previewBtn) return;
         
-        // Reset to pending style
-        statusBox.className = 'status-pending';
-        
-        // Reset icon
-        if (statusIcon) {
-            statusIcon.className = 'fas fa-clock';
-        }
-        
-        // Reset text - check if this is a server-uploaded file or not
-        if (statusText) {
+        // Reset to appropriate style based on verification status
+        if (verifiedStatus === 'rejected') {
+            statusBox.className = 'status-pending';
+            if (statusIcon) statusIcon.className = 'fas fa-clock';
+            if (statusText) statusText.textContent = 'Previous file rejected - please upload new file';
+        } else {
+            statusBox.className = 'status-pending';
+            if (statusIcon) statusIcon.className = 'fas fa-clock';
+            
             // Check if we have an existing server-uploaded file
-            const existingUpload = statusText.innerHTML.includes('Uploaded:');
+            const existingUpload = statusText && statusText.innerHTML.includes('Uploaded:');
             if (existingUpload) {
                 // Keep the server-uploaded file display
                 // Do nothing - the server data is already in the HTML
             } else {
                 // Reset to default text
-                if (fieldName === 'marriage_certificate') {
-                    statusText.textContent = 'Required for married female applicants';
-                } else {
-                    statusText.textContent = 'Not uploaded yet';
+                if (statusText) {
+                    if (fieldName === 'marriage_certificate') {
+                        statusText.textContent = 'Required for married female applicants';
+                    } else {
+                        statusText.textContent = 'Not uploaded yet';
+                    }
                 }
             }
         }
         
-        // Reset preview button if no server file exists
+        // Reset preview button if no server file exists or if rejected
         const hasServerFile = previewBtn.getAttribute('data-filename') && 
                              previewBtn.getAttribute('data-filename').includes('static/');
         
-        if (!hasServerFile) {
+        if (!hasServerFile || verifiedStatus === 'rejected') {
             previewBtn.classList.add('preview-btn-disabled');
             previewBtn.disabled = true;
             previewBtn.setAttribute('data-uploaded', 'false');
@@ -463,7 +485,9 @@ function initializeRequirementsPage() {
         // Show loading state
         submitBtn.disabled = true;
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        submitBtn.innerHTML = verifiedStatus === 'rejected' 
+            ? '<i class="fas fa-spinner fa-spin"></i> Resubmitting...' 
+            : '<i class="fas fa-spinner fa-spin"></i> Uploading...';
         
         // Additional validation for required fields
         const missingFields = [];
@@ -500,6 +524,7 @@ function initializeRequirementsPage() {
 
     console.log('Requirements Page initialized successfully');
     console.log('User gender:', userGender);
+    console.log('Verification status:', verifiedStatus);
 }
 
 // Store object URLs for cleanup
@@ -524,12 +549,14 @@ document.addEventListener('click', function(e) {
         const label = previewBtn.getAttribute('data-label');
         const fieldName = previewBtn.getAttribute('data-field');
         const isUploaded = previewBtn.getAttribute('data-uploaded') === 'true';
+        const verifiedStatus = document.body.getAttribute('data-verified-status') || '';
         
         console.log('Preview clicked:', {
             filename: filename,
             label: label,
             isUploaded: isUploaded,
-            fieldName: fieldName
+            fieldName: fieldName,
+            verifiedStatus: verifiedStatus
         });
         
         if (!isUploaded || !filename) {

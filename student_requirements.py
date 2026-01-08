@@ -21,11 +21,13 @@ def upload_requirements():
         return redirect(url_for("auth.login"))
 
     db = get_db()
-    cursor = db.cursor(dictionary=True, buffered=True)  # ✅ FIX
+    cursor = db.cursor(dictionary=True, buffered=True)
     user_id = session["user_id"]
 
+    # Get user profile info
     profile_picture = "default.png"
     gender = None
+    verified_status = None  # NEW: Store verification status
 
     cursor.execute("""
         SELECT profile_picture, gender
@@ -37,6 +39,15 @@ def upload_requirements():
     if user:
         profile_picture = user.get("profile_picture") or profile_picture
         gender = (user.get("gender") or "").lower()
+
+    # NEW: Get verification status from login table
+    cursor.execute("""
+        SELECT verified FROM login
+        WHERE user_id = %s
+    """, (user_id,))
+    login_info = cursor.fetchone()
+    if login_info:
+        verified_status = login_info.get("verified")
 
     if request.method == "POST":
         uploaded_files = {}
@@ -101,29 +112,51 @@ def upload_requirements():
         additional_notes = request.form.get("additional_notes", "")
 
         try:
-            cursor.execute("""
-                INSERT INTO student_requirements
-                (user_id, barangay_clearance, valid_id, medical_certificate,
-                 transcript_form, marriage_certificate, additional_notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                    barangay_clearance = VALUES(barangay_clearance),
-                    valid_id = VALUES(valid_id),
-                    medical_certificate = VALUES(medical_certificate),
-                    transcript_form = VALUES(transcript_form),
-                    marriage_certificate = VALUES(marriage_certificate),
-                    additional_notes = VALUES(additional_notes),
-                    date_uploaded = NOW()
-            """, (
-                user_id,
-                uploaded_files.get("barangay_clearance"),
-                uploaded_files.get("valid_id"),
-                uploaded_files.get("medical_certificate"),
-                uploaded_files.get("transcript_form"),
-                uploaded_files.get("marriage_certificate"),
-                additional_notes
-            ))
+            # NEW: Check if this is a resubmission after rejection
+            cursor.execute("SELECT requirement_id FROM student_requirements WHERE user_id = %s", (user_id,))
+            existing_record = cursor.fetchone()
+            
+            if existing_record:
+                # Update existing record (resubmission after rejection or editing)
+                cursor.execute("""
+                    UPDATE student_requirements
+                    SET barangay_clearance = %s,
+                        valid_id = %s,
+                        medical_certificate = %s,
+                        transcript_form = %s,
+                        marriage_certificate = %s,
+                        additional_notes = %s,
+                        date_uploaded = NOW()
+                    WHERE user_id = %s
+                """, (
+                    uploaded_files.get("barangay_clearance"),
+                    uploaded_files.get("valid_id"),
+                    uploaded_files.get("medical_certificate"),
+                    uploaded_files.get("transcript_form"),
+                    uploaded_files.get("marriage_certificate"),
+                    additional_notes,
+                    user_id
+                ))
+                action_message = "updated"
+            else:
+                # First-time submission
+                cursor.execute("""
+                    INSERT INTO student_requirements
+                    (user_id, barangay_clearance, valid_id, medical_certificate,
+                     transcript_form, marriage_certificate, additional_notes)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    user_id,
+                    uploaded_files.get("barangay_clearance"),
+                    uploaded_files.get("valid_id"),
+                    uploaded_files.get("medical_certificate"),
+                    uploaded_files.get("transcript_form"),
+                    uploaded_files.get("marriage_certificate"),
+                    additional_notes
+                ))
+                action_message = "uploaded"
 
+            # NEW: Always set to pending when submitting/resubmitting
             cursor.execute("""
                 UPDATE login
                 SET verified = 'pending'
@@ -131,10 +164,17 @@ def upload_requirements():
             """, (user_id,))
 
             db.commit()
-            flash(
-                "Your TESDA requirements have been uploaded successfully and are pending verification.",
-                "success"
-            )
+            
+            if verified_status == 'rejected':
+                flash(
+                    "Your requirements have been resubmitted successfully and are pending verification.",
+                    "success"
+                )
+            else:
+                flash(
+                    f"Your TESDA requirements have been {action_message} successfully and are pending verification.",
+                    "success"
+                )
 
         except Exception as e:
             db.rollback()
@@ -143,17 +183,19 @@ def upload_requirements():
 
         return redirect(url_for("student_requirements.upload_requirements"))
 
+    # GET request - show form
     cursor.execute(
         "SELECT * FROM student_requirements WHERE user_id = %s",
         (user_id,)
     )
     existing = cursor.fetchone()
 
-    cursor.close()  # ✅ now SAFE
+    cursor.close()
 
     return render_template(
         "students/student_requirements.html",
         existing=existing,
         profile_picture=profile_picture,
-        gender=gender
+        gender=gender,
+        verified_status=verified_status  # NEW: Pass verification status to template
     )
