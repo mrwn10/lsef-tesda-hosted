@@ -22,32 +22,20 @@
                 <p>Please sign in to access your account</p>
             </div>
 
-            <!-- Flash messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message flash-{{ category }}">
-                                <span class="flash-icon">
-                                    {% if category == 'login_success_message' %}
-                                        <i class="fas fa-check-circle"></i>
-                                    {% elif category == 'logout_message' %}
-                                        <i class="fas fa-info-circle"></i>
-                                    {% else %}
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    {% endif %}
-                                </span>
-                                <span class="flash-text">{{ message }}</span>
-                                <button class="flash-close" aria-label="Close message">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
+            <!-- JavaScript messages container -->
+            <div id="js-message-container" class="js-message-container" style="display: none;">
+                <div class="js-message">
+                    <span class="js-message-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </span>
+                    <span class="js-message-text"></span>
+                    <button class="js-message-close" aria-label="Close message">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
 
-            <form class="login-form" method="POST" action="{{ url_for('login.login') }}" autocomplete="on">
+            <form class="login-form" id="loginForm" autocomplete="on">
                 <div class="form-group">
                     <label for="identifier">
                         <i class="fas fa-user"></i> Username or Email
@@ -76,7 +64,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="login-btn">
+                <button type="submit" class="login-btn" id="loginBtn">
                     <span class="btn-text">Sign In</span>
                     <span class="btn-loader">
                         <i class="fas fa-spinner fa-spin"></i>

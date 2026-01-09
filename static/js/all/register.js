@@ -1,4 +1,4 @@
-// register.js - Updated with AJAX form submission and success modal
+// register.js - Updated with SweetAlert2 for success message
 
 document.addEventListener('DOMContentLoaded', function() {
     // Set max date for date of birth (must be in the past)
@@ -30,13 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Track if we're currently checking
     let isCheckingEmail = false;
     let isCheckingUsername = false;
-
-    // Modal instances
-    let successModal = null;
-    const successModalElement = document.getElementById('successModal');
-    if (successModalElement) {
-        successModal = new bootstrap.Modal(successModalElement);
-    }
 
     // Initialize form steps
     function updateFormSteps() {
@@ -213,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Enhanced availability check function (NO TOASTS)
     function checkAvailability(type, value) {
         if (type === 'username' && value.length < 3) {
-            const availabilityElement = document.getElementById('username-availability');
+            const availabilityElement = document.getElementById(`${type}-availability`);
             if (availabilityElement) {
                 availabilityElement.textContent = '';
             }
@@ -695,23 +688,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ==============================================
-    // SUCCESS MODAL FUNCTIONALITY
+    // SWEETALERT2 SUCCESS MESSAGE FUNCTIONALITY
     // ==============================================
 
-    // Show success modal
-    function showSuccessModal(message, title = 'Registration Successful') {
-        if (successModal) {
-            const modalTitle = document.getElementById('successModalLabel');
-            const modalMessage = document.getElementById('successMessage');
-            
-            if (modalTitle) modalTitle.textContent = title;
-            if (modalMessage) modalMessage.textContent = message;
-            
-            successModal.show();
-            
-            // Reset form after showing modal
-            resetForm();
-        }
+    // Show success message using SweetAlert2
+    function showSuccessMessage(title = 'Registration Successful!', message = 'Your account is pending approval. You will be notified via email once your account is approved.') {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            html: `
+                <div style="text-align: left;">
+                    <p>${message}</p>
+                    <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <p style="margin: 0 0 10px 0; color: #495057; font-weight: 500;">
+                            <i class="fas fa-info-circle" style="color: #28a745;"></i> 
+                            <strong>Next Steps:</strong>
+                        </p>
+                        <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                            <li>Wait for administrator approval</li>
+                            <li>Check your email for confirmation</li>
+                            <li>You'll be able to login once approved</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Go to Login',
+            cancelButtonText: 'Stay on Page',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            focusConfirm: true,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            backdrop: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to login
+                const loginLink = document.querySelector('.auth-links a[href*="login"]');
+                if (loginLink && loginLink.href) {
+                    window.location.href = loginLink.href;
+                } else {
+                    window.location.href = '/login';
+                }
+            } else {
+                // User chose to stay on page - reset the form
+                resetForm();
+            }
+        });
     }
 
     // Reset form after successful registration
@@ -769,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==============================================
-    // AJAX FORM SUBMISSION
+    // AJAX FORM SUBMISSION WITH SWEETALERT2 SUCCESS
     // ==============================================
 
     // Form submission with AJAX
@@ -845,8 +868,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.classList.remove('loading');
                 
                 if (data.success) {
-                    // Show success modal
-                    showSuccessModal(data.message, data.modal_title || 'Registration Successful');
+                    // Show SweetAlert2 success message
+                    showSuccessMessage(
+                        data.modal_title || 'Registration Successful!',
+                        data.message || 'Your account is pending approval. You will be notified via email once your account is approved.'
+                    );
                 } else {
                     // Show error message
                     showUploadStatus('error', data.message || 'Registration failed');
@@ -859,34 +885,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.classList.remove('loading');
                 console.error('Form submission error:', error);
                 showUploadStatus('error', 'An error occurred. Please try again.');
-            }
-        });
-    }
-
-    // ==============================================
-    // SUCCESS MODAL BUTTON HANDLERS
-    // ==============================================
-
-    // OK button handler
-    const successOkBtn = document.getElementById('successOkBtn');
-    if (successOkBtn) {
-        successOkBtn.addEventListener('click', function() {
-            // Modal will close automatically via data-bs-dismiss
-            // Form is already reset when modal was shown
-        });
-    }
-
-    // Redirect to login button
-    const redirectToLoginBtn = document.getElementById('redirectToLoginBtn');
-    if (redirectToLoginBtn) {
-        redirectToLoginBtn.addEventListener('click', function() {
-            if (successModal) {
-                successModal.hide();
-            }
-            // Get login URL from the auth links
-            const loginLink = document.querySelector('.auth-links a[href*="login"]');
-            if (loginLink && loginLink.href) {
-                window.location.href = loginLink.href;
             }
         });
     }
@@ -1201,5 +1199,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize form
     updateFormSteps();
 
-    console.log('Registration form JavaScript loaded successfully with modal support');
+    console.log('Registration form JavaScript loaded successfully with SweetAlert2 support');
 });
