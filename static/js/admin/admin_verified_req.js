@@ -360,7 +360,13 @@ $(document).ready(function() {
             if (userId && userId !== '0') {
                 loadStudentDetails(userId);
             } else {
-                showMessage('info', 'This student has not uploaded any documents yet.');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Documents',
+                    text: 'This student has not uploaded any documents yet.',
+                    confirmButtonText: 'OK',
+                    ...window.swalConfig
+                });
             }
         });
 
@@ -717,21 +723,22 @@ $(document).ready(function() {
     $('#verifyStudentBtn').on('click', function() {
         if (!currentStudentId) return;
         
-        // Show approval confirmation modal
-        $('#approvalModal').fadeIn();
+        // Close student details modal first, then show approval confirmation
+        closeStudentDetailsModal();
+        setTimeout(() => {
+            showApprovalConfirmation();
+        }, 300); // Small delay to ensure modal is fully closed
     });
 
     // Reject student from details modal
     $('#rejectStudentBtn').on('click', function() {
         if (!currentStudentId) return;
         
-        // Reset rejection reason textarea
-        $('#rejectionReasonTextarea').val('');
-        $('#charCount').text('0');
-        $('#rejectionValidation').hide();
-        
-        // Show rejection reason modal
-        $('#rejectionReasonModal').fadeIn();
+        // Close student details modal first, then show rejection reason modal
+        closeStudentDetailsModal();
+        setTimeout(() => {
+            showRejectionReasonModal();
+        }, 300); // Small delay to ensure modal is fully closed
     });
 
     // Tab switching
@@ -769,7 +776,6 @@ $(document).ready(function() {
 function init() {
     initMobileNavigation();
     initModals();
-    initRejectionReasonHandlers();
 }
 
 // Mobile Navigation Functionality
@@ -841,7 +847,7 @@ function initMobileNavigation() {
     }
 }
 
-// Initialize modal functionality - CONSISTENT WITH OTHER PAGES
+// Initialize modal functionality - CONSISTENT WITH ADMIN HOMEPAGE
 function initModals() {
     // Close modal function - works for ALL modals
     function closeAllModals() {
@@ -876,7 +882,7 @@ function initModals() {
 
     // ===== SPECIFIC MODAL FUNCTIONALITY =====
 
-    // Logout Modal - CONSISTENT WITH OTHER PAGES
+    // Logout Modal - CONSISTENT WITH ADMIN HOMEPAGE
     $('#logout-trigger').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -921,134 +927,184 @@ function initModals() {
         }
     });
 
-    // Close all modals when clicking close buttons
-    $('.close-modal').click(function() {
-        closeAllModals();
+    // Student details modal close buttons
+    $('#closeStudentDetailsModal').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#studentDetailsModal').fadeOut();
+    });
+    
+    $('#close-student-details-modal').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#studentDetailsModal').fadeOut();
     });
 
-    // Approval Modal
-    $('#close-approval-modal').click(function() {
-        $('#approvalModal').fadeOut();
-    });
-
-    $('#cancelApproval').click(function() {
-        $('#approvalModal').fadeOut();
-    });
-
-    $('#confirmApproval').click(function() {
-        approveStudent();
-    });
-
-    // Rejection Reason Modal
-    $('#close-rejection-reason-modal').click(function() {
-        $('#rejectionReasonModal').fadeOut();
-    });
-
-    $('#cancelRejectionReason').click(function() {
-        $('#rejectionReasonModal').fadeOut();
-    });
-
-    $('#confirmRejectionWithReason').click(function() {
-        rejectStudentWithReason();
-    });
-
-    // Rejection Success Modal
-    $('#close-rejection-success-modal').click(function() {
-        $('#rejectionSuccessModal').fadeOut();
-        loadData();
-    });
-
-    $('#closeRejectionSuccessModal').click(function() {
-        $('#rejectionSuccessModal').fadeOut();
-        loadData();
-    });
-
-    // Success Modal
-    $('#close-success-modal').click(function() {
-        $('#success-modal').fadeOut();
-        loadData();
-    });
-
-    // Error Modal
-    $('#close-error-modal').click(function() {
-        $('#error-modal').fadeOut();
-    });
-
-    // Info Modal
-    $('#close-info-modal').click(function() {
-        $('#info-modal').fadeOut();
+    // Close alert when X is clicked (if you add alerts later)
+    $('.close-alert').click(function() {
+        $('#status-message').fadeOut();
     });
 }
 
-// Initialize rejection reason handlers
-function initRejectionReasonHandlers() {
-    // Character counter for rejection reason textarea
-    $('#rejectionReasonTextarea').on('input', function() {
-        const text = $(this).val();
-        const charCount = text.length;
-        $('#charCount').text(charCount);
-        
-        // Update validation
-        const validationMessage = $('#rejectionValidation');
-        if (charCount === 0) {
-            validationMessage.show().find('#validationText').text('Please provide a rejection reason');
-            $('#confirmRejectionWithReason').prop('disabled', true);
-        } else if (charCount < 10) {
-            validationMessage.show().find('#validationText').text('Please provide a more detailed reason (minimum 10 characters)');
-            $('#confirmRejectionWithReason').prop('disabled', true);
-        } else {
-            validationMessage.hide();
-            $('#confirmRejectionWithReason').prop('disabled', false);
+// SweetAlert2 Functions
+function showLoading(message) {
+    $('#loadingText').text(message || 'Processing...');
+    $('#loadingOverlay').fadeIn();
+}
+
+function hideLoading() {
+    $('#loadingOverlay').fadeOut();
+}
+
+function showSuccessAlert(title, message, showEmailNotification = false) {
+    let html = `<div style="text-align: center;">
+        <p style="margin-bottom: 15px;">${message}</p>`;
+    
+    if (showEmailNotification) {
+        html += `<div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px; margin-top: 10px; color: #065f46; font-size: 0.9rem;">
+            <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Notification email sent successfully
+        </div>`;
+    }
+    
+    html += `</div>`;
+    
+    Swal.fire({
+        icon: 'success',
+        title: title || 'Success',
+        html: html,
+        confirmButtonText: 'OK',
+        ...window.swalConfig
+    }).then(() => {
+        // Reload data after success
+        window.location.reload();
+    });
+}
+
+function showErrorAlert(title, message) {
+    Swal.fire({
+        icon: 'error',
+        title: title || 'Error',
+        text: message,
+        confirmButtonText: 'OK',
+        ...window.swalConfig
+    });
+}
+
+function showInfoAlert(title, message) {
+    Swal.fire({
+        icon: 'info',
+        title: title || 'Information',
+        text: message,
+        confirmButtonText: 'OK',
+        ...window.swalConfig
+    });
+}
+
+function showApprovalConfirmation() {
+    Swal.fire({
+        title: 'Confirm Verification',
+        html: `
+            <div style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #15803d; margin-bottom: 15px;"></i>
+                <p style="margin-bottom: 15px;">Are you sure you want to verify this student's documents? They will be able to enroll in courses.</p>
+                <p style="color: #64748b; font-size: 0.9rem;">
+                    <i class="fas fa-envelope"></i> An approval notification email will be sent to the student.
+                </p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Verify Student',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#15803d',
+        cancelButtonColor: '#6c757d',
+        ...window.swalConfig
+    }).then((result) => {
+        if (result.isConfirmed) {
+            approveStudent();
         }
     });
 }
 
-// Unified Modal Handling - CONSISTENT WITH PROFILE PAGE
-function showMessage(type, text, showEmailNotification = false) {
-    // Hide all modals first
-    $('.modal').fadeOut();
-    
-    switch(type) {
-        case 'success':
-            $('#success-message').text(text);
-            if (showEmailNotification) {
-                $('#success-email-notification').show();
-            } else {
-                $('#success-email-notification').hide();
+function showRejectionReasonModal() {
+    Swal.fire({
+        title: 'Rejection Reason Required',
+        html: `
+            <div style="text-align: left;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #334155;">
+                        <i class="fas fa-comment-dots" style="margin-right: 5px;"></i> Please provide a reason for rejecting this verification:
+                    </label>
+                    <textarea id="swalRejectionReason" 
+                              style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 120px;"
+                              placeholder="Explain why the documents are being rejected. For example: 'ID is expired', 'Medical certificate is unclear', 'Missing required information', etc."
+                              maxlength="500"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                        <div style="font-size: 0.85rem; color: #64748b;">
+                            <span id="swalCharCount">0</span> / 500 characters
+                        </div>
+                        <div id="swalValidation" style="font-size: 0.85rem; color: #b91c1c; display: none;">
+                            <i class="fas fa-exclamation-triangle" style="margin-right: 3px;"></i> <span id="swalValidationText"></span>
+                        </div>
+                    </div>
+                </div>
+                <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">
+                    <i class="fas fa-envelope"></i> This reason will be included in the rejection email sent to the student.
+                </p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Submit Rejection',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#b91c1c',
+        cancelButtonColor: '#6c757d',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const reason = document.getElementById('swalRejectionReason').value.trim();
+            
+            if (!reason) {
+                Swal.showValidationMessage('Please provide a rejection reason');
+                return false;
             }
-            $('#success-modal').fadeIn();
-            break;
-        case 'error':
-            $('#error-message').text(text);
-            $('#error-modal').fadeIn();
-            break;
-        case 'info':
-            $('#info-message').text(text);
-            $('#info-modal').fadeIn();
-            break;
+            
+            if (reason.length < 10) {
+                Swal.showValidationMessage('Please provide a more detailed reason (minimum 10 characters)');
+                return false;
+            }
+            
+            return reason;
+        },
+        ...window.swalConfig
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            rejectStudentWithReason(result.value);
+        }
+    });
+    
+    // Add character counter for SweetAlert textarea
+    const textarea = document.getElementById('swalRejectionReason');
+    const charCount = document.getElementById('swalCharCount');
+    
+    if (textarea && charCount) {
+        textarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            if (count === 0) {
+                Swal.enableButtons();
+                Swal.showValidationMessage('Please provide a rejection reason');
+            } else if (count < 10) {
+                Swal.enableButtons();
+                Swal.showValidationMessage('Please provide a more detailed reason (minimum 10 characters)');
+            } else {
+                Swal.resetValidationMessage();
+            }
+        });
     }
-}
-
-// Show loading modal
-function showLoading(message) {
-    $('#loadingMessage').text(message || 'Processing...');
-    $('#loadingModal').fadeIn();
-}
-
-// Hide loading modal
-function hideLoading() {
-    $('#loadingModal').fadeOut();
 }
 
 // Approve student function
 function approveStudent() {
     if (!window.currentStudentId) return;
-    
-    const button = $('#confirmApproval');
-    const originalHtml = button.html();
-    
-    // Add loading state
-    button.addClass('loading').prop('disabled', true);
     
     showLoading('Approving student and sending email...');
     
@@ -1057,26 +1113,20 @@ function approveStudent() {
         type: 'POST',
         success: function(response) {
             hideLoading();
-            button.removeClass('loading').prop('disabled', false);
             
             if (response.success) {
-                // Show success modal with email notification
-                $('#approvalModal').fadeOut();
-                $('#studentDetailsModal').fadeOut();
-                showMessage('success', response.message, response.email_sent);
-                
-                // Reload data
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                // Show success alert with email notification
+                showSuccessAlert(
+                    'Verification Approved',
+                    response.message,
+                    response.email_sent
+                );
             } else {
-                showMessage('error', response.message || 'Error verifying student');
-                $('#approvalModal').fadeOut();
+                showErrorAlert('Verification Failed', response.message || 'Error verifying student');
             }
         },
         error: function(xhr, status, error) {
             hideLoading();
-            button.removeClass('loading').prop('disabled', false);
             
             let errorMessage = 'Error verifying student';
             if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1085,28 +1135,14 @@ function approveStudent() {
                 errorMessage += ': ' + error;
             }
             
-            showMessage('error', errorMessage);
-            $('#approvalModal').fadeOut();
+            showErrorAlert('Verification Failed', errorMessage);
         }
     });
 }
 
 // Reject student with reason function
-function rejectStudentWithReason() {
+function rejectStudentWithReason(rejectionReason) {
     if (!window.currentStudentId) return;
-    
-    const rejectionReason = $('#rejectionReasonTextarea').val().trim();
-    
-    if (!rejectionReason || rejectionReason.length < 10) {
-        $('#rejectionValidation').show().find('#validationText').text('Please provide a detailed rejection reason (minimum 10 characters)');
-        return;
-    }
-    
-    const button = $('#confirmRejectionWithReason');
-    const originalHtml = button.html();
-    
-    // Add loading state
-    button.addClass('loading').prop('disabled', true);
     
     showLoading('Rejecting verification and sending email...');
     
@@ -1119,34 +1155,20 @@ function rejectStudentWithReason() {
         }),
         success: function(response) {
             hideLoading();
-            button.removeClass('loading').prop('disabled', false);
             
             if (response.success) {
-                // Show rejection success modal
-                $('#rejectionReasonModal').fadeOut();
-                $('#studentDetailsModal').fadeOut();
-                
-                // Update rejection success message
-                $('#rejectionSuccessMessage').text(response.message);
-                if (response.email_sent) {
-                    $('#rejection-email-notification').show();
-                } else {
-                    $('#rejection-email-notification').hide();
-                }
-                $('#rejectionSuccessModal').fadeIn();
-                
-                // Reload data
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                // Show success alert with email notification
+                showSuccessAlert(
+                    'Verification Rejected',
+                    response.message,
+                    response.email_sent
+                );
             } else {
-                showMessage('error', response.message || 'Error rejecting verification');
-                $('#rejectionReasonModal').fadeOut();
+                showErrorAlert('Rejection Failed', response.message || 'Error rejecting verification');
             }
         },
         error: function(xhr, status, error) {
             hideLoading();
-            button.removeClass('loading').prop('disabled', false);
             
             let errorMessage = 'Error rejecting verification';
             if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1155,8 +1177,7 @@ function rejectStudentWithReason() {
                 errorMessage += ': ' + error;
             }
             
-            showMessage('error', errorMessage);
-            $('#rejectionReasonModal').fadeOut();
+            showErrorAlert('Rejection Failed', errorMessage);
         }
     });
 }

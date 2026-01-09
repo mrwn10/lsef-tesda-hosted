@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- SweetAlert2 CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Define URLs for JavaScript -->
     <script>
     window.appUrls = {
@@ -23,11 +27,25 @@
         staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
         staticRequirementsPath: "{{ url_for('static', filename='uploads/requirements/') }}",
         acceptVerification: "{{ url_for('admin_verified_req.accept_verification', user_id=0) }}",
-        rejectVerification: "{{ url_for('admin_verified_req.reject_verification', user_id=0) }}"
+        rejectVerification: "{{ url_for('admin_verified_req.reject_verification', user_id=0) }}",
+        reopenVerification: "{{ url_for('admin_verified_req.reopen_verification', user_id=0) }}"
     };
     
     // Store current student ID globally for modal actions
     window.currentStudentId = null;
+    
+    // SweetAlert2 Default Configuration
+    window.swalConfig = {
+        confirmButtonColor: '#003366',
+        cancelButtonColor: '#6c757d',
+        allowOutsideClick: false,
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    };
 </script>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
@@ -151,147 +169,7 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div class="modal" id="success-modal">
-        <div class="modal-content">
-            <div class="modal-header success">
-                <h3><i class="fas fa-check-circle"></i> Success</h3>
-                <button class="close-modal" id="close-success-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="success-message">Operation completed successfully!</p>
-                <div class="email-notification" id="success-email-notification" style="display: none;">
-                    <i class="fas fa-check-circle"></i> Notification email sent successfully
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-yes close-modal">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Error Modal -->
-    <div class="modal" id="error-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-exclamation-circle"></i> Error</h3>
-                <button class="close-modal" id="close-error-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="error-message">An error occurred!</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-yes close-modal">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Info Modal -->
-    <div class="modal" id="info-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Information</h3>
-                <button class="close-modal" id="close-info-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="info-message">Information message</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-yes close-modal">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Verification Approval Confirmation Modal -->
-    <div id="approvalModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-check-circle"></i> Confirm Verification</h3>
-                <button class="close-modal" id="close-approval-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to verify this student's documents? They will be able to enroll in courses.</p>
-                <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">
-                    <i class="fas fa-envelope"></i> An approval notification email will be sent to the student.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="confirmApproval">Yes, Verify Student</button>
-                <button class="btn btn-secondary" id="cancelApproval">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Verification Rejection Reason Modal -->
-    <div id="rejectionReasonModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-times-circle"></i> Rejection Reason Required</h3>
-                <button class="close-modal" id="close-rejection-reason-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="rejection-reason-section">
-                    <label for="rejectionReasonTextarea" class="rejection-reason-label">
-                        <i class="fas fa-comment-dots"></i> Please provide a reason for rejecting this verification:
-                    </label>
-                    <textarea 
-                        id="rejectionReasonTextarea" 
-                        class="rejection-reason-textarea" 
-                        placeholder="Explain why the documents are being rejected. For example: 'ID is expired', 'Medical certificate is unclear', 'Missing required information', etc."
-                        rows="5"
-                        maxlength="500"></textarea>
-                    <div class="rejection-reason-footer">
-                        <div class="character-counter">
-                            <span id="charCount">0</span> / 500 characters
-                        </div>
-                        <div class="validation-message" id="rejectionValidation" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i> <span id="validationText">Please provide a rejection reason</span>
-                        </div>
-                    </div>
-                    <p style="color: #64748b; font-size: 0.9rem; margin-top: 15px;">
-                        <i class="fas fa-envelope"></i> This reason will be included in the rejection email sent to the student.
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" id="confirmRejectionWithReason">Submit Rejection</button>
-                <button class="btn btn-secondary" id="cancelRejectionReason">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rejection Success Modal -->
-    <div id="rejectionSuccessModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-times-circle"></i> Verification Rejected</h3>
-                <button class="close-modal" id="close-rejection-success-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="rejectionSuccessMessage">Verification has been rejected successfully.</p>
-                <div class="email-notification" id="rejection-email-notification" style="display: none;">
-                    <i class="fas fa-check-circle"></i> Rejection email sent successfully
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeRejectionSuccessModal">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logout Confirmation Modal -->
+    <!-- Logout Confirmation Modal (Added - Consistent with Admin Homepage) -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -306,6 +184,102 @@
             <div class="modal-footer">
                 <button class="btn btn-yes" id="confirm-logout">Yes</button>
                 <button class="btn btn-no" id="cancel-logout">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Details Modal (Keep this one as it's complex) -->
+    <div id="studentDetailsModal" class="modal">
+        <div class="modal-content extra-large-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> Student Details</h3>
+                <button class="close-modal" id="close-student-details-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="student-details-container">
+                    <!-- Left Column: Student Profile Info -->
+                    <div class="student-profile-column">
+                        <!-- Profile Header with Picture -->
+                        <div class="profile-header">
+                            <img id="studentProfilePicture" src="{{ url_for('static', filename='img/default_profile.png') }}" 
+                                 alt="Student Profile Picture" class="profile-picture">
+                            <div class="profile-info">
+                                <h3 id="studentName">Student Name</h3>
+                                <p id="studentEmail">student@email.com</p>
+                                <div id="studentStatus"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Student Information -->
+                        <div class="student-details-content" id="studentDetailsContent">
+                            <!-- Student details will be inserted here by JavaScript -->
+                        </div>
+                        
+                        <!-- Sticky Verification Actions (Only for pending status) -->
+                        <div class="verification-actions" id="verificationActions" style="display: none;">
+                            <div class="actions-header">
+                                <h4><i class="fas fa-clipboard-check"></i> Verification Actions</h4>
+                            </div>
+                            <div class="actions-buttons">
+                                <button class="btn btn-success" id="verifyStudentBtn">
+                                    <i class="fas fa-check"></i> Verify Student
+                                </button>
+                                <button class="btn btn-reject" id="rejectStudentBtn">
+                                    <i class="fas fa-times"></i> Reject Verification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Document Preview - NOW WITH TABS -->
+                    <div class="document-preview-column">
+                        <!-- Tab Navigation -->
+                        <div class="document-tabs">
+                            <button class="document-tab active" data-tab="preview">
+                                <i class="fas fa-file-alt"></i> Document Preview
+                            </button>
+                            <button class="document-tab" data-tab="list">
+                                <i class="fas fa-folder-open"></i> Uploaded Documents
+                                <span class="document-count" id="documentCount">0</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Tab Content -->
+                        <div class="tab-content">
+                            <!-- Preview Tab -->
+                            <div class="tab-pane active" id="previewTab">
+                                <div class="document-preview-container" id="documentPreviewContainer">
+                                    <div class="no-document-selected">
+                                        <i class="fas fa-file-alt"></i>
+                                        <h5>No Document Selected</h5>
+                                        <p>Select a document from the Documents tab to preview it here</p>
+                                    </div>
+                                    <div class="document-viewer" id="documentViewer" style="display: none;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- List Tab -->
+                            <div class="tab-pane" id="listTab">
+                                <div class="document-list-container">
+                                    <div class="document-list-header">
+                                        <h4><i class="fas fa-folder-open"></i> All Uploaded Documents</h4>
+                                        <div class="document-summary">
+                                            <span id="uploadedCount">0 documents</span>
+                                        </div>
+                                    </div>
+                                    <div class="document-list" id="documentList">
+                                        <!-- Documents will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeStudentDetailsModal">Close</button>
             </div>
         </div>
     </div>
@@ -419,111 +393,11 @@
         </div>
     </main>
 
-    <!-- Student Details Modal -->
-    <div id="studentDetailsModal" class="modal">
-        <div class="modal-content extra-large-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-user-circle"></i> Student Details</h3>
-                <button class="close-modal" id="close-student-details-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="student-details-container">
-                    <!-- Left Column: Student Profile Info -->
-                    <div class="student-profile-column">
-                        <!-- Profile Header with Picture -->
-                        <div class="profile-header">
-                            <img id="studentProfilePicture" src="{{ url_for('static', filename='img/default_profile.png') }}" 
-                                 alt="Student Profile Picture" class="profile-picture">
-                            <div class="profile-info">
-                                <h3 id="studentName">Student Name</h3>
-                                <p id="studentEmail">student@email.com</p>
-                                <div id="studentStatus"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Student Information -->
-                        <div class="student-details-content" id="studentDetailsContent">
-                            <!-- Student details will be inserted here by JavaScript -->
-                        </div>
-                        
-                        <!-- Sticky Verification Actions (Only for pending status) -->
-                        <div class="verification-actions" id="verificationActions" style="display: none;">
-                            <div class="actions-header">
-                                <h4><i class="fas fa-clipboard-check"></i> Verification Actions</h4>
-                            </div>
-                            <div class="actions-buttons">
-                                <button class="btn btn-success" id="verifyStudentBtn">
-                                    <i class="fas fa-check"></i> Verify Student
-                                </button>
-                                <button class="btn btn-reject" id="rejectStudentBtn">
-                                    <i class="fas fa-times"></i> Reject Verification
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Right Column: Document Preview - NOW WITH TABS -->
-                    <div class="document-preview-column">
-                        <!-- Tab Navigation -->
-                        <div class="document-tabs">
-                            <button class="document-tab active" data-tab="preview">
-                                <i class="fas fa-file-alt"></i> Document Preview
-                            </button>
-                            <button class="document-tab" data-tab="list">
-                                <i class="fas fa-folder-open"></i> Uploaded Documents
-                                <span class="document-count" id="documentCount">0</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Tab Content -->
-                        <div class="tab-content">
-                            <!-- Preview Tab -->
-                            <div class="tab-pane active" id="previewTab">
-                                <div class="document-preview-container" id="documentPreviewContainer">
-                                    <div class="no-document-selected">
-                                        <i class="fas fa-file-alt"></i>
-                                        <h5>No Document Selected</h5>
-                                        <p>Select a document from the Documents tab to preview it here</p>
-                                    </div>
-                                    <div class="document-viewer" id="documentViewer" style="display: none;"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- List Tab -->
-                            <div class="tab-pane" id="listTab">
-                                <div class="document-list-container">
-                                    <div class="document-list-header">
-                                        <h4><i class="fas fa-folder-open"></i> All Uploaded Documents</h4>
-                                        <div class="document-summary">
-                                            <span id="uploadedCount">0 documents</span>
-                                        </div>
-                                    </div>
-                                    <div class="document-list" id="documentList">
-                                        <!-- Documents will be inserted here -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeStudentDetailsModal">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Modal -->
-    <div id="loadingModal" class="modal" style="z-index: 9999; display: none;">
-        <div class="modal-content" style="width: 200px; background: transparent; box-shadow: none;">
-            <div class="modal-body" style="background: transparent; border: none;">
-                <div class="loading-spinner" style="text-align: center;">
-                    <div class="spinner" style="width: 40px; height: 40px;"></div>
-                    <span id="loadingMessage" style="color: white; margin-top: 10px;">Processing...</span>
-                </div>
-            </div>
+    <!-- Loading Overlay (Kept for consistency) -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <span id="loadingText">Processing...</span>
         </div>
     </div>
 

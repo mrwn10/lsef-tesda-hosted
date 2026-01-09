@@ -155,23 +155,88 @@ function initializeRequirementsPage() {
     const maritalStatusSelect = document.getElementById("maritalStatus");
     const marriageCertificateField = document.getElementById("marriageCertificateField");
     const marriageCertificateInput = document.getElementById("marriageCertificateInput");
+    const submitUrl = document.body.getAttribute('data-submit-url');
 
     // Get user gender and verification status from data attributes
     const userGender = document.body.getAttribute('data-user-gender') || '';
     const verifiedStatus = document.body.getAttribute('data-verified-status') || '';
 
     // Check if elements exist
-    if (!form) {
-        console.error('Form not found');
+    if (!form || !submitUrl) {
+        console.error('Form or submit URL not found');
         return;
     }
 
-    // NEW: Add special styling for resubmission if rejected
+    // ===== CHECK IF STUDENT IS ALREADY VERIFIED =====
+    if (verifiedStatus === 'verified') {
+        console.log('Student already verified. Disabling form...');
+        
+        // Add disabled class to form
+        form.classList.add('form-disabled');
+        
+        // Disable all form inputs
+        const allInputs = form.querySelectorAll('input, select, textarea, button');
+        allInputs.forEach(element => {
+            element.disabled = true;
+            element.style.cursor = 'not-allowed';
+            
+            // For file inputs, also disable the overlay
+            if (element.classList.contains('file-input')) {
+                const overlay = element.nextElementSibling;
+                if (overlay && overlay.classList.contains('file-input-overlay')) {
+                    overlay.style.cursor = 'not-allowed';
+                    overlay.style.opacity = '0.6';
+                    overlay.style.backgroundColor = '#f8f9fa';
+                    overlay.style.borderColor = '#dee2e6';
+                }
+            }
+        });
+        
+        // Hide submit button
+        if (submitBtn) {
+            submitBtn.style.display = 'none';
+        }
+        
+        // Update marital status field styling
+        const maritalStatusField = document.querySelector('.marital-status-field');
+        if (maritalStatusField) {
+            maritalStatusField.style.opacity = '0.6';
+            maritalStatusField.style.cursor = 'not-allowed';
+        }
+        
+        // Show verified message if not already shown
+        const formActions = document.querySelector('.form-actions');
+        if (formActions && !formActions.querySelector('.verified-message')) {
+            // Check if message already exists from server-side template
+            const existingMessage = formActions.innerHTML.includes('verified-message');
+            if (!existingMessage) {
+                formActions.innerHTML = `
+                    <div class="verified-message">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Your requirements have been verified and approved. No further submissions are needed.</span>
+                    </div>
+                `;
+            }
+        }
+        
+        // Disable preview buttons
+        document.querySelectorAll('.preview-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('preview-btn-disabled');
+            btn.style.cursor = 'not-allowed';
+        });
+        
+        console.log('Form disabled for verified student.');
+        return; // STOP HERE - don't initialize form functionality for verified students
+    }
+    // ===== END OF VERIFICATION CHECK =====
+
+    // Add special styling for resubmission if rejected
     if (verifiedStatus === 'rejected' && submitBtn) {
         submitBtn.classList.add('resubmit');
     }
 
-    // Auto-hide flash messages after 5 seconds (if any exist)
+    // Auto-hide any existing alert messages after 5 seconds
     document.querySelectorAll('.alert-message:not(#rejectionAlert)').forEach(alert => {
         setTimeout(() => {
             alert.style.opacity = '0';
@@ -238,10 +303,10 @@ function initializeRequirementsPage() {
         });
     }
 
-    // File input styling and validation
+    // File input styling and validation - ADD VERIFICATION CHECK
     document.querySelectorAll('.file-input').forEach(input => {
         // Set initial state for file inputs that might have existing values
-        // NEW: Don't pre-fill if status is rejected
+        // Don't pre-fill if status is rejected
         if (input.files.length > 0 && verifiedStatus !== 'rejected') {
             const overlay = input.nextElementSibling;
             if (overlay) {
@@ -252,6 +317,15 @@ function initializeRequirementsPage() {
         }
 
         input.addEventListener('change', function() {
+            // Check if student is verified (extra safety check)
+            const currentVerifiedStatus = document.body.getAttribute('data-verified-status') || '';
+            if (currentVerifiedStatus === 'verified') {
+                showSweetAlert('info', 'Already Verified', 
+                    'Your requirements have been verified. You cannot upload new files.');
+                this.value = '';
+                return;
+            }
+            
             const fileName = this.files[0] ? this.files[0].name : 'Choose file';
             const overlay = this.nextElementSibling;
             
@@ -267,7 +341,8 @@ function initializeRequirementsPage() {
                     const fileExtension = file.name.split('.').pop().toLowerCase();
                     
                     if (!allowedTypes.includes(fileExtension)) {
-                        alert('Invalid file type. Please upload PDF, JPG, PNG, DOC, or DOCX files only.');
+                        showSweetAlert('error', 'Invalid File Type', 
+                            'Please upload PDF, JPG, PNG, DOC, or DOCX files only.');
                         this.value = '';
                         overlay.querySelector('span').textContent = this.name === 'marriage_certificate' ? 'Choose marriage certificate' : 'Choose file';
                         overlay.classList.remove('has-file');
@@ -278,7 +353,9 @@ function initializeRequirementsPage() {
                     
                     // Validate file size (max 10MB)
                     if (file.size > 10 * 1024 * 1024) {
-                        alert('File size too large. Please upload files smaller than 10MB.');
+                        const fieldName = this.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        showSweetAlert('error', 'File Too Large', 
+                            `${fieldName} is too large (${(file.size/1024/1024).toFixed(1)}MB). Maximum file size is 10MB.`);
                         this.value = '';
                         overlay.querySelector('span').textContent = this.name === 'marriage_certificate' ? 'Choose marriage certificate' : 'Choose file';
                         overlay.classList.remove('has-file');
@@ -328,8 +405,8 @@ function initializeRequirementsPage() {
             // Update text
             if (statusText) {
                 statusText.innerHTML = verifiedStatus === 'rejected' 
-                    ? `Selected: <span class="file-link">${fileName}</span>` 
-                    : `Selected: <span class="file-link">${fileName}</span>`;
+                    ? `Selected: <span class="file-link">${truncateFileName(fileName, 30)}</span>` 
+                    : `Selected: <span class="file-link">${truncateFileName(fileName, 30)}</span>`;
             }
             
             // Update preview button
@@ -352,12 +429,6 @@ function initializeRequirementsPage() {
                     previewBtn.setAttribute('data-label', labelText);
                 }
             }
-            
-            console.log(`Updated ${fieldName} preview button:`, {
-                disabled: previewBtn.disabled,
-                dataUploaded: previewBtn.getAttribute('data-uploaded'),
-                className: previewBtn.className
-            });
         }
     }
     
@@ -447,11 +518,11 @@ function initializeRequirementsPage() {
     // Initial form validation
     validateForm();
 
-    // Form submission with validation
-    form.addEventListener("submit", function(e) {
+    // AJAX Form Submission with SweetAlert2
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault();
+        
         if (!validateForm()) {
-            e.preventDefault();
-            
             // Get specific validation errors
             const errors = [];
             const maritalStatus = maritalStatusSelect ? maritalStatusSelect.value : '';
@@ -476,47 +547,65 @@ function initializeRequirementsPage() {
             }
             
             if (errors.length > 0) {
-                alert(`Please complete the following required fields:\n\n• ${errors.join('\n• ')}`);
+                showSweetAlert('warning', 'Missing Information', 
+                    `Please complete the following required fields:\n\n• ${errors.join('\n• ')}`);
             }
             
             return;
         }
 
         // Show loading state
-        submitBtn.disabled = true;
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = verifiedStatus === 'rejected' 
+        const isResubmitting = verifiedStatus === 'rejected';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = isResubmitting 
             ? '<i class="fas fa-spinner fa-spin"></i> Resubmitting...' 
-            : '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-        
-        // Additional validation for required fields
-        const missingFields = [];
-        const requiredInputs = form.querySelectorAll('input[required]');
-        const maritalStatus = maritalStatusSelect ? maritalStatusSelect.value : '';
-        const isFemale = userGender === 'female';
-        
-        if (!maritalStatus) {
-            missingFields.push("Marital Status");
-        }
-        
-        requiredInputs.forEach(input => {
-            if (!input.files || input.files.length === 0) {
-                const fieldName = input.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                missingFields.push(fieldName);
-            }
-        });
+            : '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
-        // Special check for marriage certificate - only if female and married
-        if (isFemale && maritalStatus === 'married' && marriageCertificateInput && 
-            (!marriageCertificateInput.files || marriageCertificateInput.files.length === 0)) {
-            missingFields.push("Marriage Certificate");
-        }
-
-        if (missingFields.length > 0) {
-            e.preventDefault();
-            alert(`Please complete the following required fields:\n\n• ${missingFields.join('\n• ')}`);
+        try {
+            // Prepare FormData
+            const formData = new FormData(form);
             
-            // Reset button state
+            // Add CSRF token if available
+            const csrfToken = document.querySelector('input[name="csrf_token"]');
+            if (csrfToken) {
+                formData.append('csrf_token', csrfToken.value);
+            }
+
+            // Send AJAX request
+            const response = await fetch(submitUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                // Show success SweetAlert
+                showSweetAlert('success', 'Success!', result.message).then(() => {
+                    // Reload the page to show updated status and files
+                    window.location.reload();
+                });
+            } else {
+                // Show error SweetAlert
+                showSweetAlert('error', 'Submission Failed', result.message || 'An error occurred. Please try again.');
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+
+        } catch (error) {
+            console.error('Submission error:', error);
+            
+            // Show error SweetAlert
+            showSweetAlert('error', 'Network Error', 
+                'Unable to connect to the server. Please check your internet connection and try again.');
+            
+            // Re-enable submit button
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
@@ -525,12 +614,45 @@ function initializeRequirementsPage() {
     console.log('Requirements Page initialized successfully');
     console.log('User gender:', userGender);
     console.log('Verification status:', verifiedStatus);
+    console.log('Submit URL:', submitUrl);
+}
+
+// NEW: SweetAlert2 Helper Function
+function showSweetAlert(icon, title, text, confirmButtonText = 'OK') {
+    return Swal.fire({
+        icon: icon,
+        title: title,
+        text: text,
+        confirmButtonText: confirmButtonText,
+        confirmButtonColor: icon === 'success' ? '#003366' : 
+                           icon === 'error' ? '#dc3545' : 
+                           icon === 'warning' ? '#ffc107' : '#003366',
+        timer: icon === 'success' ? 3000 : undefined,
+        timerProgressBar: icon === 'success',
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    });
+}
+
+// NEW: Helper function to truncate file names
+function truncateFileName(fileName, maxLength) {
+    if (fileName.length <= maxLength) return fileName;
+    
+    const extension = fileName.split('.').pop();
+    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
+    const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4); // -4 for "... ."
+    
+    return truncatedName + '... .' + extension;
 }
 
 // Store object URLs for cleanup
 const objectURLs = new Map();
 
-// Event delegation for preview buttons (works for dynamically added buttons)
+// Event delegation for preview buttons
 document.addEventListener('click', function(e) {
     // Handle preview button clicks
     if (e.target.closest('.preview-btn')) {
@@ -551,16 +673,8 @@ document.addEventListener('click', function(e) {
         const isUploaded = previewBtn.getAttribute('data-uploaded') === 'true';
         const verifiedStatus = document.body.getAttribute('data-verified-status') || '';
         
-        console.log('Preview clicked:', {
-            filename: filename,
-            label: label,
-            isUploaded: isUploaded,
-            fieldName: fieldName,
-            verifiedStatus: verifiedStatus
-        });
-        
         if (!isUploaded || !filename) {
-            alert('No file available for preview.');
+            showSweetAlert('info', 'No File', 'No file available for preview.');
             return;
         }
         
@@ -594,16 +708,12 @@ document.addEventListener('click', function(e) {
             const objectURL = URL.createObjectURL(file);
             objectURLs.set(fieldName, objectURL);
             fileUrl = objectURL;
-            
-            console.log('Using local file preview with object URL:', fileUrl);
         } else if (filename.includes('/static/')) {
             // This is an already uploaded file with full path
             fileUrl = filename;
-            console.log('Using server file with full path');
         } else {
             // This is an already uploaded file (has server path)
             fileUrl = "/static/uploads/requirements/" + filename;
-            console.log('Using server file with relative path');
         }
         
         // Create preview based on file type
@@ -612,7 +722,7 @@ document.addEventListener('click', function(e) {
         } else if (['jpg', 'jpeg', 'png'].includes(fileExt)) {
             previewHtml = `<img src="${fileUrl}" alt="Preview" class="preview-image">`;
         } else if (['doc', 'docx'].includes(fileExt)) {
-            // For DOC/DOCX files, show download option since they can't be previewed
+            // For DOC/DOCX files, show download option
             previewHtml = `
                 <div class="file-placeholder">
                     <i class="fas fa-file-word"></i>
@@ -706,7 +816,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Clean up object URLs when page is about to unload (form submission)
+// Clean up object URLs when page is about to unload
 window.addEventListener('beforeunload', function() {
     objectURLs.forEach((url, key) => {
         URL.revokeObjectURL(url);

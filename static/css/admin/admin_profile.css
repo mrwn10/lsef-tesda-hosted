@@ -35,6 +35,139 @@ body.modal-open {
     overflow: hidden;
 }
 
+/* ===== MODAL STYLES (Added for logout modal) ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 0 auto;
+    padding: 0;
+    width: 400px;
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 5px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.close-modal:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body p {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+/* ===== LOGOUT MODAL BUTTON STYLES (Consistent with other pages) ===== */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex: 1;
+    text-align: center;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-yes {
+    background-color: var(--tesda-maroon);
+    color: white;
+}
+
+.btn-yes:hover {
+    background-color: #6b0000;
+}
+
+.btn-no {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-no:hover {
+    background-color: #e2e8f0;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ===== Navigation Styles ===== */
 .nav-container {
     position: sticky;
@@ -921,7 +1054,7 @@ select {
     font-weight: 600;
 }
 
-/* ===== Signature Section Styles ===== */
+/* ===== SIGNATURE SECTION FIXES ===== */
 .signature-section {
     margin-top: 1rem;
 }
@@ -933,6 +1066,7 @@ select {
     width: 100%;
 }
 
+/* FIXED: Signature frame styling */
 .signature-frame {
     width: 100%;
     max-width: 300px;
@@ -946,12 +1080,27 @@ select {
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
-#signature-preview {
-    max-width: 100%;
-    max-height: 100%;
+/* FIXED: Added wrapper for better image control */
+.signature-image-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* FIXED: Signature image styling - removed max constraints that caused issues */
+.signature-image {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
 .signature-controls {
@@ -981,223 +1130,7 @@ select {
     margin-right: 8px;
 }
 
-/* ===== MODAL STYLES ===== */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-.modal-content {
-    background-color: #fff;
-    margin: 0 auto;
-    padding: 0;
-    width: 400px;
-    max-width: 100%;
-    max-height: 90vh;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    animation: modalFadeIn 0.3s ease-out;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-header {
-    padding: 15px 20px;
-    background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 8px 8px 0 0;
-    flex-shrink: 0;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.close-modal {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0 5px;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.close-modal:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-.modal-body {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    overflow-y: auto;
-}
-
-.modal-body p {
-    margin: 0;
-    font-size: 1rem;
-    color: #333;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-}
-
-.modal-footer {
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    flex-shrink: 0;
-}
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    flex: 1;
-    text-align: center;
-    font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
-    min-height: 44px;
-}
-
-.btn-yes {
-    background-color: var(--tesda-blue);
-    color: white;
-}
-
-.btn-yes:hover {
-    background-color: var(--tesda-dark-blue);
-}
-
-.btn-no {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
-}
-
-.btn-no:hover {
-    background-color: #e2e8f0;
-}
-
-/* Success Modal Specific Styles */
-#success-modal .modal-header {
-    background-color: var(--success-green);
-}
-
-#success-modal .modal-header i {
-    color: #bbf7d0;
-}
-
-#success-modal .btn-yes {
-    background-color: var(--success-green);
-}
-
-#success-modal .btn-yes:hover {
-    background-color: #166534;
-}
-
-/* Error Modal Specific Styles */
-#error-modal .modal-header {
-    background-color: var(--error-red);
-}
-
-#error-modal .modal-header i {
-    color: #fecaca;
-}
-
-#error-modal .btn-yes {
-    background-color: var(--error-red);
-}
-
-#error-modal .btn-yes:hover {
-    background-color: #991b1b;
-}
-
-/* Info Modal Specific Styles */
-#info-modal .modal-header {
-    background-color: var(--info-blue);
-}
-
-#info-modal .modal-header i {
-    color: #bfdbfe;
-}
-
-#info-modal .btn-yes {
-    background-color: var(--info-blue);
-}
-
-#info-modal .btn-yes:hover {
-    background-color: #1e40af;
-}
-
-/* Logout Modal Specific Styles */
-#logout-modal .modal-header {
-    background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
-}
-
-#logout-modal .btn-yes {
-    background-color: var(--tesda-maroon);
-    color: white;
-    border: none;
-}
-
-#logout-modal .btn-yes:hover {
-    background-color: #6b0000;
-}
-
-#logout-modal .btn-no {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
-}
-
-#logout-modal .btn-no:hover {
-    background-color: #e2e8f0;
-}
-
-/* Modal Animation */
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===== Responsive Design ===== */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
     main {
         max-width: 95%;
@@ -1233,6 +1166,12 @@ select {
     
     .form-column {
         min-width: 280px;
+    }
+    
+    /* Modal responsiveness */
+    .modal-content {
+        width: 90%;
+        max-width: 400px;
     }
 }
 
@@ -1360,35 +1299,18 @@ select {
     }
     
     /* Modal adjustments for mobile */
-    .modal {
-        padding: 10px;
-    }
-    
     .modal-content {
         width: 95%;
-        margin: 20px auto;
+        margin: 10% auto;
     }
     
     .modal-footer {
         flex-direction: column;
     }
     
-    .btn {
+    .modal-footer .btn {
         width: 100%;
-        min-width: 100%;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-    
-    .save-btn {
-        width: 100%;
-    }
-    
-    .mobile-nav {
-        width: 85%;
-        max-width: 320px;
+        margin-bottom: 5px;
     }
     
     /* Touch-friendly sizes */
@@ -1490,6 +1412,10 @@ select {
         height: 100px;
     }
     
+    .form-section {
+        padding: 1rem;
+    }
+    
     .modal-content {
         width: 100%;
         margin: 10px;
@@ -1499,10 +1425,6 @@ select {
     .modal-body,
     .modal-footer {
         padding: 15px;
-    }
-    
-    .form-section {
-        padding: 1rem;
     }
 }
 

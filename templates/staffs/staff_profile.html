@@ -10,11 +10,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
     <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
             logoutUrl: "{{ url_for('login.logout') }}"
         };
+        
+        // UPDATED URLs - using the new endpoint names
+        const fetchProfileUrl = "{{ url_for('staff_profile.staff_profile_data') }}";  // CHANGED to data endpoint
+        const updateProfileUrl = "{{ url_for('staff_profile.update_staff_profile') }}"; 
+        const defaultProfilePic = "{{ url_for('static', filename='img/tesda_logo.png') }}"; 
+        const defaultSignaturePic = "{{ url_for('static', filename='img/default_signature.png') }}";
     </script>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
@@ -83,7 +92,7 @@
                 <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
                 
                 <div class="mobile-nav-divider"></div>
-                <a href="{{ url_for('staff_profile') }}" class="active"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="{{ url_for('staff_profile.staff_profile_page') }}" class="active"><i class="fas fa-user-circle"></i> My Profile</a> <!-- CHANGED -->
                 <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                 <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -101,10 +110,10 @@
             
             <div class="user-section">
                 <div class="profile-dropdown">
-                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + (profile_picture or 'default.png')) }}" alt="Profile" class="profile-img">
+                    <img id="nav-profile-pic" src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="Profile" class="profile-img">
 
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('staff_profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                        <a href="{{ url_for('staff_profile.staff_profile_page') }}"><i class="fas fa-user-circle"></i> My Profile</a> <!-- CHANGED -->
                         <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -115,7 +124,7 @@
     </div>
     <!-- New Navigation End -->
 
-    <!-- Logout Confirmation Modal - UPDATED FOR EXTERNAL USAGE -->
+    <!-- Logout Confirmation Modal -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -140,10 +149,6 @@
             <div class="breadcrumb">
                 <span>Home</span> / <span>Profile</span>
             </div>
-        </div>
-        
-        <div id="message-container">
-            <div id="message-content" class="message"></div>
         </div>
 
         <form id="profile-form" class="profile-form" enctype="multipart/form-data">
@@ -172,7 +177,7 @@
                                 </button>
                             </div>
                             <div class="file-info">
-                                <p>Max. file size: 2MB</p>
+                                <p>Max. file size: 10MB</p>
                                 <p>Supported formats: JPG, PNG</p>
                             </div>
                         </div>
@@ -352,7 +357,7 @@
                                 </button>
                             </div>
                             <div class="file-info">
-                                <p>Max. file size: 2MB</p>
+                                <p>Max. file size: 10MB</p>
                                 <p>Format: PNG, JPG, JPEG</p>
                             </div>
                             <div class="signature-note">
@@ -371,12 +376,8 @@
         </form>
     </main>
     
-    <script>
-        const fetchProfileUrl = "/staff/profile"; 
-        const updateProfileUrl = "/staff/profile/update"; 
-        const defaultProfilePic = "/static/img/tesda_logo.png"; 
-        const defaultSignaturePic = "/static/img/default_signature.png";
-    </script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script src="{{ url_for('static', filename='js/staff/staff_profile.js') }}"></script>
 </body>
 </html>

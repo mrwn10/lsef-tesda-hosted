@@ -8,6 +8,9 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
     <!-- Navigation -->
@@ -111,25 +114,6 @@
             <div class="breadcrumb">
                 <span>Home</span> / <span>Profile</span>
             </div>
-        </div>
-
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message flash-{{ category }}">
-                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %} flash-icon"></i>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <!-- Message Container for AJAX responses -->
-        <div id="message-container">
-            <div id="message-content" class="message"></div>
         </div>
 
         <!-- Profile Form -->
@@ -335,6 +319,8 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script>
         // Global variables for your backend URLs
         const fetchProfileUrl = "{{ url_for('student_profile.student_profile') }}"; 

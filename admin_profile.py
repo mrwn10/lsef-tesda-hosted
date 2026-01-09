@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, current_app, url_for
+from flask import Blueprint, request, jsonify, session, current_app, url_for, render_template
 from database import get_db
 import os
 from werkzeug.utils import secure_filename
@@ -17,9 +17,19 @@ def allowed_file(filename):
 def allowed_signature(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_SIGNATURE_EXTENSIONS
 
-
+# ===== HTML PAGE ENDPOINT =====
 @admin_profile_bp.route('/profile', methods=['GET'])
-def admin_profile():
+def admin_profile_page():
+    """Render the HTML profile page"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return render_template('login.html', error='Unauthorized access')
+    
+    return render_template('admin/admin_profile.html')
+
+# ===== JSON API ENDPOINT =====
+@admin_profile_bp.route('/profile/data', methods=['GET'])
+def admin_profile_data():
+    """Return JSON data for the profile (used by AJAX)"""
     if 'user_id' not in session or session.get('role') != 'admin':
         return jsonify({'error': 'Unauthorized access'}), 401
 
@@ -47,16 +57,15 @@ def admin_profile():
         admin['date_of_birth'] = admin['date_of_birth'].strftime('%Y-%m-%d') if admin['date_of_birth'] else None
         admin['date_registered'] = admin['date_registered'].strftime('%Y-%m-%d %H:%M:%S') if admin['date_registered'] else None
 
+        # FIXED: Remove _external=True for local URLs
         admin['profile_picture_url'] = url_for(
             'static',
-            filename=f"uploads/profile_pictures/{admin['profile_picture']}",
-            _external=True
+            filename=f"uploads/profile_pictures/{admin['profile_picture']}"
         ) if admin['profile_picture'] else None
 
         admin['signature_url'] = url_for(
             'static',
-            filename=f"uploads/signatures/{admin['signature']}",
-            _external=True
+            filename=f"uploads/signatures/{admin['signature']}"
         ) if admin['signature'] else None
 
         return jsonify({'success': True, 'admin': admin})
@@ -110,7 +119,8 @@ def update_profile():
         if 'signature' in files:
             file = files['signature']
             if file and file.filename and allowed_signature(file.filename):
-                filename = f"{user_id}_{uuid.uuid4().hex}.png"
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{user_id}_{uuid.uuid4().hex}.{ext}"
                 upload_dir = os.path.join(current_app.static_folder, 'uploads', 'signatures')
                 os.makedirs(upload_dir, exist_ok=True)
                 file.save(os.path.join(upload_dir, secure_filename(filename)))
@@ -173,7 +183,40 @@ def update_profile():
         """, fields)
 
         db.commit()
-        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+        
+        # Fetch updated profile to return
+        query = """
+            SELECT l.username, l.email, l.role, l.account_status,
+                   pi.first_name, pi.middle_name, pi.last_name,
+                   pi.province, pi.municipality, pi.baranggay,
+                   pi.contact_number, pi.date_of_birth, pi.gender,
+                   pi.profile_picture, pi.signature
+            FROM login l
+            JOIN personal_information pi ON l.user_id = pi.user_id
+            WHERE l.user_id = %s
+        """
+        cursor.execute(query, (user_id,))
+        updated_profile = cursor.fetchone()
+        
+        if updated_profile and updated_profile['date_of_birth']:
+            updated_profile['date_of_birth'] = updated_profile['date_of_birth'].strftime('%Y-%m-%d')
+        
+        # FIXED: Remove _external=True for local URLs
+        updated_profile['profile_picture_url'] = url_for(
+            'static',
+            filename=f"uploads/profile_pictures/{updated_profile['profile_picture']}"
+        ) if updated_profile['profile_picture'] else None
+        
+        updated_profile['signature_url'] = url_for(
+            'static',
+            filename=f"uploads/signatures/{updated_profile['signature']}"
+        ) if updated_profile['signature'] else None
+
+        return jsonify({
+            'success': True, 
+            'message': 'Profile updated successfully',
+            'updated_profile': updated_profile
+        })
 
     except Exception as e:
         db.rollback()

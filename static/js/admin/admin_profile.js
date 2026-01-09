@@ -9,6 +9,7 @@ $(document).ready(function() {
 // Initialize all functionality
 function init() {
     initMobileNavigation();
+    initEventListeners();
     initModals();
 }
 
@@ -81,7 +82,7 @@ function initMobileNavigation() {
     }
 }
 
-// Initialize modal functionality - CONSISTENT WITH OTHER PAGES
+// Initialize modal functionality
 function initModals() {
     // Close modal function - works for ALL modals
     function closeAllModals() {
@@ -116,7 +117,7 @@ function initModals() {
 
     // ===== SPECIFIC MODAL FUNCTIONALITY =====
 
-    // Logout Modal - CONSISTENT WITH OTHER PAGES
+    // Logout Modal
     $('#logout-trigger').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -160,10 +161,191 @@ function initModals() {
             window.location.href = "/logout";
         }
     });
+}
 
-    // Close all modals when clicking close buttons
-    $('.close-modal').click(function() {
-        closeAllModals();
+// Initialize event listeners
+function initEventListeners() {
+    // Profile picture handling
+    $('#profile_picture').change(function() {
+        const file = this.files[0];
+        if (file) {
+            // Check file size (max 10MB to match backend)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('error', 'File size exceeds 10MB limit');
+                $(this).val('');
+                return;
+            }
+            
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                showMessage('error', 'Only JPG, JPEG, or PNG files are allowed');
+                $(this).val('');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#profile-preview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remove profile picture
+    $('#remove-picture').click(function() {
+        $('#profile_picture').val('');
+        $('#profile-preview').attr('src', defaultProfilePic);
+        showMessage('info', 'Profile picture removed. Remember to save changes.');
+    });
+    
+    // FIXED: Signature handling with better preview
+    $('#signature').change(function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        if (!['image/png','image/jpeg','image/jpg'].includes(file.type)) {
+            showMessage('error', 'Signature must be PNG or JPG');
+            this.value = '';
+            return;
+        }
+
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) {
+            showMessage('error', 'Signature file size exceeds 10MB limit');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // FIXED: Set src directly without any constraints
+            $('#signature-preview').attr('src', e.target.result);
+            
+            // FIXED: Add a small delay to ensure image loads
+            setTimeout(() => {
+                // Check if image loaded successfully
+                const img = $('#signature-preview')[0];
+                if (img.complete && img.naturalHeight !== 0) {
+                    console.log('Signature image loaded successfully');
+                } else {
+                    img.onload = function() {
+                        console.log('Signature image loaded after onload event');
+                    };
+                    img.onerror = function() {
+                        console.error('Failed to load signature image');
+                        showMessage('error', 'Failed to preview signature image');
+                        $('#signature').val('');
+                        $('#signature-preview').attr('src', defaultSignaturePic);
+                    };
+                }
+            }, 100);
+        };
+        reader.onerror = function() {
+            showMessage('error', 'Failed to read signature file');
+            this.value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Remove signature
+    $('#remove-signature').click(function() {
+        $('#signature').val('');
+        $('#signature-preview').attr('src', defaultSignaturePic);
+        showMessage('info', 'Signature removed. Remember to save changes.');
+    });
+    
+    // Show/hide password
+    $('.toggle-password').click(function() {
+        const input = $(this).siblings('input');
+        const type = input.attr('type') === 'password' ? 'text' : 'password';
+        input.attr('type', type);
+        $(this).toggleClass('fa-eye fa-eye-slash');
+    });
+    
+    // Password strength indicator
+    $('#new_password').on('input', function() {
+        const password = $(this).val();
+        let strength = 0;
+        let text = '';
+        
+        if (password.length > 0) {
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            const strengthText = ['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
+            text = strengthText[strength];
+            
+            $('.strength-meter .strength-bar').removeClass('active');
+            for (let i = 0; i < strength; i++) {
+                $('.strength-bar').eq(i).addClass('active');
+            }
+            
+            $('.strength-text span').text(text);
+        } else {
+            $('.strength-meter .strength-bar').removeClass('active');
+            $('.strength-text span').text('None');
+        }
+    });
+    
+    // Form submission
+    $('#profile-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Check password match
+        const newPassword = $('#new_password').val();
+        const confirmPassword = $('#confirm_password').val();
+        
+        if (newPassword && newPassword !== confirmPassword) {
+            showMessage('error', 'New password and confirmation do not match');
+            return;
+        }
+        
+        // Show loading state
+        $(this).addClass('loading');
+        $('.save-btn').html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+        
+        let formData = new FormData(this);
+        
+        $.ajax({
+            url: updateProfileUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showMessage('success', response.message);
+                    if (response.updated_profile) {
+                        updateFormFields(response.updated_profile);
+                    }
+                    // Clear password fields after successful update
+                    $('#current_password').val('');
+                    $('#new_password').val('');
+                    $('#confirm_password').val('');
+                    // Clear file inputs
+                    $('#profile_picture').val('');
+                    $('#signature').val('');
+                } else {
+                    showMessage('error', response.error || 'Update failed');
+                }
+                $('#profile-form').removeClass('loading');
+                $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
+            },
+            error: function(xhr) {
+                let errorMsg = 'An error occurred while updating your profile';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.statusText) {
+                    errorMsg = xhr.statusText;
+                }
+                showMessage('error', errorMsg);
+                $('#profile-form').removeClass('loading');
+                $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
+            }
+        });
     });
 }
 
@@ -173,7 +355,7 @@ function loadProfileData() {
     $('#profile-form').addClass('loading');
     
     $.ajax({
-        url: '/admin/profile', // ORIGINAL HARDCODED URL
+        url: fetchProfileUrl,
         type: 'GET',
         success: function(response) {
             if (response.success && response.admin) {
@@ -205,167 +387,72 @@ function updateFormFields(profileData) {
     
     // Update profile picture
     if (profileData.profile_picture_url) {
-        $('#profile-preview').attr('src', profileData.profile_picture_url);
+        // FIXED: Ensure absolute URL for profile picture
+        const profilePicUrl = profileData.profile_picture_url.startsWith('http') 
+            ? profileData.profile_picture_url 
+            : window.location.origin + profileData.profile_picture_url;
+        
+        $('#profile-preview').attr('src', profilePicUrl);
+        $('#nav-profile-pic').attr('src', profilePicUrl);
     } else {
         $('#profile-preview').attr('src', defaultProfilePic);
+        $('#nav-profile-pic').attr('src', defaultProfilePic);
     }
     
-    // Update signature - ORIGINAL HAS A BUG HERE (missing closing brace)
+    // FIXED: Update signature with better handling
     if (profileData.signature_url) {
-        $('#signature-preview').attr('src', profileData.signature_url);
+        // Ensure absolute URL for signature
+        const signatureUrl = profileData.signature_url.startsWith('http') 
+            ? profileData.signature_url 
+            : window.location.origin + profileData.signature_url;
+        
+        $('#signature-preview').attr('src', signatureUrl);
+        
+        // Add error handling for signature image
+        $('#signature-preview').on('error', function() {
+            console.error('Failed to load signature image from:', signatureUrl);
+            $(this).attr('src', defaultSignaturePic);
+        });
+        
+        // Force image reload
+        $('#signature-preview')[0].src = signatureUrl;
+    } else {
+        $('#signature-preview').attr('src', defaultSignaturePic);
     }
 }
 
-$('#profile-form').on('submit', function(e) {
-    e.preventDefault();
-    
-    // Check password match
-    const newPassword = $('#new_password').val();
-    const confirmPassword = $('#confirm_password').val();
-    
-    if (newPassword && newPassword !== confirmPassword) {
-        showMessage('error', 'New password and confirmation do not match');
-        return;
-    }
-    
-    // Show loading state
-    $(this).addClass('loading');
-    $('.save-btn').html('<i class="fas fa-spinner fa-spin"></i> Saving...');
-    
-    let formData = new FormData(this);
-    
-    $.ajax({
-        url: updateProfileUrl, // USING VARIABLE FROM HTML
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                showMessage('success', response.message);
-                if (response.updated_profile) {
-                    updateFormFields(response.updated_profile);
-                }
-            } else {
-                showMessage('error', response.error || 'Update failed');
-            }
-            $('#profile-form').removeClass('loading');
-            $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
-        },
-        error: function(xhr) {
-            let errorMsg = 'An error occurred while updating your profile';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-                errorMsg = xhr.responseJSON.error;
-            } else if (xhr.statusText) {
-                errorMsg = xhr.statusText;
-            }
-            showMessage('error', errorMsg);
-            $('#profile-form').removeClass('loading');
-            $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
-        }
-    });
-});
-
-$('#profile_picture').change(function() {
-    const file = this.files[0];
-    if (file) {
-        // Check file size (max 2MB) - ORIGINAL SIZE
-        if (file.size > 2 * 1024 * 1024) {
-            showMessage('error', 'File size exceeds 2MB limit');
-            $(this).val('');
-            return;
-        }
-        
-        // Check file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-        if (!validTypes.includes(file.type)) {
-            showMessage('error', 'Only JPG, JPEG, or PNG files are allowed');
-            $(this).val('');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            $('#profile-preview').attr('src', e.target.result);
-        }
-        reader.readAsDataURL(file);
-    }
-});
-
-$('#signature').change(function () {
-    const file = this.files[0];
-    if (!file) return;
-
-    if (!['image/png','image/jpeg','image/jpg'].includes(file.type)) {
-        showMessage('error', 'Signature must be PNG or JPG');
-        this.value = '';
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = e => $('#signature-preview').attr('src', e.target.result);
-    reader.readAsDataURL(file);
-});
-
-
-$('#remove-picture').click(function() {
-    $('#profile_picture').val('');
-    $('#profile-preview').attr('src', defaultProfilePic);
-    showMessage('info', 'Profile picture removed. Remember to save changes.');
-});
-
-// Show/hide password
-$('.toggle-password').click(function() {
-    const input = $(this).siblings('input');
-    const type = input.attr('type') === 'password' ? 'text' : 'password';
-    input.attr('type', type);
-    $(this).toggleClass('fa-eye fa-eye-slash');
-});
-
-// Password strength indicator
-$('#new_password').on('input', function() {
-    const password = $(this).val();
-    let strength = 0;
-    let text = '';
-    
-    if (password.length > 0) {
-        if (password.length >= 8) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-        
-        const strengthText = ['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
-        text = strengthText[strength];
-        
-        $('.strength-meter .strength-bar').removeClass('active');
-        for (let i = 0; i < strength; i++) {
-            $('.strength-bar').eq(i).addClass('active');
-        }
-        
-        $('.strength-text span').text(text);
-    } else {
-        $('.strength-meter .strength-bar').removeClass('active');
-        $('.strength-text span').text('None');
-    }
-});
-
-// Unified Modal Handling
+// SweetAlert2 Message Handling
 function showMessage(type, text) {
-    // Hide all modals first
-    $('.modal').fadeOut();
+    const swalConfig = {
+        title: getTitleByType(type),
+        text: text,
+        icon: type,
+        confirmButtonText: 'OK',
+        confirmButtonColor: getButtonColorByType(type),
+        customClass: {
+            popup: 'sweetalert-popup',
+            title: 'sweetalert-title',
+            confirmButton: 'sweetalert-confirm-btn'
+        }
+    };
     
+    Swal.fire(swalConfig);
+}
+
+function getTitleByType(type) {
     switch(type) {
-        case 'success':
-            $('#success-message').text(text);
-            $('#success-modal').fadeIn();
-            break;
-        case 'error':
-            $('#error-message').text(text);
-            $('#error-modal').fadeIn();
-            break;
-        case 'info':
-            $('#info-message').text(text);
-            $('#info-modal').fadeIn();
-            break;
+        case 'success': return 'Success';
+        case 'error': return 'Error';
+        case 'info': return 'Information';
+        default: return 'Message';
+    }
+}
+
+function getButtonColorByType(type) {
+    switch(type) {
+        case 'success': return '#15803d';
+        case 'error': return '#b91c1c';
+        case 'info': return '#1d4ed8';
+        default: return '#003366';
     }
 }

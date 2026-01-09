@@ -126,13 +126,53 @@ $(document).ready(function() {
         }
     });
 
-    // ===== YOUR ORIGINAL WORKING PROFILE FUNCTIONALITY =====
+    // ===== PROFILE FUNCTIONALITY WITH SWEETALERT2 =====
     
+    // SweetAlert2 Message Function
+    function showMessage(type, text) {
+        const swalConfig = {
+            title: getTitleByType(type),
+            text: text,
+            icon: type,
+            confirmButtonText: 'OK',
+            confirmButtonColor: getButtonColorByType(type),
+            customClass: {
+                popup: 'sweetalert-popup',
+                title: 'sweetalert-title',
+                confirmButton: 'sweetalert-confirm-btn'
+            }
+        };
+        
+        Swal.fire(swalConfig);
+    }
+
+    function getTitleByType(type) {
+        switch(type) {
+            case 'success': return 'Success';
+            case 'error': return 'Error';
+            case 'info': return 'Information';
+            default: return 'Message';
+        }
+    }
+
+    function getButtonColorByType(type) {
+        switch(type) {
+            case 'success': return '#15803d';
+            case 'error': return '#b91c1c';
+            case 'info': return '#1d4ed8';
+            default: return '#003366';
+        }
+    }
+
     // Fetch student profile data
     function fetchProfileData() {
         $.ajax({
             url: fetchProfileUrl,
             type: "GET",
+            beforeSend: function() {
+                // Show loading state on form
+                $('#profile-form').addClass('loading');
+            },
             success: function(response) {
                 if (response.success) {
                     const student = response.student;
@@ -161,11 +201,19 @@ $(document).ready(function() {
                         $('#profile-preview').attr('src', defaultProfilePic);
                     }
                 } else {
-                    showMessage(response.error || 'Failed to load profile data', 'error');
+                    showMessage('error', response.error || 'Failed to load profile data');
                 }
+                $('#profile-form').removeClass('loading');
             },
             error: function(xhr, status, error) {
-                showMessage('Error fetching profile data: ' + error, 'error');
+                let errorMsg = 'Error fetching profile data';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.statusText) {
+                    errorMsg = xhr.statusText;
+                }
+                showMessage('error', errorMsg);
+                $('#profile-form').removeClass('loading');
             }
         });
     }
@@ -173,6 +221,20 @@ $(document).ready(function() {
     // Handle form submission
     $('#profile-form').submit(function(e) {
         e.preventDefault();
+
+        // Check password match
+        const newPassword = $('#new_password').val();
+        const confirmPassword = $('#confirm_password').val();
+        
+        if (newPassword && newPassword !== confirmPassword) {
+            showMessage('error', 'New password and confirmation do not match');
+            return;
+        }
+
+        // Show loading state
+        $(this).addClass('loading');
+        $('.btn-primary').html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+        $('.btn-primary').prop('disabled', true);
 
         const formData = new FormData(this);
 
@@ -184,7 +246,7 @@ $(document).ready(function() {
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    showMessage(response.message, 'success');
+                    showMessage('success', response.message);
 
                     // Update profile picture if changed
                     if (response.updated_profile.profile_picture_url) {
@@ -195,16 +257,28 @@ $(document).ready(function() {
                     $('#current_password').val('');
                     $('#new_password').val('');
                     $('#confirm_password').val('');
+                    
+                    // Update password strength indicator
+                    updatePasswordStrengthIndicator(0);
+                    $('#password-strength-text').text('None');
                 } else {
-                    showMessage(response.error || 'Failed to update profile', 'error');
+                    showMessage('error', response.error || 'Failed to update profile');
                 }
+                $('#profile-form').removeClass('loading');
+                $('.btn-primary').html('<i class="fas fa-save"></i> Save Changes');
+                $('.btn-primary').prop('disabled', false);
             },
             error: function(xhr, status, error) {
                 let errorMsg = 'Error updating profile';
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
+                } else if (xhr.statusText) {
+                    errorMsg = xhr.statusText;
                 }
-                showMessage(errorMsg, 'error');
+                showMessage('error', errorMsg);
+                $('#profile-form').removeClass('loading');
+                $('.btn-primary').html('<i class="fas fa-save"></i> Save Changes');
+                $('.btn-primary').prop('disabled', false);
             }
         });
     });
@@ -213,6 +287,21 @@ $(document).ready(function() {
     $('#profile_picture').change(function() {
         const file = this.files[0];
         if (file) {
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showMessage('error', 'File size exceeds 2MB limit');
+                $(this).val('');
+                return;
+            }
+            
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                showMessage('error', 'Only JPG, JPEG, or PNG files are allowed');
+                $(this).val('');
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 $('#profile-preview').attr('src', e.target.result);
@@ -225,6 +314,7 @@ $(document).ready(function() {
     $('#remove-picture').click(function() {
         $('#profile_picture').val('');
         $('#profile-preview').attr('src', defaultProfilePic);
+        showMessage('info', 'Profile picture removed. Remember to save changes.');
     });
 
     // Toggle password visibility
@@ -258,25 +348,11 @@ $(document).ready(function() {
     function updatePasswordStrengthIndicator(strength) {
         const strengthTexts = ['None', 'Weak', 'Fair', 'Good', 'Strong'];
         $('#password-strength-text').text(strengthTexts[strength]);
-    }
-
-    // Message display function
-    function showMessage(message, type) {
-        const messageContainer = $('#message-container');
-        const messageContent = $('#message-content');
         
-        messageContent.removeClass('success error info').addClass(type);
-        messageContent.html(`
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            ${message}
-        `);
-        
-        messageContainer.slideDown();
-        
-        // Auto hide after 5 seconds
-        setTimeout(() => {
-            messageContainer.slideUp();
-        }, 5000);
+        $('.strength-meter .strength-bar').removeClass('active');
+        for (let i = 0; i < strength; i++) {
+            $('.strength-bar').eq(i).addClass('active');
+        }
     }
 
     // Initial fetch

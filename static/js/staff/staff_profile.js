@@ -1,608 +1,399 @@
-// staff_profile.js - Complete Fixed Version with Enhanced Responsiveness
 $(document).ready(function() {
-    // Check and ensure viewport meta tag exists for proper mobile scaling
-    function checkViewportMeta() {
-        if (!$('meta[name="viewport"]').length) {
-            $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">');
-        }
-    }
-    
-    // Handle responsive images and prevent overflow
-    function handleResponsiveImages() {
-        // Ensure images don't overflow on small screens
-        $('#profile-preview, #signature-preview').on('load', function() {
-            $(this).css({
-                'max-width': '100%',
-                'max-height': '100%',
-                'object-fit': 'cover'
-            });
-        });
-        
-        // Initial check
-        $('#profile-preview, #signature-preview').each(function() {
-            if (this.complete) {
-                $(this).trigger('load');
-            }
-        });
-    }
-    
     // Initialize all functionality
-    function init() {
-        checkViewportMeta();
-        handleResponsiveImages();
-        initMobileNavigation();
-        initModals();
-        fetchProfileData();
-        setupFormValidation();
+    init();
+    
+    // Load profile data on page load
+    loadProfileData();
+});
+
+// Initialize all functionality
+function init() {
+    initMobileNavigation();
+    initEventListeners();
+    initModals(); // Initialize modal functionality
+}
+
+// Mobile Navigation Functionality
+function initMobileNavigation() {
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const mobileNav = document.getElementById('mobileNav');
+    const closeMobileNav = document.getElementById('closeMobileNav');
+    
+    if (hamburgerMenu && mobileNav) {
+        hamburgerMenu.addEventListener('click', function() {
+            mobileNav.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
         
-        // Profile form functionality
-        $('#profile-form').submit(function(e) {
-            e.preventDefault();
-            
-            // Validate files before submission
-            if (!validateFiles()) {
-                return;
-            }
-
-            // Show loading state
-            const $form = $(this);
-            const $submitBtn = $form.find('.save-btn');
-            const originalText = $submitBtn.html();
-            
-            // Add loading class to form
-            $form.addClass('loading');
-            $submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
-            
-            const formData = new FormData(this);
-
-            $.ajax({
-                url: updateProfileUrl, 
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // Restore button and form
-                    $form.removeClass('loading');
-                    $submitBtn.html(originalText).prop('disabled', false);
-                    
-                    if (response.success) {
-                        showMessage(response.message, 'success');
-
-                        // Update profile picture if changed
-                        if (response.updated_profile && response.updated_profile.profile_picture_url) {
-                            $('#profile-preview').attr('src', response.updated_profile.profile_picture_url);
-                        }
-                        
-                        // Update signature if changed
-                        if (response.updated_profile && response.updated_profile.signature_url) {
-                            $('#signature-preview').attr('src', response.updated_profile.signature_url);
-                        }
-
-                        // Clear password fields
-                        $('#current_password, #new_password, #confirm_password').val('');
-                        
-                        // Clear file inputs and reset UI
-                        resetFileInputUI();
-                        
-                    } else {
-                        showMessage(response.error || 'Failed to update profile', 'error');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Restore button and form
-                    $form.removeClass('loading');
-                    $submitBtn.html(originalText).prop('disabled', false);
-                    
-                    let errorMsg = 'Error updating profile. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg = xhr.responseJSON.error;
-                    } else if (xhr.status === 413) {
-                        errorMsg = 'File too large. Maximum file size is 2MB.';
-                    } else if (xhr.status === 415) {
-                        errorMsg = 'Unsupported file format. Please use JPG or PNG.';
-                    }
-                    showMessage(errorMsg, 'error');
+        if (closeMobileNav) {
+            closeMobileNav.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        // Close mobile nav when clicking on links
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Expandable mobile menu sections
+        const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
+        mobileNavHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const section = this.getAttribute('data-section');
+                const submenu = document.getElementById(`${section}-submenu`);
+                const chevron = this.querySelector('.chevron-icon');
+                
+                // Toggle active class
+                this.classList.toggle('active');
+                
+                // Toggle submenu
+                if (submenu) {
+                    submenu.classList.toggle('active');
+                }
+                
+                // Rotate only the chevron icon
+                if (chevron) {
+                    chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
                 }
             });
         });
-
-        // Profile picture preview
-        $('#profile_picture').change(function() {
-            handleFileUpload(this, 'profile');
-        });
-
-        // Remove profile picture
-        $('#remove-picture').click(function() {
-            resetFileInput('profile_picture', defaultProfilePic, 'profile');
-        });
-
-        // Signature preview
-        $('#signature').change(function() {
-            handleFileUpload(this, 'signature');
-        });
-
-        // Remove signature
-        $('#remove-signature').click(function() {
-            resetFileInput('signature', defaultSignaturePic, 'signature');
-        });
-
-        // Toggle password visibility
-        $('.toggle-password').click(function() {
-            const input = $(this).siblings('input');
-            const type = input.attr('type') === 'password' ? 'text' : 'password';
-            input.attr('type', type);
-            $(this).toggleClass('fa-eye fa-eye-slash');
-        });
-
-        // Password strength indicator
-        $('#new_password').on('input', function() {
-            const password = $(this).val();
-            const strength = checkPasswordStrength(password);
-            updatePasswordStrengthIndicator(strength);
-        });
         
-        // Handle window resize for responsive adjustments
-        $(window).on('resize', debounce(function() {
-            adjustFormLayout();
-        }, 250));
-        
-        // Initial layout adjustment
-        adjustFormLayout();
-    }
-    
-    // Debounce function for resize events
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-    
-    // Adjust form layout based on screen size
-    function adjustFormLayout() {
-        const windowWidth = $(window).width();
-        const $formColumns = $('.form-columns');
-        const $formSections = $('.form-section');
-        
-        if (windowWidth <= 768) {
-            // Mobile adjustments
-            $formSections.css({
-                'padding': '1rem',
-                'margin-bottom': '1.5rem'
-            });
-        } else {
-            // Desktop adjustments
-            $formSections.css({
-                'padding': '1.5rem',
-                'margin-bottom': '2rem'
-            });
-        }
-    }
-    
-    // Setup form validation
-    function setupFormValidation() {
-        // Contact number validation
-        $('#contact_number').on('input', function() {
-            const value = $(this).val().replace(/\D/g, '');
-            $(this).val(value);
-        });
-        
-        // Email validation
-        $('#email').on('blur', function() {
-            const email = $(this).val();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (email && !emailRegex.test(email)) {
-                showMessage('Please enter a valid email address', 'error');
-            }
-        });
-        
-        // Password confirmation validation
-        $('#confirm_password').on('blur', function() {
-            const newPassword = $('#new_password').val();
-            const confirmPassword = $(this).val();
-            
-            if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-                showMessage('Passwords do not match', 'error');
-            }
-        });
-    }
-    
-    // Validate files before form submission
-    function validateFiles() {
-        const profileFile = $('#profile_picture')[0].files[0];
-        const signatureFile = $('#signature')[0].files[0];
-        
-        if (profileFile) {
-            const validProfileTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            if (!validProfileTypes.includes(profileFile.type)) {
-                showMessage('Profile picture must be JPG or PNG format', 'error');
-                return false;
-            }
-            
-            if (profileFile.size > 2 * 1024 * 1024) {
-                showMessage('Profile picture size must be less than 2MB', 'error');
-                return false;
-            }
-        }
-        
-        if (signatureFile) {
-            const validSignatureTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            if (!validSignatureTypes.includes(signatureFile.type)) {
-                showMessage('Signature must be PNG, JPG, or JPEG format', 'error');
-                return false;
-            }
-            
-            if (signatureFile.size > 2 * 1024 * 1024) {
-                showMessage('Signature size must be less than 2MB', 'error');
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    // Handle file upload with UI feedback
-    function handleFileUpload(inputElement, type) {
-        const file = inputElement.files[0];
-        if (!file) return;
-        
-        const $input = $(inputElement);
-        const validTypes = type === 'profile' 
-            ? ['image/jpeg', 'image/jpg', 'image/png']
-            : ['image/png', 'image/jpeg', 'image/jpg'];
-        
-        // Validate file type
-        if (!validTypes.includes(file.type)) {
-            showMessage(`Please upload a ${type === 'profile' ? 'JPG or PNG' : 'PNG, JPG, or JPEG'} file for ${type}`, 'error');
-            $input.val('');
-            return;
-        }
-        
-        // Validate file size (2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            showMessage(`${type === 'profile' ? 'Profile picture' : 'Signature'} size must be less than 2MB`, 'error');
-            $input.val('');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            // Update preview image
-            if (type === 'profile') {
-                $('#profile-preview').attr('src', e.target.result);
-            } else {
-                $('#signature-preview').attr('src', e.target.result);
-            }
-            
-            // Show file name and success state
-            updateFileInputUI($input, file, type);
-        };
-        
-        reader.onerror = function() {
-            showMessage('Error reading file. Please try again.', 'error');
-            $input.val('');
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    // Update file input UI with file information
-    function updateFileInputUI($input, file, type) {
-        const $label = $input.closest('.file-input-wrapper').find('label');
-        const fileName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
-        const fileSize = (file.size / 1024).toFixed(2) + ' KB';
-        
-        // Update button text with file name
-        $label.html(`<i class="fas fa-check-circle"></i> ${fileName}`);
-        $label.addClass('upload-success');
-        
-        // Show file info
-        const $fileInfo = $input.closest('.file-input-wrapper').find('.file-name-display');
-        const iconClass = type === 'profile' ? 'fa-file-image' : 'fa-signature';
-        $fileInfo.html(`<i class="fas ${iconClass}"></i> ${fileSize}`).addClass('show');
-    }
-    
-    // Reset file input
-    function resetFileInput(inputId, defaultImage, type) {
-        const $input = $(`#${inputId}`);
-        $input.val('');
-        
-        // Reset preview image
-        if (type === 'profile') {
-            $('#profile-preview').attr('src', defaultImage);
-        } else {
-            $('#signature-preview').attr('src', defaultImage);
-        }
-        
-        // Reset button text and styling
-        const $label = $input.closest('.file-input-wrapper').find('label');
-        $label.removeClass('upload-success');
-        $label.html(type === 'profile' 
-            ? '<i class="fas fa-cloud-upload-alt"></i> Change Picture'
-            : '<i class="fas fa-cloud-upload-alt"></i> Upload Signature'
-        );
-        
-        // Hide file info
-        $input.closest('.file-input-wrapper').find('.file-name-display').removeClass('show').html('');
-    }
-    
-    // Reset all file input UI after successful submission
-    function resetFileInputUI() {
-        // Reset profile picture UI
-        const $profileLabel = $('#profile_picture').closest('.file-input-wrapper').find('label');
-        $profileLabel.removeClass('upload-success');
-        $profileLabel.html('<i class="fas fa-cloud-upload-alt"></i> Change Picture');
-        $('#profile-file-name').removeClass('show').html('');
-        
-        // Reset signature UI
-        const $signatureLabel = $('#signature').closest('.file-input-wrapper').find('label');
-        $signatureLabel.removeClass('upload-success');
-        $signatureLabel.html('<i class="fas fa-cloud-upload-alt"></i> Upload Signature');
-        $('#signature-file-name').removeClass('show').html('');
-    }
-    
-    // Mobile Navigation Functionality
-    function initMobileNavigation() {
-        const hamburgerMenu = document.getElementById('hamburgerMenu');
-        const mobileNav = document.getElementById('mobileNav');
-        const closeMobileNav = document.getElementById('closeMobileNav');
-        
-        if (hamburgerMenu && mobileNav) {
-            hamburgerMenu.addEventListener('click', function() {
-                mobileNav.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-            
-            if (closeMobileNav) {
-                closeMobileNav.addEventListener('click', function() {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
-                });
-            }
-            
-            // Expandable mobile menu sections
-            const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
-            mobileNavHeaders.forEach(header => {
-                header.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    const submenu = document.getElementById(`${section}-submenu`);
-                    const chevron = this.querySelector('.chevron-icon');
-                    
-                    // Toggle active class
-                    this.classList.toggle('active');
-                    
-                    // Toggle submenu
-                    if (submenu) {
-                        submenu.classList.toggle('active');
-                    }
-                    
-                    // Rotate chevron icon
-                    if (chevron) {
-                        chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
-                    }
-                });
-            });
-            
-            // Close mobile nav when clicking on links
-            const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
-            mobileNavLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    // Only close if it's not an expandable header
-                    if (!this.classList.contains('mobile-nav-header-link')) {
-                        mobileNav.classList.remove('active');
-                        document.body.style.overflow = '';
-                    }
-                });
-            });
-            
-            // Close mobile nav when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-            
-            // Close mobile nav with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-            
-            // Handle window resize - close mobile nav on larger screens
-            function handleResize() {
-                if (window.innerWidth > 768 && mobileNav.classList.contains('active')) {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
-            
-            window.addEventListener('resize', debounce(handleResize, 250));
-        }
-    }
-    
-    // Initialize all modal functionality
-    function initModals() {
-        // Close modal function - works for ALL modals
-        function closeAllModals() {
-            $('.modal').fadeOut(300);
-            document.body.style.overflow = '';
-            document.body.classList.remove('modal-open');
-        }
-
-        // Open modal function
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                document.body.classList.add('modal-open');
-            }
-        }
-
-        // Close modal when clicking outside - works for ALL modals
-        $(document).on('click', function(e) {
-            if ($(e.target).hasClass('modal')) {
-                closeAllModals();
-            }
-        });
-
-        // Escape key to close modals - works for ALL modals
-        $(document).keyup(function(e) {
-            if (e.keyCode === 27) {
-                closeAllModals();
-            }
-        });
-
-        // ===== LOGOUT MODAL FUNCTIONALITY =====
-        $('#logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openModal('logout-modal');
-        });
-        
-        $('#mobile-logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // First close mobile nav properly
-            const mobileNav = document.getElementById('mobileNav');
-            if (mobileNav) {
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
                 mobileNav.classList.remove('active');
                 document.body.style.overflow = '';
             }
-            // Then open logout modal
-            setTimeout(() => {
-                openModal('logout-modal');
-            }, 10);
         });
         
-        $('#cancel-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#close-logout-modal').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#confirm-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Get logout URL from multiple possible sources for external compatibility
-            const logoutUrl = window.appUrls?.logoutUrl || 
-                            document.body.getAttribute('data-logout-url') || 
-                            "/logout";
-            
-            if (logoutUrl) {
-                window.location.href = logoutUrl;
-            } else {
-                console.log('Logout URL not properly configured, using default');
-                window.location.href = "/logout";
+        // Close mobile nav with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
     }
+}
+
+// Initialize modal functionality
+function initModals() {
+    // Close modal function - works for ALL modals
+    function closeAllModals() {
+        $('.modal').fadeOut(300);
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+    }
+
+    // Open modal function
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    // Close modal when clicking outside - works for ALL modals
+    $(document).on('click', function(e) {
+        if ($(e.target).hasClass('modal')) {
+            closeAllModals();
+        }
+    });
+
+    // Escape key to close modals - works for ALL modals
+    $(document).keyup(function(e) {
+        if (e.keyCode === 27) {
+            closeAllModals();
+        }
+    });
+
+    // ===== SPECIFIC MODAL FUNCTIONALITY =====
+
+    // Logout Modal
+    $('#logout-trigger').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openModal('logout-modal');
+    });
     
-    // Fetch profile data
-    function fetchProfileData() {
-        // Show loading state
-        $('.profile-form').addClass('loading');
-        
-        $.ajax({
-            url: fetchProfileUrl, 
-            type: "GET",
-            success: function(response) {
-                $('.profile-form').removeClass('loading');
-                
-                if (response.success) {
-                    const staff = response.staff;
+    $('#mobile-logout-trigger').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // First close mobile nav properly
+        const mobileNav = document.getElementById('mobileNav');
+        if (mobileNav) {
+            mobileNav.classList.remove('active');
+        }
+        // Then open logout modal
+        setTimeout(() => {
+            openModal('logout-modal');
+        }, 10);
+    });
+    
+    $('#cancel-logout').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllModals();
+    });
+    
+    $('#close-logout-modal').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllModals();
+    });
+    
+    $('#confirm-logout').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const logoutUrl = document.body.getAttribute('data-logout-url');
+        if (logoutUrl) {
+            window.location.href = logoutUrl;
+        } else {
+            console.error('Logout URL not found');
+            window.location.href = "/logout";
+        }
+    });
+}
 
-                    // Personal Information
-                    $('#first_name').val(staff.first_name || '');
-                    $('#middle_name').val(staff.middle_name || '');
-                    $('#last_name').val(staff.last_name || '');
-                    $('#contact_number').val(staff.contact_number || '');
-                    $('#date_of_birth').val(staff.date_of_birth || '');
-                    $('#gender').val(staff.gender || '');
-
-                    // Account Information
-                    $('#username').val(staff.username || '');
-                    $('#email').val(staff.email || '');
-
-                    // Address Information
-                    $('#province').val(staff.province || '');
-                    $('#municipality').val(staff.municipality || '');
-                    $('#baranggay').val(staff.baranggay || '');
-
-                    // Profile Picture
-                    if (staff.profile_picture_url) {
-                        $('#profile-preview').attr('src', staff.profile_picture_url);
-                    } else {
-                        $('#profile-preview').attr('src', defaultProfilePic);
-                    }
-                    
-                    // Signature
-                    if (staff.signature_url) {
-                        $('#signature-preview').attr('src', staff.signature_url);
-                    } else {
-                        $('#signature-preview').attr('src', defaultSignaturePic);
-                    }
-
-                } else {
-                    showMessage(response.error || 'Failed to load profile data', 'error');
-                }
-            },
-            error: function(xhr, status, error) {
-                $('.profile-form').removeClass('loading');
-                showMessage('Error fetching profile data: ' + error, 'error');
+// Initialize event listeners
+function initEventListeners() {
+    // Profile picture handling
+    $('#profile_picture').change(function() {
+        const file = this.files[0];
+        if (file) {
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('error', 'File size exceeds 10MB limit');
+                $(this).val('');
+                return;
             }
-        });
-    }
+            
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                showMessage('error', 'Only JPG, JPEG, or PNG files are allowed');
+                $(this).val('');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#profile-preview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remove profile picture
+    $('#remove-picture').click(function() {
+        $('#profile_picture').val('');
+        $('#profile-preview').attr('src', defaultProfilePic);
+        showMessage('info', 'Profile picture removed. Remember to save changes.');
+    });
+    
+    // Signature handling
+    $('#signature').change(function () {
+        const file = this.files[0];
+        if (!file) return;
 
-    function checkPasswordStrength(password) {
-        if (!password) return 0;
-        let strength = 0;
-        if (password.length >= 4) strength++;
-        if (password.length >= 8) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-        return Math.min(strength, 4);
-    }
-
-    function updatePasswordStrengthIndicator(strength) {
-        const strengthTexts = ['None', 'Weak', 'Fair', 'Good', 'Strong'];
-        const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#5cb85c', '#5cb85c'];
-
-        $('.strength-bar').removeClass('active');
-        for (let i = 0; i < strength; i++) {
-            $('.strength-bar').eq(i).addClass('active').css('background-color', colors[strength]);
+        if (!['image/png','image/jpeg','image/jpg'].includes(file.type)) {
+            showMessage('error', 'Signature must be PNG or JPG');
+            this.value = '';
+            return;
         }
 
-        $('.strength-text span').text(strengthTexts[strength]).css('color', colors[strength]);
+        const reader = new FileReader();
+        reader.onload = e => $('#signature-preview').attr('src', e.target.result);
+        reader.readAsDataURL(file);
+    });
+    
+    // Remove signature
+    $('#remove-signature').click(function() {
+        $('#signature').val('');
+        $('#signature-preview').attr('src', defaultSignaturePic);
+        showMessage('info', 'Signature removed. Remember to save changes.');
+    });
+    
+    // Show/hide password
+    $('.toggle-password').click(function() {
+        const input = $(this).siblings('input');
+        const type = input.attr('type') === 'password' ? 'text' : 'password';
+        input.attr('type', type);
+        $(this).toggleClass('fa-eye fa-eye-slash');
+    });
+    
+    // Password strength indicator
+    $('#new_password').on('input', function() {
+        const password = $(this).val();
+        let strength = 0;
+        let text = '';
+        
+        if (password.length > 0) {
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            const strengthText = ['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
+            text = strengthText[strength];
+            
+            $('.strength-meter .strength-bar').removeClass('active');
+            for (let i = 0; i < strength; i++) {
+                $('.strength-bar').eq(i).addClass('active');
+            }
+            
+            $('.strength-text span').text(text);
+        } else {
+            $('.strength-meter .strength-bar').removeClass('active');
+            $('.strength-text span').text('None');
+        }
+    });
+    
+    // Form submission
+    $('#profile-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Check password match
+        const newPassword = $('#new_password').val();
+        const confirmPassword = $('#confirm_password').val();
+        
+        if (newPassword && newPassword !== confirmPassword) {
+            showMessage('error', 'New password and confirmation do not match');
+            return;
+        }
+        
+        // Show loading state
+        $(this).addClass('loading');
+        $('.save-btn').html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+        
+        let formData = new FormData(this);
+        
+        $.ajax({
+            url: updateProfileUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showMessage('success', response.message);
+                    if (response.updated_profile) {
+                        updateFormFields(response.updated_profile);
+                    }
+                } else {
+                    showMessage('error', response.error || 'Update failed');
+                }
+                $('#profile-form').removeClass('loading');
+                $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
+            },
+            error: function(xhr) {
+                let errorMsg = 'An error occurred while updating your profile';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.statusText) {
+                    errorMsg = xhr.statusText;
+                }
+                showMessage('error', errorMsg);
+                $('#profile-form').removeClass('loading');
+                $('.save-btn').html('<i class="fas fa-save"></i> Save Changes');
+            }
+        });
+    });
+}
+
+// Load profile data on page load
+function loadProfileData() {
+    // Show loading state
+    $('#profile-form').addClass('loading');
+    
+    $.ajax({
+        url: fetchProfileUrl,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.staff) {
+                updateFormFields(response.staff);
+            } else {
+                showMessage('error', response.error || 'Failed to load profile data');
+            }
+            $('#profile-form').removeClass('loading');
+        },
+        error: function(xhr) {
+            showMessage('error', 'Failed to load profile data. Please try again later.');
+            $('#profile-form').removeClass('loading');
+        }
+    });
+}
+
+function updateFormFields(profileData) {
+    $('#username').val(profileData.username || '');
+    $('#email').val(profileData.email || '');
+    $('#first_name').val(profileData.first_name || '');
+    $('#middle_name').val(profileData.middle_name || '');
+    $('#last_name').val(profileData.last_name || '');
+    $('#contact_number').val(profileData.contact_number || '');
+    $('#province').val(profileData.province || '');
+    $('#municipality').val(profileData.municipality || '');
+    $('#baranggay').val(profileData.baranggay || '');
+    $('#date_of_birth').val(profileData.date_of_birth || '');
+    $('#gender').val(profileData.gender || '');
+    
+    // Update profile picture
+    if (profileData.profile_picture_url) {
+        $('#profile-preview').attr('src', profileData.profile_picture_url);
+        $('#nav-profile-pic').attr('src', profileData.profile_picture_url);
+    } else {
+        $('#profile-preview').attr('src', defaultProfilePic);
+        $('#nav-profile-pic').attr('src', defaultProfilePic);
     }
-
-    function showMessage(message, type) {
-        const messageDiv = $('#message-content');
-        messageDiv.text(message).removeClass().addClass('message ' + type);
-        $('#message-container').fadeIn();
-
-        // Auto-hide after 5 seconds
-        setTimeout(function() {
-            $('#message-container').fadeOut();
-        }, 5000);
+    
+    // Update signature
+    if (profileData.signature_url) {
+        $('#signature-preview').attr('src', profileData.signature_url);
+    } else {
+        $('#signature-preview').attr('src', defaultSignaturePic);
     }
+}
 
-    // Initialize everything
-    init();
-});
+// SweetAlert2 Message Handling
+function showMessage(type, text) {
+    const swalConfig = {
+        title: getTitleByType(type),
+        text: text,
+        icon: type,
+        confirmButtonText: 'OK',
+        confirmButtonColor: getButtonColorByType(type),
+        customClass: {
+            popup: 'sweetalert-popup',
+            title: 'sweetalert-title',
+            confirmButton: 'sweetalert-confirm-btn'
+        }
+    };
+    
+    Swal.fire(swalConfig);
+}
+
+function getTitleByType(type) {
+    switch(type) {
+        case 'success': return 'Success';
+        case 'error': return 'Error';
+        case 'info': return 'Information';
+        default: return 'Message';
+    }
+}
+
+function getButtonColorByType(type) {
+    switch(type) {
+        case 'success': return '#15803d';
+        case 'error': return '#b91c1c';
+        case 'info': return '#1d4ed8';
+        default: return '#003366';
+    }
+}
