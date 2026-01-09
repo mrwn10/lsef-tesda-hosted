@@ -6,10 +6,10 @@ def get_db():
     if 'db' not in g:
         try:
             g.db = mysql.connector.connect(
-                host=os.environ.get('DB_HOST', 'localhost'),
-                user=os.environ.get('DB_USER', 'root'),
-                password=os.environ.get('DB_PASSWORD', ''),
-                database=os.environ.get('DB_NAME', 'lsef_tesda'),
+                host=os.environ.get('DB_HOST', 'marwindalin.mysql.pythonanywhere-services.com'),
+                user=os.environ.get('DB_USER', 'marwindalin'),
+                password=os.environ.get('DB_PASSWORD', 'Database09'),
+                database=os.environ.get('DB_NAME', 'marwindalin$lsef_tesda'),
                 port=3306
             )
         except mysql.connector.Error as err:
