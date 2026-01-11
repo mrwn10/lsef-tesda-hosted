@@ -48,7 +48,7 @@ $(document).ready(function() {
         });
     }
 
-    // Modal Functions - PERFECTLY MATCHED
+    // Modal Functions
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -70,7 +70,7 @@ $(document).ready(function() {
         }
     }
 
-    // Logout Modal Handling - PERFECTLY MATCHED
+    // Logout Modal Handling
     const logoutModal = document.getElementById('logout-modal');
     const logoutTrigger = document.getElementById('logout-trigger');
     const mobileLogoutTrigger = document.getElementById('mobile-logout-trigger');
@@ -87,7 +87,7 @@ $(document).ready(function() {
         });
     }
 
-    // Show modal when logout is clicked (mobile) - PERFECTLY FIXED
+    // Show modal when logout is clicked (mobile)
     if (mobileLogoutTrigger) {
         mobileLogoutTrigger.addEventListener('click', function(e) {
             e.preventDefault();
@@ -103,7 +103,7 @@ $(document).ready(function() {
         });
     }
 
-    // Hide modal when cancel is clicked - PERFECTLY FIXED
+    // Hide modal when cancel is clicked
     if (cancelLogout) {
         cancelLogout.addEventListener('click', function(e) {
             e.preventDefault();
@@ -127,7 +127,7 @@ $(document).ready(function() {
         });
     }
 
-    // Handle logout confirmation - PERFECTLY FIXED
+    // Handle logout confirmation
     if (confirmLogout) {
         confirmLogout.addEventListener('click', function(e) {
             e.preventDefault();
@@ -169,45 +169,58 @@ $(document).ready(function() {
     new StudentEnrollment();
 });
 
-// Student Enrollment JavaScript Functions (unchanged)
+// Student Enrollment JavaScript Functions
 class StudentEnrollment {
     constructor() {
         this.enrolledClasses = [];
-        this.hasCurrentEnrollment = false;
+        // Check if there's any active enrollment (enrolled OR pending)
+        this.hasActiveEnrollment = $('.enrollment-disabled').length > 0;
+        this.isPendingEnrollment = $('.pending-enrollment-warning').length > 0;
         this.init();
     }
 
     init() {
         this.bindEvents();
         console.log('Student Enrollment initialized');
+        
+        // Show placeholder if enrollment is disabled
+        if (this.hasActiveEnrollment) {
+            this.showPlaceholder();
+        }
     }
 
     bindEvents() {
-        // Dropdown change event
-        $('#class_id').on('change', (e) => {
-            const classId = e.target.value;
-            if (classId) {
-                this.loadClassDetails(classId);
-            } else {
-                this.showPlaceholder();
-            }
-        });
+        // Dropdown change event - only bind if not disabled
+        if (!this.hasActiveEnrollment) {
+            $('#class_id').on('change', (e) => {
+                const classId = e.target.value;
+                if (classId) {
+                    this.loadClassDetails(classId);
+                } else {
+                    this.showPlaceholder();
+                }
+            });
+        }
 
-        // Summary card click events
-        $('.summary-card').on('click', (e) => {
-            const classId = $(e.currentTarget).data('class-id');
-            $('#class_id').val(classId).trigger('change');
-            
-            // Scroll to the dropdown
-            $('html, body').animate({
-                scrollTop: $('#class_id').offset().top - 100
-            }, 500);
-        });
+        // Summary card click events - only bind if not disabled
+        if (!this.hasActiveEnrollment) {
+            $('.summary-card:not(.card-disabled)').on('click', (e) => {
+                const classId = $(e.currentTarget).data('class-id');
+                $('#class_id').val(classId).trigger('change');
+                
+                // Scroll to the dropdown
+                $('html, body').animate({
+                    scrollTop: $('#class_id').offset().top - 100
+                }, 500);
+            });
+        }
 
-        // Submit button click
-        $('#submit-btn').on('click', () => {
-            this.submitEnrollment();
-        });
+        // Submit button click - only bind if not disabled
+        if (!this.hasActiveEnrollment) {
+            $('#submit-btn').on('click', () => {
+                this.confirmEnrollment();
+            });
+        }
     }
 
     async loadClassDetails(classId) {
@@ -223,7 +236,7 @@ class StudentEnrollment {
             
         } catch (error) {
             console.error('Error loading class details:', error);
-            this.showFlashMessage('Error loading class details. Please try again.', 'error');
+            this.showSimpleAlert('Error', 'Error loading class details.', 'error');
         }
     }
 
@@ -324,7 +337,7 @@ class StudentEnrollment {
     updateSubmitButton(classId) {
         const submitButton = $('#submit-btn');
         
-        if (classId && !this.hasCurrentEnrollment) {
+        if (classId && !this.hasActiveEnrollment) {
             submitButton.prop('disabled', false);
             submitButton.html('<i class="fas fa-paper-plane btn-icon"></i> Submit Enrollment Request');
             submitButton.removeClass('btn-disabled');
@@ -345,20 +358,42 @@ class StudentEnrollment {
         $('#submit-btn').prop('disabled', true).addClass('btn-disabled');
     }
 
-    async submitEnrollment() {
+    // Simple confirmation dialog
+    confirmEnrollment() {
         const classId = $('#class_id').val();
-        const submitButton = $('#submit-btn');
-        const loadingSpinner = $('#loading-spinner');
         
         if (!classId) {
-            this.showFlashMessage('Please select a class first.', 'error');
+            this.showSimpleAlert('Select a Class', 'Please select a class first.', 'warning');
             return;
         }
         
-        // Show loading spinner
-        loadingSpinner.show();
-        submitButton.prop('disabled', true);
+        // Get selected class title
+        const selectedOption = $('#class_id option:selected').text();
+        const classTitle = selectedOption.split(' - ')[0]; // Just show course title
         
+        // Clean confirmation dialog
+        Swal.fire({
+            title: 'Confirm Enrollment',
+            text: `Enroll in "${classTitle}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Enroll',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#003366',
+            cancelButtonColor: '#6c757d',
+            showCloseButton: false,
+            backdrop: true,
+            allowOutsideClick: false,
+            allowEscapeKey: true,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return this.submitEnrollment(classId);
+            }
+        });
+    }
+
+    // Submit enrollment with clean feedback
+    async submitEnrollment(classId) {
         try {
             const formData = new FormData();
             formData.append('class_id', classId);
@@ -374,58 +409,144 @@ class StudentEnrollment {
             const data = await response.json();
             
             if (data.success) {
-                this.showFlashMessage(data.message, 'success');
-                // Disable the button and update text
-                submitButton.prop('disabled', true);
-                submitButton.html('<i class="fas fa-check-circle btn-icon"></i> Enrollment Requested');
-                submitButton.addClass('btn-disabled');
+                // Simple success alert
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Enrollment request submitted successfully.',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#003366',
+                    showCloseButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
                 
-                // Refresh the page after 2 seconds to update available slots
+                // Update UI
+                $('#submit-btn').prop('disabled', true);
+                $('#submit-btn').html('<i class="fas fa-check-circle btn-icon"></i> Enrollment Requested');
+                $('#submit-btn').addClass('btn-disabled');
+                
+                // Disable the dropdown option
+                $(`#class_id option[value="${classId}"]`).prop('disabled', true);
+                
+                // Refresh the page after 3 seconds to show pending warning
                 setTimeout(() => {
                     window.location.reload();
-                }, 2000);
+                }, 3000);
+                
+                return true;
             } else {
-                this.showFlashMessage(data.message, 'error');
-                submitButton.prop('disabled', false);
+                // Simple error alert
+                let errorMessage = data.message;
+                if (errorMessage.length > 100) {
+                    errorMessage = errorMessage.substring(0, 100) + '...';
+                }
+                
+                Swal.fire({
+                    title: 'Cannot Enroll',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#dc3545',
+                    showCloseButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
                 
                 // If the error is about verification, redirect to requirements page
                 if (data.message.includes('not verified') || data.message.includes('requirements')) {
                     setTimeout(() => {
                         window.location.href = "/student/requirements";
-                    }, 3000);
+                    }, 2000);
                 }
+                
+                return false;
             }
             
         } catch (error) {
             console.error('Error:', error);
-            this.showFlashMessage('An error occurred during enrollment. Please try again.', 'error');
-            submitButton.prop('disabled', false);
-        } finally {
-            loadingSpinner.hide();
+            
+            Swal.fire({
+                title: 'Connection Error',
+                text: 'Please check your connection and try again.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#003366',
+                showCloseButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            });
+            
+            return false;
         }
     }
 
-    showFlashMessage(message, type) {
-        let flashMessages = $('.flash-messages');
-        if (flashMessages.length === 0) {
-            // Create flash messages container if it doesn't exist
-            const content = $('.enrollment-content');
-            flashMessages = $('<div class="flash-messages"></div>');
-            content.prepend(flashMessages);
-        }
-        
-        const flashMessage = $(`
-            <div class="flash-message flash-${type}">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} flash-icon"></i>
-                <span>${message}</span>
-            </div>
-        `);
-        
-        flashMessages.append(flashMessage);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            flashMessage.fadeOut(() => flashMessage.remove());
-        }, 5000);
+    // Simple alert helper
+    showSimpleAlert(title, text, icon) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#003366',
+            showCloseButton: false,
+            timer: icon === 'success' ? 3000 : undefined,
+            timerProgressBar: icon === 'success'
+        });
     }
 }
+
+// Add minimal custom SweetAlert styles
+const style = document.createElement('style');
+style.textContent = `
+    .swal2-popup {
+        font-family: 'Poppins', sans-serif;
+        border-radius: 8px;
+    }
+    
+    .swal2-title {
+        color: #003366;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+    
+    .swal2-content {
+        font-size: 1rem;
+        color: #555;
+    }
+    
+    /* Remove close button */
+    .swal2-close {
+        display: none !important;
+    }
+    
+    /* Adjust button styles */
+    .swal2-confirm, .swal2-cancel {
+        font-weight: 600;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+    
+    /* Make SweetAlert icons match our theme */
+    .swal2-icon.swal2-success {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    
+    .swal2-icon.swal2-error {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    
+    .swal2-icon.swal2-warning {
+        border-color: #ffc107;
+        color: #ffc107;
+    }
+    
+    .swal2-icon.swal2-question {
+        border-color: #003366;
+        color: #003366;
+    }
+`;
+document.head.appendChild(style);

@@ -1,3 +1,4 @@
+# staff_class_management.py - Updated Flask route
 from flask import Blueprint, render_template, request, jsonify, session
 from datetime import datetime
 from database import get_db
@@ -26,16 +27,33 @@ def view_active_classes():
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
 
-        # Fetch only 'active' or 'edited' classes created by this staff
+        # UPDATED QUERY: Fetch classes with student counts
         query = """
             SELECT 
-                cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students, cl.prerequisites,
-                cl.start_date, cl.end_date, cl.status, cl.date_created,
-                co.course_title
+                cl.class_id, 
+                cl.class_title, 
+                cl.schedule, 
+                cl.venue, 
+                cl.max_students, 
+                cl.prerequisites,
+                cl.start_date, 
+                cl.end_date, 
+                cl.status, 
+                cl.date_created,
+                co.course_title,
+                -- Count enrolled students for each class
+                COUNT(e.enrollment_id) as current_students
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
             JOIN login l ON cl.instructor_id = l.user_id
-            WHERE cl.status IN ('active', 'edited') AND l.role = 'staff' AND cl.instructor_id = %s
+            LEFT JOIN enrollment e ON cl.class_id = e.class_id 
+                AND e.status IN ('enrolled', 'completed')  -- Only count active/completed enrollments
+            WHERE cl.status IN ('active', 'edited') 
+                AND l.role = 'staff' 
+                AND cl.instructor_id = %s
+            GROUP BY cl.class_id, cl.class_title, cl.schedule, cl.venue, 
+                     cl.max_students, cl.prerequisites, cl.start_date, 
+                     cl.end_date, cl.status, cl.date_created, co.course_title
             ORDER BY cl.date_created DESC
         """
         cursor.execute(query, (instructor_id,))
@@ -45,6 +63,8 @@ def view_active_classes():
         for cls in active_classes:
             cls['start_date'] = cls['start_date'].isoformat() if cls['start_date'] else None
             cls['end_date'] = cls['end_date'].isoformat() if cls['end_date'] else None
+            # Ensure current_students is an integer
+            cls['current_students'] = int(cls['current_students']) if cls['current_students'] else 0
 
         return render_template(
             'staffs/staff_class_management.html',

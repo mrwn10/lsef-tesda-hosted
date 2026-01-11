@@ -88,10 +88,40 @@ def enrollment_page():
         enrolled = cursor.fetchall()
         enrolled_classes = [e['class_id'] for e in enrolled]
 
-        # 🔹 Check if currently enrolled
-        cursor.execute("SELECT COUNT(*) AS total FROM enrollment WHERE user_id = %s AND status = 'enrolled'", (user_id,))
+        # 🔹 NEW: Check for ANY active enrollment (enrolled OR pending)
+        cursor.execute("""
+            SELECT COUNT(*) AS total 
+            FROM enrollment 
+            WHERE user_id = %s AND status IN ('enrolled', 'pending')
+        """, (user_id,))
         result = cursor.fetchone()
-        has_current_enrollment = result['total'] > 0 if result else False
+        has_active_enrollment = result['total'] > 0 if result else False
+
+        # 🔹 NEW: Get pending enrollment details
+        pending_enrollment = None
+        if has_active_enrollment:
+            cursor.execute("""
+                SELECT 
+                    e.enrollment_id,
+                    e.class_id,
+                    e.status,
+                    e.enrollment_date,
+                    cl.class_title,
+                    co.course_title
+                FROM enrollment e
+                JOIN classes cl ON e.class_id = cl.class_id
+                JOIN courses co ON cl.course_id = co.course_id
+                WHERE e.user_id = %s 
+                AND e.status IN ('pending', 'enrolled')
+                ORDER BY e.enrollment_date DESC
+                LIMIT 1
+            """, (user_id,))
+            pending_enrollment = cursor.fetchone()
+
+        # 🔹 NEW: Check specifically for enrolled (not pending)
+        cursor.execute("SELECT COUNT(*) AS total FROM enrollment WHERE user_id = %s AND status = 'enrolled'", (user_id,))
+        result_enrolled = cursor.fetchone()
+        has_current_enrollment = result_enrolled['total'] > 0 if result_enrolled else False
 
         logging.info(f"[Enrollment Page] Found {len(classes)} available classes for user {user_id}")
 
@@ -100,6 +130,8 @@ def enrollment_page():
             classes=classes,
             enrolled_classes=enrolled_classes,
             has_current_enrollment=has_current_enrollment,
+            has_active_enrollment=has_active_enrollment,  # NEW: Pass this flag
+            pending_enrollment=pending_enrollment,  # NEW: Pass pending details
             profile_picture=profile_picture,
             verified=student['verified']
         )
@@ -112,6 +144,8 @@ def enrollment_page():
             classes=[],
             enrolled_classes=[],
             has_current_enrollment=False,
+            has_active_enrollment=False,
+            pending_enrollment=None,
             profile_picture=profile_picture,
             verified=student.get('verified', 'unverified') if 'student' in locals() else 'unverified'
         )

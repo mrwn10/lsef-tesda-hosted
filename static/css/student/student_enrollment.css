@@ -403,6 +403,59 @@ body.modal-open {
     overflow: visible;
 }
 
+/* ===== FIX: CURRENT ENROLLMENT WARNING - AT THE TOP ===== */
+.current-enrollment-warning {
+    background: #fff3f3;
+    border: 1px solid #ffd6d6;
+    border-left: 4px solid #dc2626;
+    color: #7f1d1d;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-enrollment-warning i {
+    font-size: 1.8rem;
+    color: #dc2626;
+    margin-top: 5px;
+}
+
+.current-enrollment-warning h4 {
+    margin: 0 0 5px 0;
+    color: #dc2626;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.current-enrollment-warning p {
+    margin: 0 0 15px 0;
+    color: #7f1d1d;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-enrollment-warning .btn-view-current {
+    background-color: var(--tesda-maroon);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-enrollment-warning .btn-view-current:hover {
+    background-color: #6b0000;
+    color: white;
+}
+
 /* Verification Warning */
 .verification-warning {
     background: #ffe8e8;
@@ -434,45 +487,6 @@ body.modal-open {
     color: #b30000;
     opacity: 0.9;
     font-family: 'Poppins', sans-serif;
-}
-
-/* Flash Messages */
-.flash-messages {
-    margin-bottom: 25px;
-}
-
-.flash-message {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: 'Poppins', sans-serif;
-    border-left: 4px solid;
-}
-
-.flash-success {
-    background-color: #e8f5e8;
-    border-color: #4CAF50;
-    color: #2e7d32;
-}
-
-.flash-error {
-    background-color: #ffe8e8;
-    border-color: #f44336;
-    color: #b30000;
-}
-
-.flash-info {
-    background-color: #e3f2fd;
-    border-color: #2196F3;
-    color: #0d47a1;
-}
-
-.flash-icon {
-    font-size: 1.2rem;
 }
 
 /* Enrollment Card */
@@ -536,6 +550,15 @@ body.modal-open {
     min-height: 48px;
 }
 
+/* Disabled select state */
+.form-group select:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+    border-color: #dee2e6;
+}
+
 /* Focus states */
 .form-group select:focus {
     outline: none;
@@ -545,21 +568,13 @@ body.modal-open {
 }
 
 /* Hover state */
-.form-group select:hover {
+.form-group select:hover:not(:disabled) {
     border-color: var(--tesda-blue);
-}
-
-/* Disabled state */
-.form-group select:disabled {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.7;
 }
 
 /* Desktop-only custom styling */
 @media (min-width: 769px) {
-    .form-group select {
+    .form-group select:not(:disabled) {
         /* Apply custom appearance only for desktop */
         appearance: none;
         -webkit-appearance: none;
@@ -733,38 +748,20 @@ body.modal-open {
     text-align: center;
 }
 
-.current-enrollment-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    background-color: #fff3f3;
-    border: 1px solid #ffd6d6;
-    border-radius: 8px;
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
-    font-family: 'Poppins', sans-serif;
+/* ===== FIX: BUTTON DISABLED STATE ===== */
+.btn-disabled {
+    background-color: #cbd5e1 !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
-.current-enrollment-warning h4 {
-    margin: 0 0 5px 0;
-    color: #dc2626;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-}
-
-.current-enrollment-warning p {
-    margin: 0 0 15px 0;
-    color: #7f1d1d;
-    font-size: 0.95rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-.warning-icon {
-    color: #dc2626;
-    font-size: 1.8rem;
-    flex-shrink: 0;
-    margin-top: 5px;
+.btn-disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Buttons */
@@ -789,13 +786,13 @@ body.modal-open {
     box-shadow: 0 4px 6px rgba(0, 51, 102, 0.2);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background-color: var(--tesda-dark-blue);
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 51, 102, 0.25);
 }
 
-.btn-primary:active {
+.btn-primary:active:not(:disabled) {
     transform: translateY(0);
 }
 
@@ -1311,6 +1308,17 @@ body.modal-open {
     .current-enrollment-warning {
         flex-direction: column;
         text-align: center;
+        gap: 10px;
+    }
+    
+    .current-enrollment-warning i {
+        margin-top: 0;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
     
     .summary-header {
@@ -1447,5 +1455,234 @@ body.modal-open {
     .profile-img {
         width: 30px;
         height: 30px;
+    }
+}
+
+/* ===== NEW: PENDING ENROLLMENT WARNING STYLES ===== */
+.pending-enrollment-warning {
+    background: #fff8e6;
+    border: 1px solid #ffd166;
+    border-left: 4px solid #ffb703;
+    color: #7a5c00;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.pending-enrollment-warning i {
+    font-size: 1.8rem;
+    color: #ffb703;
+    margin-top: 5px;
+}
+
+.pending-enrollment-warning h4 {
+    margin: 0 0 5px 0;
+    color: #7a5c00;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.pending-enrollment-warning p {
+    margin: 0 0 8px 0;
+    color: #7a5c00;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.pending-enrollment-warning .warning-subtext {
+    font-size: 0.85rem;
+    color: #9c7c00;
+    font-style: italic;
+}
+
+.pending-enrollment-warning .warning-note {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: rgba(255, 183, 3, 0.1);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.pending-enrollment-warning .warning-note i {
+    font-size: 1rem;
+    color: #ffb703;
+    margin-right: 5px;
+}
+
+/* ===== CURRENT ENROLLMENT WARNING STYLES ===== */
+.current-enrollment-warning {
+    background: #fff3f3;
+    border: 1px solid #ffd6d6;
+    border-left: 4px solid #dc2626;
+    color: #7f1d1d;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-enrollment-warning i {
+    font-size: 1.8rem;
+    color: #dc2626;
+    margin-top: 5px;
+}
+
+.current-enrollment-warning h4 {
+    margin: 0 0 5px 0;
+    color: #dc2626;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.current-enrollment-warning p {
+    margin: 0 0 8px 0;
+    color: #7f1d1d;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-enrollment-warning .warning-note {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: rgba(220, 38, 38, 0.1);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.current-enrollment-warning .btn-view-current {
+    background-color: var(--tesda-maroon);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 10px;
+}
+
+.current-enrollment-warning .btn-view-current:hover {
+    background-color: #6b0000;
+    color: white;
+}
+
+/* ===== ENROLLMENT DISABLED STATES ===== */
+.enrollment-disabled .form-group select:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+    border-color: #dee2e6;
+}
+
+.enrollment-disabled .summary-card {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.enrollment-disabled .summary-card:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-disabled {
+    position: relative;
+}
+
+.disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--tesda-blue);
+    font-weight: 600;
+    z-index: 2;
+}
+
+.disabled-overlay i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--tesda-blue);
+}
+
+.select-disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(248, 249, 250, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--tesda-blue);
+    z-index: 4;
+    pointer-events: none;
+}
+
+.select-disabled-overlay i {
+    font-size: 1.5rem;
+}
+
+.field-note {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.field-note i {
+    color: #6c757d;
+}
+
+.summary-note {
+    font-size: 0.9rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .pending-enrollment-warning,
+    .current-enrollment-warning {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .pending-enrollment-warning i,
+    .current-enrollment-warning i {
+        margin-top: 0;
+    }
+    
+    .disabled-overlay {
+        padding: 10px;
+        text-align: center;
+    }
+    
+    .disabled-overlay i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
     }
 }

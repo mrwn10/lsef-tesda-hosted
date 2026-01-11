@@ -8,6 +8,8 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
     <!-- Navigation -->
@@ -78,13 +80,12 @@
                         <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal - PERFECTLY MATCHED -->
+    <!-- Logout Confirmation Modal -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -127,27 +128,41 @@
             </div>
             {% endif %}
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message flash-{{ category }}">
-                                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %} flash-icon"></i>
-                                <span>{{ message }}</span>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
+            <!-- NEW: PENDING ENROLLMENT WARNING - TOP PRIORITY -->
+            {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+            <div class="pending-enrollment-warning">
+                <i class="fas fa-clock warning-icon"></i>
+                <div class="warning-content">
+                    <h4>Enrollment Request Pending Approval</h4>
+                    <p>Your enrollment request for <strong>{{ pending_enrollment.course_title }} - {{ pending_enrollment.class_title }}</strong> is under review.</p>
+                    <p class="warning-subtext">Submitted on: {{ pending_enrollment.enrollment_date.strftime('%B %d, %Y at %I:%M %p') if pending_enrollment.enrollment_date else 'Recently' }}</p>
+                    <p class="warning-note"><i class="fas fa-info-circle"></i> You cannot enroll in another class until this request is approved or rejected.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- CURRENT ENROLLMENT WARNING - Only for enrolled status -->
+            {% if has_current_enrollment and pending_enrollment and pending_enrollment.status == 'enrolled' %}
+            <div class="current-enrollment-warning">
+                <i class="fas fa-exclamation-circle warning-icon"></i>
+                <div class="warning-content">
+                    <h4>Currently Enrolled in Another Course</h4>
+                    <p>You are currently enrolled in <strong>{{ pending_enrollment.course_title }} - {{ pending_enrollment.class_title }}</strong>.</p>
+                    <p class="warning-note">You must complete your current course before enrolling in a new one.</p>
+                    <a href="{{ url_for('student_view_class.view_enrolled_classes') }}" class="btn btn-view-current">
+                        <i class="fas fa-eye"></i> View Current Enrollment
+                    </a>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Enrollment Card -->
-            <div class="enrollment-card">
+            <div class="enrollment-card {% if has_active_enrollment %}enrollment-disabled{% endif %}">
                 <form id="enrollment-form">
                     <div class="form-group">
                         <label for="class_id">Select a Class:</label>
                         <div class="select-wrapper">
-                            <select name="class_id" id="class_id" required>
+                            <select name="class_id" id="class_id" {% if has_active_enrollment %}disabled{% endif %} required>
                                 <option value="">-- Select Class --</option>
                                 {% if classes %}
                                     {% for cls in classes %}
@@ -163,7 +178,22 @@
                                 {% endif %}
                             </select>
                             <i class="fas fa-chevron-down select-icon"></i>
+                            {% if has_active_enrollment %}
+                            <div class="select-disabled-overlay" title="New enrollment disabled due to active or pending enrollment">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            {% endif %}
                         </div>
+                        {% if has_active_enrollment %}
+                        <div class="field-note">
+                            <i class="fas fa-info-circle"></i> 
+                            {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+                                Selection disabled - You have a pending enrollment request
+                            {% else %}
+                                Selection disabled - You are currently enrolled in another course
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Class Details Section -->
@@ -177,17 +207,24 @@
 
                     <!-- Form Actions -->
                     <div class="form-actions">
-                        {% if has_current_enrollment %}
-                            <div class="current-enrollment-warning">
-                                <i class="fas fa-exclamation-circle warning-icon"></i>
-                                <div class="warning-content">
-                                    <h4>Currently Enrolled in Another Course</h4>
-                                    <p>You must complete your current course before enrolling in a new one.</p>
-                                    <a href="{{ url_for('student_view_class.view_enrolled_classes') }}" class="btn btn-view-current">
-                                        <i class="fas fa-eye"></i> View Current Enrollment
-                                    </a>
-                                </div>
-                            </div>
+                        {% if has_active_enrollment %}
+                            <button 
+                                type="button" 
+                                class="btn btn-disabled" 
+                                disabled
+                                {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+                                    title="New enrollment is disabled because you have a pending enrollment request awaiting approval"
+                                {% else %}
+                                    title="New enrollment is disabled because you are currently enrolled in another course"
+                                {% endif %}
+                            >
+                                <i class="fas fa-lock btn-icon"></i>
+                                {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+                                    Enrollment Locked - Pending Request
+                                {% else %}
+                                    Enrollment Locked - Currently Enrolled
+                                {% endif %}
+                            </button>
                         {% else %}
                             <button 
                                 type="button" 
@@ -205,14 +242,36 @@
 
             <!-- Available Classes Summary -->
             {% if classes %}
-            <div class="classes-summary">
+            <div class="classes-summary {% if has_active_enrollment %}summary-disabled{% endif %}">
                 <div class="section-header">
                     <h2><i class="fas fa-list-alt"></i> Available Classes ({{ classes|length }})</h2>
+                    {% if has_active_enrollment %}
+                    <span class="summary-note">
+                        <i class="fas fa-info-circle"></i> 
+                        {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+                            Class selection disabled due to pending enrollment request
+                        {% else %}
+                            Class selection disabled due to current enrollment
+                        {% endif %}
+                    </span>
+                    {% endif %}
                 </div>
                 <div class="summary-grid">
                     {% for cls in classes %}
                     {% if cls.class_id not in enrolled_classes %}
-                    <div class="summary-card" data-class-id="{{ cls.class_id }}">
+                    <div class="summary-card {% if has_active_enrollment %}card-disabled{% endif %}" data-class-id="{{ cls.class_id }}">
+                        {% if has_active_enrollment %}
+                        <div class="disabled-overlay" title="New enrollment disabled due to active or pending enrollment">
+                            <i class="fas fa-lock"></i>
+                            <span>
+                                {% if pending_enrollment and pending_enrollment.status == 'pending' %}
+                                    Pending Enrollment
+                                {% else %}
+                                    Currently Enrolled
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
                         <div class="summary-header">
                             <h4>{{ cls.course_title }}</h4>
                             <span class="class-badge">{{ cls.class_title }}</span>
@@ -250,6 +309,8 @@
         <p>Processing your enrollment...</p>
     </div>
 
+    <!-- SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='js/student/student_enrollment.js') }}"></script>
 </body>
