@@ -17,7 +17,7 @@
             logoutUrl: "{{ url_for('login.logout') }}",
             staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
             editGradeUrl: "{{ url_for('staff_class_student_management.edit_student_grade') }}",
-            autoRemarksUrl: "{{ url_for('staff_class_student_management.get_auto_remarks') }}",
+            autoStatusRemarksUrl: "{{ url_for('staff_class_student_management.get_auto_status_remarks') }}",
             studentProfileUrl: "{{ url_for('staff_class_student_management.get_student_profile', user_id=0) }}".replace('/0', '/'),
             generateCertUrl: "{{ url_for('staff_class_student_management.generate_private_completion') }}"
         };
@@ -69,7 +69,7 @@
                         <a href="{{ url_for('staff_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
                         <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
                         <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
-                        <a href="{{ url_for('staff_class_management') }}" class="active"><i class="fas fa-user-graduate"></i> Student Management</a>
+                        <a href="{{ url_for('staff_class_student_management.view_class_students', class_id=class_id) }}" class="active"><i class="fas fa-user-graduate"></i> Student Management</a>
                     </div>
                 </div>
                 
@@ -160,9 +160,9 @@
                         <tr>
                             <th>Student Name</th>
                             <th>Email</th>
-                            <th>Average with Remarks</th>
-                            <th>Current Remarks</th>
-                            <th>Actions</th>
+                            <th>Average</th>
+                            <th>Remarks</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -173,9 +173,11 @@
                         {% set has_all_grades = prelim is not none and midterm is not none and final is not none %}
                         {% if has_all_grades %}
                             {% set avg = (prelim + midterm + final) / 3 %}
+                            {% set status = student.auto_status %}
                             {% set auto_remarks = "Competent" if avg >= 75 else "Not Yet Competent" %}
                         {% else %}
                             {% set avg = none %}
+                            {% set status = "Incomplete" %}
                             {% set auto_remarks = "Incomplete" %}
                         {% endif %}
                         <tr>
@@ -183,16 +185,16 @@
                             <td>{{ student.email }}</td>
                             <td>
                                 {% if has_all_grades %}
-                                    <span class="average-with-remarks {% if avg >= 75 %}competent{% else %}not-competent{% endif %}">
-                                        Average {{ "%.2f"|format(avg) }}, {{ auto_remarks }}
+                                    <span class="average-grade">
+                                        {{ "%.2f"|format(avg) }}
                                     </span>
                                 {% else %}
-                                    <span class="average-with-remarks incomplete">Average N/A, Incomplete</span>
+                                    <span class="average-grade na">N/A</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="current-remarks {{ student.remarks|lower|replace(' ', '-') if student.remarks else 'not-set' }}">
-                                    {{ student.remarks or 'Not Set' }}
+                                <span class="status-remarks {{ status.lower().replace('(', '').replace(')', '').replace(' ', '-') }}">
+                                    {{ status }}
                                 </span>
                             </td>
                             <td class="action-buttons">
@@ -202,7 +204,7 @@
                                         data-midterm="{{ student.midterm_grade if student.midterm_grade is not none else '' }}"
                                         data-final="{{ student.final_grade if student.final_grade is not none else '' }}"
                                         data-remarks="{{ student.remarks or '' }}"
-                                        data-auto-remarks="{{ auto_remarks }}">
+                                        data-auto-status="{{ status }}">
                                     <i class="fas fa-edit"></i> Edit Grade
                                 </button>
                                 <button class="profile-btn" data-user-id="{{ student.user_id }}">
@@ -278,17 +280,24 @@
                     </div>
                 </div>
                 
-                <!-- Auto Remarks Display -->
-                <div class="form-group auto-remarks-section">
-                    <label>Automatic Remarks:</label>
+                <!-- Auto Status Display -->
+                <div class="form-group auto-status-section">
+                    <label>Automatic Status:</label>
                     <div id="autoRemarksDisplay" class="auto-remarks-display">
-                        <span id="autoRemarksText">Enter grades to see automatic remarks</span>
+                        <span id="autoRemarksText">Enter final grade to see automatic status</span>
                         <div class="inline-loading" id="autoRemarksLoading" style="display: none; margin-left: 10px;">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
                     </div>
                     <small class="form-text text-muted">
-                        <i class="fas fa-info-circle"></i> Automatic remarks: Average ≥ 75 = Competent, < 75 = Not Yet Competent, missing grades = Incomplete
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>GRADING SYSTEM:</strong> 
+                        (96-100) - Excellent (Competent); 
+                        (91-95) - Very Satisfactory (Competent); 
+                        (86-90) - Satisfactory (Competent); 
+                        (81-85) - Fairly Satisfactory (Competent); 
+                        (75-80) - Passed (Competent); 
+                        (74-Below) - Failed (Not Yet Competent)
                     </small>
                 </div>
 
@@ -300,6 +309,9 @@
                         <option value="Incomplete">Incomplete</option>
                         <option value="Dropped">Dropped</option>
                     </select>
+                    <small class="form-text text-muted">
+                        Remarks are based on average of all three grades. Average ≥ 75 = Competent, < 75 = Not Yet Competent
+                    </small>
                 </div>
 
                 <!-- Auto Remarks Toggle -->
@@ -312,7 +324,7 @@
                         </label>
                     </div>
                     <small class="form-text text-muted">
-                        When enabled, remarks will be automatically calculated. Uncheck to manually select remarks.
+                        When enabled, remarks will be automatically calculated based on average. Uncheck to manually select remarks.
                     </small>
                 </div>
             </div>
@@ -373,6 +385,7 @@
                                     <th>Schedule</th>
                                     <th>Venue</th>
                                     <th>Current Grade (Avg)</th>
+                                    <th>Grade Status</th>
                                     <th>Final Remarks</th>
                                     <th>Status</th>
                                     <th>Instructor</th>

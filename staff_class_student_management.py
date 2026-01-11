@@ -1,4 +1,3 @@
-# staff_class_student_management.py - FIXED VERSION
 from flask import Blueprint, render_template, request, jsonify, session, url_for, json, send_file, redirect, flash
 from datetime import datetime
 from database import get_db
@@ -25,7 +24,7 @@ staff_class_student_management_bp = Blueprint('staff_class_student_management', 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
 
 # ---------------- FONT REGISTRATION ----------------
-pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))  # Chinese font
+pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
 OFL_FONT_PATH = os.path.join("static", "fonts", "UnifrakturCook-Bold.ttf")
 if os.path.exists(OFL_FONT_PATH):
     try:
@@ -35,32 +34,52 @@ if os.path.exists(OFL_FONT_PATH):
 else:
     print("Font file not found:", OFL_FONT_PATH)
 
-# ===================== CALCULATE REMARKS AUTOMATICALLY =====================
-def calculate_remarks(prelim, midterm, final):
+# ===================== CALCULATE STATUS AND REMARKS AUTOMATICALLY =====================
+def calculate_status_and_remarks(prelim, midterm, final):
     """
-    Automatically calculate remarks based on grades
-    Rules:
-    - All three grades must be provided
-    - Average >= 75: Competent
-    - Average < 75: Not Yet Competent
+    Automatically calculate status and remarks based on grades
+    Rules based on final grade:
+    - (96-100) - Excellent (Competent)
+    - (91-95) - Very Satisfactory (Competent)
+    - (86-90) - Satisfaction (Competent)
+    - (81-85)- Fairly Satisfactory (Competent)
+    - (75-80) - Passed (Competent)
+    - (74-Below) - Failed (Not Yet Competent)
     - Any missing grade: Incomplete
     """
     if prelim is None or midterm is None or final is None:
-        return "Incomplete"
+        return "Incomplete", "Incomplete"
     
     try:
         prelim = float(prelim)
         midterm = float(midterm)
         final = float(final)
         
+        # Calculate status based on final grade
+        if final >= 96:
+            status = "Excellent (Competent)"
+        elif final >= 91:
+            status = "Very Satisfactory (Competent)"
+        elif final >= 86:
+            status = "Satisfactory (Competent)"
+        elif final >= 81:
+            status = "Fairly Satisfactory (Competent)"
+        elif final >= 75:
+            status = "Passed (Competent)"
+        else:
+            status = "Failed (Not Yet Competent)"
+        
+        # Calculate remarks based on average
         average = (prelim + midterm + final) / 3
         
         if average >= 75:
-            return "Competent"
+            remarks = "Competent"
         else:
-            return "Not Yet Competent"
+            remarks = "Not Yet Competent"
+            
+        return status, remarks
     except (ValueError, TypeError):
-        return "Incomplete"
+        return "Incomplete", "Incomplete"
 
 # ===================== VIEW CLASS STUDENTS =====================
 @staff_class_student_management_bp.route('/staff_class/<int:class_id>/students', methods=['GET'])
@@ -82,7 +101,7 @@ def view_class_students(class_id):
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
 
-    # FETCH CLASS DETAILS TO VERIFY STAOWNS THE CLASS
+    # FETCH CLASS DETAILS TO VERIFY STAFF OWNS THE CLASS
     cursor.execute("""
         SELECT class_title, instructor_id FROM classes 
         WHERE class_id = %s
@@ -98,7 +117,7 @@ def view_class_students(class_id):
         flash('You are not authorized to manage this class.', 'error')
         return redirect(url_for('staff_class_management'))
 
-    # FIXED: Fetch ALL enrolled students regardless of status
+    # FIXED: Fetch ALL enrolled students with status from student_grades
     cursor.execute("""
         SELECT 
             pi.first_name, 
@@ -107,7 +126,8 @@ def view_class_students(class_id):
             l.user_id AS user_id, 
             sg.prelim_grade, 
             sg.midterm_grade, 
-            sg.final_grade, 
+            sg.final_grade,
+            sg.status,  -- NEW: Get status from student_grades
             sg.remarks,
             e.enrollment_id,
             e.status AS enrollment_status
@@ -121,14 +141,26 @@ def view_class_students(class_id):
     """, (class_id,))
     students = cursor.fetchall()
     
-    # Calculate automatic remarks for display
+    # Calculate automatic status and remarks for display if not already in DB
     for student in students:
-        auto_remarks = calculate_remarks(
-            student.get('prelim_grade'),
-            student.get('midterm_grade'),
-            student.get('final_grade')
-        )
-        student['auto_remarks'] = auto_remarks
+        if not student.get('status') or student['status'] == 'Not Evaluated':
+            auto_status, auto_remarks = calculate_status_and_remarks(
+                student.get('prelim_grade'),
+                student.get('midterm_grade'),
+                student.get('final_grade')
+            )
+            student['auto_status'] = auto_status
+            student['auto_remarks'] = auto_remarks
+        else:
+            student['auto_status'] = student.get('status', 'Not Evaluated')
+            
+            # Calculate auto remarks
+            auto_status, auto_remarks = calculate_status_and_remarks(
+                student.get('prelim_grade'),
+                student.get('midterm_grade'),
+                student.get('final_grade')
+            )
+            student['auto_remarks'] = auto_remarks
         
         # For display purposes, if enrollment is completed, show as Competent
         if student['enrollment_status'] == 'completed':
@@ -157,9 +189,12 @@ def edit_student_grade():
     remarks = data.get('remarks')
     use_auto_remarks = data.get('use_auto_remarks', False)
 
-    # Calculate automatic remarks if requested
+    # Calculate automatic status and remarks if requested
     if use_auto_remarks:
-        remarks = calculate_remarks(prelim, midterm, final)
+        status, remarks = calculate_status_and_remarks(prelim, midterm, final)
+    else:
+        # Still calculate status for display
+        status, _ = calculate_status_and_remarks(prelim, midterm, final)
 
     db = get_db()
     cursor = db.cursor()
@@ -209,12 +244,13 @@ def edit_student_grade():
 
     return jsonify({
         'message': 'Grade and remarks updated successfully',
-        'auto_remarks': calculate_remarks(prelim, midterm, final) if use_auto_remarks else None
+        'auto_status': status,
+        'auto_remarks': remarks if use_auto_remarks else None
     })
 
-# ===================== GET AUTO REMARKS =====================
-@staff_class_student_management_bp.route('/staff_student/get_auto_remarks', methods=['POST'])
-def get_auto_remarks():
+# ===================== GET AUTO STATUS AND REMARKS =====================
+@staff_class_student_management_bp.route('/staff_student/get_auto_status_remarks', methods=['POST'])
+def get_auto_status_remarks():
     if 'user_id' not in session or session.get('role') != 'staff':
         return jsonify({'error': 'Unauthorized access'}), 403
 
@@ -223,10 +259,11 @@ def get_auto_remarks():
     midterm = data.get('midterm_grade')
     final = data.get('final_grade')
     
-    auto_remarks = calculate_remarks(prelim, midterm, final)
+    status, remarks = calculate_status_and_remarks(prelim, midterm, final)
     
     return jsonify({
-        'auto_remarks': auto_remarks,
+        'status': status,
+        'remarks': remarks,
         'success': True
     })
 
@@ -256,13 +293,15 @@ def get_student_profile(user_id):
         if not profile:
             return jsonify({'error': 'Student profile not found'}), 404
 
-        # Enrolled Classes
+        # Enrolled Classes with status
         cursor.execute("""
             SELECT 
                 c.class_id, c.class_title, c.schedule, c.days_of_week, c.venue,
                 c.start_date, c.end_date, c.instructor_name,
                 e.enrollment_id, e.status AS enrollment_status,
-                sg.prelim_grade, sg.midterm_grade, sg.final_grade, sg.remarks, sg.date_recorded AS grade_date
+                sg.prelim_grade, sg.midterm_grade, sg.final_grade, 
+                sg.status AS grade_status,  -- NEW: Get grade status
+                sg.remarks, sg.date_recorded AS grade_date
             FROM enrollment e
             JOIN classes c ON e.class_id = c.class_id
             LEFT JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id
@@ -340,6 +379,7 @@ def download_grade_sheet(class_id):
                 THEN ROUND((sg.prelim_grade + sg.midterm_grade + sg.final_grade) / 3, 2)
                 ELSE NULL
             END AS Average_Grade,
+            sg.status AS Grade_Status,  -- NEW: Include status in export
             COALESCE(sg.remarks, 'Not Set') AS Remarks,
             e.status AS Enrollment_Status
         FROM enrollment e
@@ -391,9 +431,9 @@ def upload_grade_sheet(class_id):
             if not email:
                 continue  # skip invalid rows
 
-            # Calculate automatic remarks if not provided
+            # Calculate automatic status and remarks if not provided
             if not remarks and prelim is not None and midterm is not None and final is not None:
-                remarks = calculate_remarks(prelim, midterm, final)
+                status, remarks = calculate_status_and_remarks(prelim, midterm, final)
 
             cursor.execute("""
                 SELECT e.enrollment_id 

@@ -1,11 +1,29 @@
-// staff_class_student_management.js - FIXED VERSION
+// staff_class_student_management.js - UPDATED WITH AUTO REFRESH
 // ===================== SMOOTH UX FIXES =====================
 // Global variables
+let currentAutoStatus = '';
 let currentAutoRemarks = '';
 let debounceTimer = null;
 let isModalClosing = false;
 let currentOpenModal = null;
 let isSaving = false;
+let currentClassId = null; // Store current class ID for refresh
+
+// Get current class ID from URL
+function getCurrentClassId() {
+    const urlParts = window.location.pathname.split('/');
+    for (let i = 0; i < urlParts.length; i++) {
+        if (urlParts[i] === 'staff_class' && i + 1 < urlParts.length) {
+            return parseInt(urlParts[i + 1]);
+        }
+    }
+    return null;
+}
+
+// Initialize with class ID
+document.addEventListener('DOMContentLoaded', function() {
+    currentClassId = getCurrentClassId();
+});
 
 // Smooth toast notification
 function showSuccessToast(message) {
@@ -56,8 +74,8 @@ function hideLoadingScreen() {
     $('#loading-screen').fadeOut(200);
 }
 
-// Debounced auto-remarks calculation
-function debouncedCalculateAutoRemarks() {
+// Debounced auto-status-remarks calculation
+function debouncedCalculateAutoStatusRemarks() {
     if (debounceTimer) {
         clearTimeout(debounceTimer);
     }
@@ -66,12 +84,12 @@ function debouncedCalculateAutoRemarks() {
     if (loadingEl) loadingEl.style.display = 'inline-block';
     
     debounceTimer = setTimeout(() => {
-        calculateAutoRemarks();
+        calculateAutoStatusRemarks();
     }, 500);
 }
 
-// Calculate auto remarks
-function calculateAutoRemarks() {
+// Calculate auto status and remarks
+function calculateAutoStatusRemarks() {
     const prelim = parseFloat(document.getElementById('prelimGrade').value) || null;
     const midterm = parseFloat(document.getElementById('midtermGrade').value) || null;
     const final = parseFloat(document.getElementById('finalGrade').value) || null;
@@ -79,9 +97,11 @@ function calculateAutoRemarks() {
     const loadingEl = document.getElementById('autoRemarksLoading');
     if (loadingEl) loadingEl.style.display = 'none';
     
+    let localStatus = calculateStatusLocally(final);
     let localRemarks = calculateRemarksLocally(prelim, midterm, final);
+    currentAutoStatus = localStatus;
     currentAutoRemarks = localRemarks;
-    updateAutoRemarksDisplay();
+    updateAutoStatusRemarksDisplay();
     
     if (document.getElementById('useAutoRemarks').checked) {
         document.getElementById('remarks').value = currentAutoRemarks;
@@ -90,9 +110,9 @@ function calculateAutoRemarks() {
     if (prelim !== null && midterm !== null && final !== null) {
         const displayElement = document.getElementById('autoRemarksText');
         const originalText = displayElement.textContent;
-        displayElement.innerHTML = `${localRemarks} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
+        displayElement.innerHTML = `${localStatus} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
         
-        fetch(window.appUrls.autoRemarksUrl, {
+        fetch(window.appUrls.autoStatusRemarksUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -103,9 +123,14 @@ function calculateAutoRemarks() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.auto_remarks !== localRemarks) {
-                currentAutoRemarks = data.auto_remarks;
-                updateAutoRemarksDisplay();
+            if (data.success) {
+                if (data.status !== localStatus) {
+                    currentAutoStatus = data.status;
+                }
+                if (data.remarks !== localRemarks) {
+                    currentAutoRemarks = data.remarks;
+                }
+                updateAutoStatusRemarksDisplay();
                 
                 if (document.getElementById('useAutoRemarks').checked) {
                     document.getElementById('remarks').value = currentAutoRemarks;
@@ -113,12 +138,33 @@ function calculateAutoRemarks() {
             }
         })
         .catch(error => {
-            console.error('Error verifying auto remarks:', error);
+            console.error('Error verifying auto status/remarks:', error);
         });
     }
 }
 
-// Local remarks calculation
+// Local status calculation based on final grade
+function calculateStatusLocally(final) {
+    if (final === null) {
+        return 'Incomplete';
+    }
+    
+    if (final >= 96) {
+        return 'Excellent (Competent)';
+    } else if (final >= 91) {
+        return 'Very Satisfactory (Competent)';
+    } else if (final >= 86) {
+        return 'Satisfactory (Competent)';
+    } else if (final >= 81) {
+        return 'Fairly Satisfactory (Competent)';
+    } else if (final >= 75) {
+        return 'Passed (Competent)';
+    } else {
+        return 'Failed (Not Yet Competent)';
+    }
+}
+
+// Local remarks calculation based on average
 function calculateRemarksLocally(prelim, midterm, final) {
     if (prelim === null || midterm === null || final === null) {
         return 'Incomplete';
@@ -151,9 +197,9 @@ function initEditButtons() {
             const midterm = this.getAttribute('data-midterm');
             const finalGrade = this.getAttribute('data-final');
             const remarks = this.getAttribute('data-remarks');
-            const autoRemarks = this.getAttribute('data-auto-remarks');
+            const autoStatus = this.getAttribute('data-auto-status');
             
-            openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks);
+            openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus);
         });
     });
 }
@@ -457,24 +503,24 @@ function initModals() {
         useAutoRemarks.addEventListener('change', toggleRemarksSelect);
     }
 
-    // Grade input events for auto remarks calculation
+    // Grade input events for auto status/remarks calculation
     const prelimInput = document.getElementById('prelimGrade');
     const midtermInput = document.getElementById('midtermGrade');
     const finalInput = document.getElementById('finalGrade');
     
     if (prelimInput) {
-        prelimInput.addEventListener('input', debouncedCalculateAutoRemarks);
+        prelimInput.addEventListener('input', debouncedCalculateAutoStatusRemarks);
     }
     if (midtermInput) {
-        midtermInput.addEventListener('input', debouncedCalculateAutoRemarks);
+        midtermInput.addEventListener('input', debouncedCalculateAutoStatusRemarks);
     }
     if (finalInput) {
-        finalInput.addEventListener('input', debouncedCalculateAutoRemarks);
+        finalInput.addEventListener('input', debouncedCalculateAutoStatusRemarks);
     }
 }
 
 // Open edit modal
-function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoRemarks) {
+function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus) {
     if (debounceTimer) {
         clearTimeout(debounceTimer);
         debounceTimer = null;
@@ -493,8 +539,14 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoR
         }
     });
     
-    currentAutoRemarks = autoRemarks || 'Incomplete';
-    updateAutoRemarksDisplay();
+    // Calculate initial status and remarks
+    const final = parseFloat(finalGrade) || null;
+    const prelimVal = parseFloat(prelim) || null;
+    const midtermVal = parseFloat(midterm) || null;
+    
+    currentAutoStatus = autoStatus || calculateStatusLocally(final);
+    currentAutoRemarks = calculateRemarksLocally(prelimVal, midtermVal, final);
+    updateAutoStatusRemarksDisplay();
     
     document.getElementById('useAutoRemarks').checked = true;
     toggleRemarksSelect();
@@ -512,22 +564,29 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoR
     }, 100);
 }
 
-function updateAutoRemarksDisplay() {
+function updateAutoStatusRemarksDisplay() {
     const displayElement = document.getElementById('autoRemarksText');
     const container = document.getElementById('autoRemarksDisplay');
     
     if (!displayElement || !container) return;
     
-    const textOnly = currentAutoRemarks.replace(/<[^>]*>/g, '').trim();
+    // Clean the status text for display
+    const textOnly = currentAutoStatus.replace(/<[^>]*>/g, '').trim();
     displayElement.textContent = textOnly;
     
+    // Reset classes
     container.className = 'auto-remarks-display';
     
-    if (currentAutoRemarks === 'Competent') {
-        container.classList.add('competent');
-    } else if (currentAutoRemarks === 'Not Yet Competent') {
-        container.classList.add('not-competent');
-    } else if (currentAutoRemarks === 'Incomplete') {
+    // Add appropriate class based on status
+    if (currentAutoStatus.includes('Excellent') || currentAutoStatus.includes('Very Satisfactory')) {
+        container.classList.add('excellent');
+    } else if (currentAutoStatus.includes('Satisfactory') || currentAutoStatus.includes('Fairly Satisfactory')) {
+        container.classList.add('satisfactory');
+    } else if (currentAutoStatus.includes('Passed')) {
+        container.classList.add('passed');
+    } else if (currentAutoStatus.includes('Failed')) {
+        container.classList.add('failed');
+    } else if (currentAutoStatus === 'Incomplete') {
         container.classList.add('incomplete');
     } else {
         container.classList.add('neutral');
@@ -552,7 +611,166 @@ function toggleRemarksSelect() {
     }
 }
 
-// SMOOTH SUBMIT FUNCTION
+// ===================== AUTO REFRESH FUNCTIONS =====================
+
+// Refresh the entire table
+function refreshStudentTable() {
+    if (!currentClassId) return;
+    
+    showLoadingScreen('Refreshing student data...');
+    
+    // Fetch updated data from server
+    fetch(`/staff_class/${currentClassId}/students?refresh=true&t=${Date.now()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Parse the HTML response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract the table content
+            const newTable = doc.querySelector('.table-container');
+            if (newTable) {
+                const currentTableContainer = document.querySelector('.table-container');
+                currentTableContainer.innerHTML = newTable.innerHTML;
+                
+                // Reinitialize event listeners
+                initEditButtons();
+                initProfileButtons();
+                initCertificateButtons();
+                
+                // Show success message
+                showSuccessToast('Table refreshed successfully!');
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing table:', error);
+            // Fallback: Reload the page
+            location.reload();
+        })
+        .finally(() => {
+            hideLoadingScreen();
+        });
+}
+
+// Update only the specific row (optimized version)
+function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks, status) {
+    // Find the row with matching enrollment_id
+    const rows = document.querySelectorAll('.class-table tbody tr');
+    let rowFound = false;
+    
+    rows.forEach(row => {
+        const editBtn = row.querySelector('.edit-btn');
+        if (editBtn && editBtn.getAttribute('data-enrollment-id') === enrollmentId) {
+            rowFound = true;
+            
+            // Update average cell
+            const avgCell = row.children[2];
+            if (prelim && midterm && final) {
+                const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
+                avgCell.innerHTML = `<span class="average-grade">${avg}</span>`;
+            } else {
+                avgCell.innerHTML = `<span class="average-grade na">N/A</span>`;
+            }
+            
+            // Update remarks/status cell
+            const statusCell = row.children[3];
+            const statusText = status || 'Not Evaluated';
+            const statusClass = getStatusClass(statusText);
+            statusCell.innerHTML = `<span class="status-remarks ${statusClass}">${statusText}</span>`;
+            
+            // Update action buttons
+            const actionCell = row.children[4];
+            const profileBtn = row.querySelector('.profile-btn');
+            const userId = profileBtn ? profileBtn.getAttribute('data-user-id') : '';
+            const studentName = `${row.children[0].textContent.trim()}`;
+            
+            // Update completion button status
+            const completionBtn = row.querySelector('.completion-btn');
+            const shouldEnable = remarks === 'Competent';
+            
+            // Rebuild action buttons
+            actionCell.innerHTML = `
+                <button class="edit-btn" 
+                        data-enrollment-id="${enrollmentId}"
+                        data-prelim="${prelim || ''}"
+                        data-midterm="${midterm || ''}"
+                        data-final="${final || ''}"
+                        data-remarks="${remarks || ''}"
+                        data-auto-status="${status || ''}">
+                    <i class="fas fa-edit"></i> Edit Grade
+                </button>
+                <button class="profile-btn" data-user-id="${userId}">
+                    <i class="fas fa-user"></i> Profile
+                </button>
+                <button class="completion-btn" 
+                        data-enrollment-id="${enrollmentId}"
+                        data-student-name="${studentName}"
+                        data-remarks="${remarks || ''}"
+                        ${!shouldEnable ? 'disabled' : ''}>
+                    <i class="fas fa-file-certificate"></i> Certificate
+                </button>
+            `;
+            
+            // Reattach event listeners
+            const newEditBtn = actionCell.querySelector('.edit-btn');
+            const newProfileBtn = actionCell.querySelector('.profile-btn');
+            const newCompletionBtn = actionCell.querySelector('.completion-btn');
+            
+            newEditBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openEditModal(
+                    enrollmentId,
+                    prelim || '',
+                    midterm || '',
+                    final || '',
+                    remarks || '',
+                    status || ''
+                );
+            });
+            
+            newProfileBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openProfileModal(userId);
+            });
+            
+            if (shouldEnable) {
+                newCompletionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    generatePrivateCompletion(enrollmentId, studentName, remarks);
+                });
+            }
+        }
+    });
+    
+    // If row not found, refresh entire table
+    if (!rowFound) {
+        refreshStudentTable();
+    }
+}
+
+// Helper function to get CSS class for status
+function getStatusClass(status) {
+    if (!status) return 'incomplete';
+    
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('excellent')) return 'excellent-competent';
+    if (statusLower.includes('very satisfactory')) return 'very-satisfactory-competent';
+    if (statusLower.includes('satisfactory')) return 'satisfactory-competent';
+    if (statusLower.includes('fairly satisfactory')) return 'fairly-satisfactory-competent';
+    if (statusLower.includes('passed')) return 'passed-competent';
+    if (statusLower.includes('failed')) return 'failed-not-yet-competent';
+    return 'incomplete';
+}
+
+// SMOOTH SUBMIT FUNCTION WITH AUTO REFRESH
 function submitGradeEdit() {
     if (isSaving) return;
     
@@ -592,151 +810,122 @@ function submitGradeEdit() {
     // 1. First, close modal smoothly
     closeModal('editGradeModal');
     
-    // 2. Show loading screen briefly
-    setTimeout(() => {
-        showLoadingScreen('Saving grade changes...');
-        
-        // 3. Make API call
-        setTimeout(() => {
-            fetch(window.appUrls.editGradeUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    enrollment_id: enrollmentId,
-                    prelim_grade: prelim || null,
-                    midterm_grade: midterm || null,
-                    final_grade: finalGrade || null,
-                    remarks: remarks,
-                    use_auto_remarks: useAutoRemarks
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err; });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 4. Hide loading screen
-                hideLoadingScreen();
-                isSaving = false;
-                
-                // 5. Show success dialog
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Grade Saved Successfully!',
-                    html: `
-                        <p>Student grades have been updated successfully.</p>
-                        <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #065f46;">
-                            <small style="color: #475569;">
-                                <i class="fas fa-info-circle"></i> 
-                                Prelim: ${prelim || 'N/A'}, Midterm: ${midterm || 'N/A'}, Final: ${finalGrade || 'N/A'}
-                            </small>
-                        </div>
-                    `,
-                    showCancelButton: false,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#065f46'
-                }).then(() => {
-                    // Restore save button state
-                    if (saveBtn) {
-                        saveBtn.innerHTML = originalText;
-                        saveBtn.classList.remove('btn-saving');
-                        saveBtn.disabled = false;
-                    }
-                    
-                    // Update the specific row in the table without reloading the page
-                    updateStudentRowLocally(enrollmentId, prelim, midterm, finalGrade, remarks);
-                });
-            })
-            .catch(error => {
-                hideLoadingScreen();
-                isSaving = false;
-                
-                console.error('Error:', error);
-                
-                // Show error message
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Save Failed',
-                    text: error.message || 'Failed to save grade changes. Please try again.',
-                    confirmButtonText: 'Try Again',
-                    confirmButtonColor: '#b91c1c'
-                }).then(() => {
-                    // Re-open the edit modal so user can try again
-                    openEditModal(
-                        enrollmentId,
-                        prelim,
-                        midterm,
-                        finalGrade,
-                        remarks,
-                        currentAutoRemarks
-                    );
-                    
-                    // Restore save button
-                    if (saveBtn) {
-                        saveBtn.innerHTML = originalText;
-                        saveBtn.classList.remove('btn-saving');
-                        saveBtn.disabled = false;
-                    }
-                });
-            });
-        }, 100);
-    }, 50);
-}
-
-// Update student row locally without page reload
-function updateStudentRowLocally(enrollmentId, prelim, midterm, final, remarks) {
-    // Find the row with matching enrollment_id
-    const rows = document.querySelectorAll('.class-table tbody tr');
-    rows.forEach(row => {
-        const editBtn = row.querySelector('.edit-btn');
-        if (editBtn && editBtn.getAttribute('data-enrollment-id') === enrollmentId) {
-            // Update average with remarks
-            const avgRemarksCell = row.children[2];
-            if (prelim && midterm && final) {
-                const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
-                const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
-                const avgClass = avg >= 75 ? 'competent' : 'not-competent';
-                avgRemarksCell.innerHTML = `<span class="average-with-remarks ${avgClass}">Average ${avg}, ${autoRemarks}</span>`;
-            } else {
-                avgRemarksCell.innerHTML = `<span class="average-with-remarks incomplete">Average N/A, Incomplete</span>`;
-            }
-            
-            // Update current remarks
-            const remarksCell = row.children[3];
-            if (remarks) {
-                remarksCell.innerHTML = `<span class="current-remarks ${remarks.toLowerCase().replace(' ', '-')}">${remarks}</span>`;
-            } else {
-                remarksCell.innerHTML = `<span class="current-remarks not-set">Not Set</span>`;
-            }
-            
-            // Update completion button status
-            const completionBtn = row.querySelector('.completion-btn');
-            if (completionBtn) {
-                const shouldEnable = remarks === 'Competent';
-                completionBtn.disabled = !shouldEnable;
-                completionBtn.setAttribute('data-remarks', remarks);
-            }
-            
-            // Update the edit button data attributes
-            editBtn.setAttribute('data-prelim', prelim || '');
-            editBtn.setAttribute('data-midterm', midterm || '');
-            editBtn.setAttribute('data-final', final || '');
-            editBtn.setAttribute('data-remarks', remarks || '');
-            
-            // Update auto remarks attribute
-            if (prelim && midterm && final) {
-                const avg = (parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3;
-                const autoRemarks = avg >= 75 ? 'Competent' : 'Not Yet Competent';
-                editBtn.setAttribute('data-auto-remarks', autoRemarks);
-            } else {
-                editBtn.setAttribute('data-auto-remarks', 'Incomplete');
-            }
+    // 2. Show loading screen
+    showLoadingScreen('Saving grade changes...');
+    
+    // 3. Make API call
+    fetch(window.appUrls.editGradeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            enrollment_id: enrollmentId,
+            prelim_grade: prelim || null,
+            midterm_grade: midterm || null,
+            final_grade: finalGrade || null,
+            remarks: remarks,
+            use_auto_remarks: useAutoRemarks
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err; });
         }
+        return response.json();
+    })
+    .then(data => {
+        // Update loading message
+        $('#loading-message').text('Refreshing table...');
+        
+        // Update the specific row with new data
+        updateStudentRowOptimized(
+            enrollmentId, 
+            prelim, 
+            midterm, 
+            finalGrade, 
+            remarks, 
+            data.auto_status || currentAutoStatus
+        );
+        
+        // 4. Hide loading screen after a short delay
+        setTimeout(() => {
+            hideLoadingScreen();
+            isSaving = false;
+            
+            // 5. Show success dialog with auto-close
+            Swal.fire({
+                icon: 'success',
+                title: 'Grade Saved Successfully!',
+                html: `
+                    <p>Student grades have been updated and table refreshed.</p>
+                    <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #065f46;">
+                        <small style="color: #475569;">
+                            <i class="fas fa-info-circle"></i> 
+                            Status: ${data.auto_status || currentAutoStatus}
+                        </small>
+                    </div>
+                `,
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#065f46',
+                timer: 3000,
+                timerProgressBar: true
+            });
+            
+            // Restore save button state
+            if (saveBtn) {
+                saveBtn.innerHTML = originalText;
+                saveBtn.classList.remove('btn-saving');
+                saveBtn.disabled = false;
+            }
+        }, 500);
+        
+    })
+    .catch(error => {
+        hideLoadingScreen();
+        isSaving = false;
+        
+        console.error('Error:', error);
+        
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Save Failed',
+            text: error.message || 'Failed to save grade changes. Please try again.',
+            confirmButtonText: 'Try Again',
+            confirmButtonColor: '#b91c1c'
+        }).then(() => {
+            // Re-open the edit modal so user can try again
+            openEditModal(
+                enrollmentId,
+                prelim,
+                midterm,
+                finalGrade,
+                remarks,
+                currentAutoStatus
+            );
+            
+            // Restore save button
+            if (saveBtn) {
+                saveBtn.innerHTML = originalText;
+                saveBtn.classList.remove('btn-saving');
+                saveBtn.disabled = false;
+            }
+        });
     });
 }
 
+// Function to refresh table on demand (optional manual refresh button)
+function setupManualRefresh() {
+    const refreshBtn = document.getElementById('refresh-table-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            refreshStudentTable();
+        });
+    }
+}
+
+// Open profile modal
 function openProfileModal(userId) {
     showLoadingScreen('Loading student profile...');
     
@@ -763,7 +952,6 @@ function openProfileModal(userId) {
             document.getElementById('profileAddress').innerText = 
                 profile.baranggay ? `${profile.baranggay}, ${profile.municipality}, ${profile.province}` : 'Not provided';
             
-            // FIXED: Use same path structure as subnav with proper fallback
             const profilePicture = profile.profile_picture || 'default.png';
             const staticPath = window.appUrls.staticProfilePath || '/static/uploads/profile_pictures/';
             document.getElementById('profilePicture').src = `${staticPath}${profilePicture}`;
@@ -789,9 +977,10 @@ function openProfileModal(userId) {
                 }
                 row.insertCell(3).textContent = avgGrade;
                 
-                row.insertCell(4).textContent = cls.remarks || 'N/A';
-                row.insertCell(5).textContent = cls.enrollment_status || 'N/A';
-                row.insertCell(6).textContent = cls.instructor_name || 'N/A';
+                row.insertCell(4).textContent = cls.grade_status || 'Not Evaluated';
+                row.insertCell(5).textContent = cls.remarks || 'N/A';
+                row.insertCell(6).textContent = cls.enrollment_status || 'N/A';
+                row.insertCell(7).textContent = cls.instructor_name || 'N/A';
             });
 
             const certsTable = document.getElementById('profileCertificatesTable').getElementsByTagName('tbody')[0];
@@ -860,7 +1049,7 @@ function openProfileModal(userId) {
         });
 }
 
-// Certificate functions
+// Certificate functions (unchanged)
 function generatePrivateCompletion(enrollmentId, studentName, remarks) {
     if (remarks !== 'Competent') {
         Swal.fire({
@@ -952,7 +1141,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
     
+    // Update URLs in window.appUrls
+    window.appUrls.autoStatusRemarksUrl = "{{ url_for('staff_class_student_management.get_auto_status_remarks') }}";
+    
     init();
+    setupManualRefresh();
 });
 
 // Clean up
