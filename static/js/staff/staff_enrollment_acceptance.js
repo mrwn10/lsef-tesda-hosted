@@ -1,4 +1,4 @@
-// staff_enrollment_acceptance.js - Complete Updated Version
+// staff_enrollment_acceptance.js - Fixed Version with SweetAlert2 for everything
 $(document).ready(function() {
     let allEnrollments = [];
     let filteredEnrollments = [];
@@ -326,9 +326,28 @@ $(document).ready(function() {
         // Student details modal close handlers
         $('#close-student-modal, #close-student-details').on('click', closeStudentDetailsModal);
         
-        // Action button handlers
-        $('#accept-enrollment').on('click', handleEnrollmentAction);
-        $('#reject-enrollment').on('click', handleEnrollmentAction);
+        // Action button handlers - UPDATED: Close modal first, then show SweetAlert2
+        $('#accept-enrollment').on('click', function() {
+            if (currentEnrollmentId) {
+                // Close the student details modal first
+                closeStudentDetailsModal();
+                // Show SweetAlert2 after a short delay
+                setTimeout(() => {
+                    showApprovalConfirmation();
+                }, 300);
+            }
+        });
+        
+        $('#reject-enrollment').on('click', function() {
+            if (currentEnrollmentId) {
+                // Close the student details modal first
+                closeStudentDetailsModal();
+                // Show SweetAlert2 after a short delay
+                setTimeout(() => {
+                    showRejectionConfirmation();
+                }, 300);
+            }
+        });
     }
     
     function viewStudentDetails(enrollmentId) {
@@ -336,31 +355,35 @@ $(document).ready(function() {
         
         // Show loading screen
         $('#loading-screen').fadeIn();
+        $('#loading-message').text('Loading student details...');
         
-        fetch(window.appUrls.studentDetailsUrl + enrollmentId)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
+        $.ajax({
+            url: window.appUrls.studentDetailsUrl.replace('0', enrollmentId),
+            method: 'GET',
+            success: function(data) {
                 $('#loading-screen').fadeOut();
                 if (data.error) {
-                    showMessage(data.error, 'error');
+                    showSweetAlertError('Error', data.error);
                     return;
                 }
                 displayStudentDetails(data);
-            })
-            .catch(error => {
-                console.error('Error fetching student details:', error);
+            },
+            error: function(xhr, status, error) {
                 $('#loading-screen').fadeOut();
-                showMessage('Error loading student details', 'error');
-            });
+                console.error('Error fetching student details:', error);
+                showSweetAlertError('Error', 'Error loading student details');
+            }
+        });
     }
 
     function displayStudentDetails(data) {
         const modalContent = $('#student-details-content');
         const gender = data.gender ? data.gender.toLowerCase() : '';
         const hasMarriageCertificate = data.marriage_certificate !== null && data.marriage_certificate !== '';
+        
+        // Get profile picture URL
+        const profilePicture = data.student_profile_picture || 'default.png';
+        const profilePictureUrl = `/static/uploads/profile_pictures/${profilePicture}`;
         
         // Format requirements status based on gender and marital status
         const requirements = [
@@ -428,6 +451,16 @@ $(document).ready(function() {
         }).join('');
 
         modalContent.html(`
+            <div class="modal-profile-header">
+                <img src="${profilePictureUrl}" alt="${data.first_name} ${data.last_name}" 
+                     class="modal-profile-picture" onerror="this.src='/static/img/default_profile.png'">
+                <div class="modal-profile-info">
+                    <h3>${data.first_name} ${data.middle_name || ''} ${data.last_name}</h3>
+                    <p>${data.email}</p>
+                    <p><strong>Username:</strong> ${data.username || 'N/A'}</p>
+                </div>
+            </div>
+            
             <div class="student-details-grid">
                 <div class="detail-section">
                     <h4><i class="fas fa-user"></i> Personal Information</h4>
@@ -510,71 +543,151 @@ $(document).ready(function() {
         $('#studentDetailsModal').fadeOut();
         document.body.style.overflow = '';
         document.body.classList.remove('modal-open');
-        currentEnrollmentId = null;
     }
-
-    function handleEnrollmentAction(e) {
+    
+    // ===== SWEETALERT2 DIALOG FUNCTIONS =====
+    
+    function showApprovalConfirmation() {
+        Swal.fire({
+            title: 'Confirm Enrollment Approval',
+            html: `
+                <div style="text-align: center;">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: #15803d; margin-bottom: 15px;"></i>
+                    <p style="margin-bottom: 15px;">Are you sure you want to approve this student's enrollment?</p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Approve',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#15803d',
+            cancelButtonColor: '#6c757d',
+            ...window.swalConfig
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleEnrollmentAction('accept');
+            }
+        });
+    }
+    
+    function showRejectionConfirmation() {
+        Swal.fire({
+            title: 'Confirm Enrollment Rejection',
+            html: `
+                <div style="text-align: center;">
+                    <i class="fas fa-times-circle" style="font-size: 3rem; color: #b91c1c; margin-bottom: 15px;"></i>
+                    <p style="margin-bottom: 15px;">Are you sure you want to reject this student's enrollment?</p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Reject',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#b91c1c',
+            cancelButtonColor: '#6c757d',
+            ...window.swalConfig
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleEnrollmentAction('reject');
+            }
+        });
+    }
+    
+    function handleEnrollmentAction(action) {
         if (!currentEnrollmentId) {
-            showMessage('No enrollment selected', 'error');
+            showSweetAlertError('Error', 'No enrollment selected');
             return;
         }
-
-        const action = $(this).attr('id') === 'accept-enrollment' ? 'accept' : 'reject';
-        const actionText = action === 'accept' ? 'accept' : 'reject';
-        const studentName = $('#student-details-content .detail-row .detail-value').first().text().trim();
         
-        const confirmationMessage = `Are you sure you want to ${actionText} the enrollment for ${studentName}?`;
+        // Show loading state in SweetAlert
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait while we process your request',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
-        if (confirm(confirmationMessage)) {
-            // Show loading state
-            const $buttons = $('#accept-enrollment, #reject-enrollment');
-            $buttons.prop('disabled', true).addClass('loading');
-            
-            // Submit the action
-            $.ajax({
-                url: window.appUrls.handleEnrollmentActionUrl,
-                method: 'POST',
-                data: {
-                    enrollment_id: currentEnrollmentId,
-                    action: action
-                },
-                success: function(response) {
-                    if (response.success) {
-                        showMessage(`Enrollment ${actionText}ed successfully`, 'success');
-                        closeStudentDetailsModal();
-                        // Reload the page after a short delay
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showMessage(response.message || `Error ${actionText}ing enrollment`, 'error');
-                        $buttons.prop('disabled', false).removeClass('loading');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error:', error);
-                    showMessage(`Error ${actionText}ing enrollment: ${error}`, 'error');
-                    $buttons.prop('disabled', false).removeClass('loading');
+        // Submit the action
+        $.ajax({
+            url: window.appUrls.handleEnrollmentActionUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                enrollment_id: currentEnrollmentId,
+                action: action
+            }),
+            success: function(response) {
+                Swal.close();
+                
+                if (response.success) {
+                    // Show success SweetAlert2
+                    showSweetAlertSuccess(
+                        'Success',
+                        response.message,
+                        () => {
+                            // Reload the page after success
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        }
+                    );
+                } else {
+                    showSweetAlertError('Error', response.error || `Error ${action}ing enrollment`);
                 }
-            });
-        }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                
+                let errorMessage = `Error ${action}ing enrollment`;
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage += ': ' + xhr.responseJSON.error;
+                } else {
+                    errorMessage += ': ' + error;
+                }
+                
+                showSweetAlertError('Error', errorMessage);
+            }
+        });
     }
-
-    function showMessage(message, type = 'success') {
-        const $messageContainer = $('#status-message');
-        const $messageText = $('#message-text');
-        
-        $messageText.text(message);
-        $messageContainer.removeClass('success danger warning').addClass(type);
-        $messageContainer.fadeIn();
-        
-        // Scroll to message
-        $messageContainer[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-        // Hide message after 5 seconds
-        setTimeout(() => {
-            $messageContainer.fadeOut();
-        }, 5000);
+    
+    // ===== SWEETALERT2 HELPER FUNCTIONS =====
+    
+    function showSweetAlertSuccess(title, message, callback = null) {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#15803d',
+            ...window.swalConfig
+        }).then((result) => {
+            if (callback && result.isConfirmed) {
+                callback();
+            }
+        });
+    }
+    
+    function showSweetAlertError(title, message) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#b91c1c',
+            ...window.swalConfig
+        });
+    }
+    
+    function showSweetAlertInfo(title, message) {
+        Swal.fire({
+            icon: 'info',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#3b82f6',
+            ...window.swalConfig
+        });
     }
 
     // ===== MOBILE NAVIGATION AND MODAL FUNCTIONS =====
@@ -733,16 +846,7 @@ $(document).ready(function() {
             }
         });
 
-        // Success Modal
-        $('#closeSuccessModal').click(function() {
-            closeAllModals();
-        });
-
-        $('#close-success-modal').click(function() {
-            closeAllModals();
-        });
-
-        // Alert close
+        // Remove the old JavaScript status message functions since we're using SweetAlert2
         $('.close-alert').click(function() {
             $(this).closest('.alert').fadeOut();
         });

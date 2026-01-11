@@ -10,52 +10,118 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+    <!-- SweetAlert2 CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
             logoutUrl: "{{ url_for('login.logout') }}",
-            studentDetailsUrl: "/staff/enrollment_acceptance/details/",
+            studentDetailsUrl: "{{ url_for('staff_enrollment_acceptance.get_enrollment_details', enrollment_id=0) }}",
             handleEnrollmentActionUrl: "{{ url_for('staff_enrollment_acceptance.handle_enrollment_action') }}"
+        };
+        
+        // SweetAlert2 Default Configuration
+        window.swalConfig = {
+            confirmButtonColor: '#003366',
+            cancelButtonColor: '#6c757d',
+            allowOutsideClick: false,
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
         };
     </script>
     <style>
-        /* Additional styles for conditional requirements */
-        .requirements-note {
-            background-color: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #1e40af;
+        /* Additional styles for profile pictures */
+        .student-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--tesda-gold);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
-        .requirements-note i {
-            margin-right: 8px;
-            color: #3b82f6;
+        .modal-profile-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--tesda-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
-        .requirement-item.conditional {
-            background-color: #f8fafc;
-            border-left: 3px solid #94a3b8;
+        .modal-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--tesda-light-blue);
         }
         
-        .requirement-status.not-required {
+        .modal-profile-info {
+            flex: 1;
+        }
+        
+        .modal-profile-info h3 {
+            color: var(--tesda-blue);
+            margin: 0 0 0.25rem 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .modal-profile-info p {
             color: #64748b;
-            background-color: #f1f5f9;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
         }
         
-        .requirement-status.not-required i {
-            color: #94a3b8;
-            margin-right: 5px;
+        /* Status message for JavaScript notifications */
+        #status-message {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 300px;
+            text-align: center;
+            display: none;
+            font-family: 'Poppins', sans-serif;
         }
         
-        .requirement-item.conditional .requirement-name {
-            color: #475569;
-            font-style: italic;
+        #status-message.success { background-color: #15803d; }
+        #status-message.error { background-color: #b91c1c; }
+        #status-message.warning { background-color: #f59e0b; }
+        
+        .message-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .close-alert {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -105,7 +171,6 @@
                         <a href="{{ url_for('staff_class_creation.create_class') }}"><i class="fas fa-plus-circle"></i> Class Creation</a>
                         <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
                         <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}" class="active"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
-                        <a href="{{ url_for('staff_class_student_management') }}"><i class="fas fa-user-graduate"></i> Student Management</a>
                     </div>
                 </div>
                 
@@ -162,11 +227,18 @@
             <a href="{{ url_for('staff_class_creation.create_class') }}">Class Creation</a>
             <a href="{{ url_for('staff_class_edit_req') }}">Class Edit Request</a>
             <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}" class="active">Enrollment Acceptance</a>
-            <a href="{{ url_for('staff_class_student_management') }}">Student Management</a>
         </div>
     </nav>
 
-    <!-- Logout Confirmation Modal - UPDATED WITH ID -->
+    <!-- JavaScript Status Message -->
+    <div id="status-message" style="display: none;">
+        <div class="message-content">
+            <span id="message-text"></span>
+            <button class="close-alert">&times;</button>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
     <div class="modal logout-modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -198,37 +270,13 @@
                     <input type="text" id="search-input" placeholder="Search students...">
                 </div>
             </div>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="alert-container">
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">
-                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
-                                <span>{{ message }}</span>
-                                <button type="button" class="close-alert">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-
-            <div class="alert" id="status-message" style="display: none;">
-                <span id="message-text"></span>
-                <button type="button" class="close-alert">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
             
             {% if enrollments %}
             <div class="user-table-container">
                 <table id="enrollmentTable" class="user-table">
                     <thead>
                         <tr>
-                            <th>Student Name</th>
+                            <th>Student</th>
                             <th>Email</th>
                             <th>Course</th>
                             <th>Class</th>
@@ -243,11 +291,16 @@
                             <td>
                                 <div class="student-info">
                                     <div class="student-avatar">
-                                        <i class="fas fa-user-circle"></i>
+                                        {% if enroll.student_profile_picture %}
+                                            <img src="{{ url_for('static', filename='uploads/profile_pictures/' + enroll.student_profile_picture) }}" 
+                                                 alt="{{ enroll.first_name }} {{ enroll.last_name }}">
+                                        {% else %}
+                                            <i class="fas fa-user-circle"></i>
+                                        {% endif %}
                                     </div>
                                     <div class="student-details">
                                         <div class="student-name">{{ enroll.first_name }} {% if enroll.middle_name %}{{ enroll.middle_name }}{% endif %} {{ enroll.last_name }}</div>
-                                        <div class="student-contact">{{ enroll.contact_number or 'N/A' }}</div>
+                                        <div class="student-contact">{{ enroll.username or enroll.contact_number or 'No contact info' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -258,7 +311,13 @@
                                 <div class="schedule-info">
                                     <div class="schedule-days">{{ enroll.schedule }}</div>
                                     <div class="schedule-venue">{{ enroll.venue }}</div>
-                                    <div class="schedule-date">{{ enroll.start_date.strftime('%b %d, %Y') if enroll.start_date else 'TBA' }}</div>
+                                    <div class="schedule-date">
+                                        {% if enroll.start_date %}
+                                            {{ enroll.start_date.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                            TBA
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </td>
                             <td>
@@ -355,24 +414,6 @@
                 <button class="btn btn-no" id="close-student-details">
                     <i class="fas fa-times"></i> Close
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header success">
-                <h3><i class="fas fa-check-circle"></i> Success</h3>
-                <button class="close-modal" id="close-success-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage">Operation completed successfully.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="closeSuccessModal">OK</button>
             </div>
         </div>
     </div>

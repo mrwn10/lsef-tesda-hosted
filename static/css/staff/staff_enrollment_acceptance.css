@@ -1720,3 +1720,208 @@ body.modal-open {
 .modal-header.danger h3 i {
     color: #fff;
 }
+
+/* Add these to your existing staff_enrollment_acceptance.css file */
+
+/* Student avatar image styles */
+.student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--tesda-gold);
+}
+
+/* Modal profile picture styles */
+.modal-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--tesda-light-blue);
+}
+
+.modal-profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--tesda-blue);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.modal-profile-info {
+    flex: 1;
+}
+
+.modal-profile-info h3 {
+    color: var(--tesda-blue);
+    margin: 0 0 0.25rem 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.modal-profile-info p {
+    color: #64748b;
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Status message for JavaScript notifications */
+#status-message {
+    position: fixed;
+    top: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 300px;
+    text-align: center;
+    display: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+#status-message.success { 
+    background-color: #15803d; 
+}
+
+#status-message.error { 
+    background-color: #b91c1c; 
+}
+
+#status-message.warning { 
+    background-color: #f59e0b; 
+}
+
+.message-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.close-alert {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.close-alert:hover {
+    opacity: 0.8;
+}
+
+/* Conditional requirement styles */
+.requirements-note {
+    background-color: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #1e40af;
+    font-family: 'Poppins', sans-serif;
+}
+
+.requirements-note i {
+    margin-right: 8px;
+    color: #3b82f6;
+}
+
+.requirement-item.conditional {
+    background-color: #f8fafc;
+    border-left: 3px solid #94a3b8;
+}
+
+.requirement-status.not-required {
+    color: #64748b;
+    background-color: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.requirement-status.not-required i {
+    color: #94a3b8;
+    margin-right: 5px;
+}
+
+.requirement-item.conditional .requirement-name {
+    color: #475569;
+    font-style: italic;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Mobile adjustments for new elements */
+@media (max-width: 768px) {
+    .modal-profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .modal-profile-info {
+        text-align: center;
+    }
+    
+    #status-message {
+        width: 90%;
+        min-width: auto;
+        top: 100px;
+    }
+    
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-profile-picture {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .modal-profile-info h3 {
+        font-size: 1.2rem;
+    }
+    
+    #status-message {
+        width: 95%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}

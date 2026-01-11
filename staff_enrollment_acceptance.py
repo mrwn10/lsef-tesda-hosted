@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime
 from database import get_db
 
@@ -7,8 +7,7 @@ staff_enrollment_acceptance_bp = Blueprint('staff_enrollment_acceptance', __name
 @staff_enrollment_acceptance_bp.route('/enrollment_acceptance', methods=['GET']) 
 def view_enrollment_requests():
     if 'user_id' not in session or session.get('role') != 'staff':
-        flash("Unauthorized access. Please log in as staff.")
-        return redirect(url_for('login.login_page'))
+        return jsonify({'error': 'Unauthorized access. Please log in as staff.'}), 401
 
     staff_id = session['user_id']
     db = get_db()
@@ -32,7 +31,6 @@ def view_enrollment_requests():
     class_ids = [row['class_id'] for row in cursor.fetchall()]
 
     if not class_ids:
-        flash("You are not assigned as instructor to any classes.")
         return render_template(
             'staffs/staff_enrollment_acceptance.html',
             enrollments=[],
@@ -50,7 +48,9 @@ def view_enrollment_requests():
             pi.first_name, 
             pi.middle_name, 
             pi.last_name,
+            l.username,
             l.email,
+            pi.contact_number,
             cl.class_title, 
             cl.schedule, 
             cl.venue, 
@@ -69,6 +69,7 @@ def view_enrollment_requests():
             sr.valid_id,
             sr.transcript_form,
             sr.additional_notes,
+            pi.profile_picture as student_profile_picture,
             CASE 
                 WHEN sr.barangay_clearance IS NOT NULL 
                 AND sr.medical_certificate IS NOT NULL 
@@ -101,43 +102,54 @@ def handle_enrollment_action():
     if 'user_id' not in session or session.get('role') != 'staff':
         return jsonify({'success': False, 'error': 'Unauthorized action.'}), 401
 
-    enrollment_id = request.form.get('enrollment_id')
-    action = request.form.get('action') 
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid JSON data.'}), 400
+    
+    enrollment_id = data.get('enrollment_id')
+    action = data.get('action')
 
     if not enrollment_id or action not in ['accept', 'reject']:
-        return jsonify({'success': False, 'error': 'Invalid request.'}), 400
+        return jsonify({'success': False, 'error': 'Invalid request parameters.'}), 400
 
     new_status = 'enrolled' if action == 'accept' else 'rejected'
 
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
     
-    # Verify that the staff member is authorized to manage this enrollment
-    cursor.execute("""
-        SELECT cl.class_id 
-        FROM enrollment e
-        JOIN classes cl ON e.class_id = cl.class_id
-        WHERE e.enrollment_id = %s AND cl.instructor_id = %s
-    """, (enrollment_id, session['user_id']))
-    
-    authorized = cursor.fetchone()
-    if not authorized:
-        return jsonify({'success': False, 'error': 'You are not authorized to manage this enrollment.'}), 403
-
-    # Update enrollment status
-    cursor.execute("""
-        UPDATE enrollment SET status = %s WHERE enrollment_id = %s
-    """, (new_status, enrollment_id))
-    db.commit()
-
-    # Return JSON response for AJAX
-    return jsonify({
-        'success': True,
-        'message': f"Enrollment request has been {new_status} successfully.",
-        'enrollment_id': enrollment_id,
-        'new_status': new_status,
-        'action': action
-    })
+    try:
+        # Verify that the staff member is authorized to manage this enrollment
+        cursor.execute("""
+            SELECT cl.class_id 
+            FROM enrollment e
+            JOIN classes cl ON e.class_id = cl.class_id
+            WHERE e.enrollment_id = %s AND cl.instructor_id = %s
+        """, (enrollment_id, session['user_id']))
+        
+        authorized = cursor.fetchone()
+        if not authorized:
+            return jsonify({'success': False, 'error': 'You are not authorized to manage this enrollment.'}), 403
+        
+        # Update enrollment status
+        cursor.execute("""
+            UPDATE enrollment SET status = %s WHERE enrollment_id = %s
+        """, (new_status, enrollment_id))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"Enrollment request has been {new_status} successfully.",
+            'enrollment_id': enrollment_id,
+            'new_status': new_status,
+            'action': action
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cursor.close()
 
 @staff_enrollment_acceptance_bp.route('/enrollment_acceptance/details/<int:enrollment_id>')
 def get_enrollment_details(enrollment_id):
@@ -147,51 +159,58 @@ def get_enrollment_details(enrollment_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    cursor.execute("""
-        SELECT 
-            e.*,
-            pi.first_name, 
-            pi.middle_name, 
-            pi.last_name,
-            pi.date_of_birth, 
-            pi.gender, 
-            pi.contact_number,
-            pi.province, 
-            pi.municipality, 
-            pi.baranggay,
-            l.email,
-            cl.class_title, 
-            cl.schedule, 
-            cl.venue,
-            co.course_title, 
-            co.course_description,
-            sr.barangay_clearance,
-            sr.medical_certificate,
-            sr.marriage_certificate,
-            sr.valid_id,
-            sr.transcript_form,
-            sr.additional_notes,
-            CASE 
-                WHEN sr.barangay_clearance IS NOT NULL 
-                AND sr.medical_certificate IS NOT NULL 
-                AND sr.valid_id IS NOT NULL 
-                AND sr.transcript_form IS NOT NULL 
-                AND (pi.gender != 'female' OR sr.marriage_certificate IS NOT NULL)
-                THEN 'complete' 
-                ELSE 'incomplete' 
-            END AS requirements_status
-        FROM enrollment e
-        JOIN personal_information pi ON e.user_id = pi.user_id
-        JOIN login l ON e.user_id = l.user_id
-        JOIN classes cl ON e.class_id = cl.class_id
-        JOIN courses co ON cl.course_id = co.course_id
-        LEFT JOIN student_requirements sr ON e.user_id = sr.user_id
-        WHERE e.enrollment_id = %s
-    """, (enrollment_id,))
-    
-    enrollment = cursor.fetchone()
-    
-    if not enrollment:
-        return jsonify({'error': 'Enrollment not found'}), 404
-    
-    return jsonify(enrollment)
+    try:
+        cursor.execute("""
+            SELECT 
+                e.*,
+                pi.first_name, 
+                pi.middle_name, 
+                pi.last_name,
+                pi.date_of_birth, 
+                pi.gender, 
+                pi.contact_number,
+                pi.province, 
+                pi.municipality, 
+                pi.baranggay,
+                pi.profile_picture as student_profile_picture,
+                l.username,
+                l.email,
+                cl.class_title, 
+                cl.schedule, 
+                cl.venue,
+                co.course_title, 
+                co.course_description,
+                sr.barangay_clearance,
+                sr.medical_certificate,
+                sr.marriage_certificate,
+                sr.valid_id,
+                sr.transcript_form,
+                sr.additional_notes,
+                CASE 
+                    WHEN sr.barangay_clearance IS NOT NULL 
+                    AND sr.medical_certificate IS NOT NULL 
+                    AND sr.valid_id IS NOT NULL 
+                    AND sr.transcript_form IS NOT NULL 
+                    AND (pi.gender != 'female' OR sr.marriage_certificate IS NOT NULL)
+                    THEN 'complete' 
+                    ELSE 'incomplete' 
+                END AS requirements_status
+            FROM enrollment e
+            JOIN personal_information pi ON e.user_id = pi.user_id
+            JOIN login l ON e.user_id = l.user_id
+            JOIN classes cl ON e.class_id = cl.class_id
+            JOIN courses co ON cl.course_id = co.course_id
+            LEFT JOIN student_requirements sr ON e.user_id = sr.user_id
+            WHERE e.enrollment_id = %s
+        """, (enrollment_id,))
+        
+        enrollment = cursor.fetchone()
+        
+        if not enrollment:
+            return jsonify({'error': 'Enrollment not found'}), 404
+        
+        return jsonify(enrollment)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        cursor.close()
