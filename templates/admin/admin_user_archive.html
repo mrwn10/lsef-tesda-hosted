@@ -5,22 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_user_archive.css') }}" />
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
-    <title>User Archive</title>
+    <title>Inactive Users</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- SweetAlert CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
-            archivedUsers: "{{ url_for('admin_user_archive.get_archived_users') }}",
+            inactiveUsers: "{{ url_for('admin_user_archive.get_inactive_users') }}",
             restoreUser: "{{ url_for('admin_user_archive.restore_user') }}",
-            deleteUser: "{{ url_for('admin_user_archive.permanent_delete_user') }}",
+            deleteUser: "{{ url_for('admin_user_archive.delete_user') }}",
             logoutUrl: "{{ url_for('login.logout') }}"
         };
-        
-        // Store current user ID globally for modal actions
-        window.currentArchiveId = null;
     </script>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
@@ -75,7 +76,7 @@
                         <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
                         <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
                         <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
-                        <a href="{{ url_for('admin_user_archive') }}" class="active"><i class="fas fa-archive"></i> User Archive</a>
+                        <a href="{{ url_for('admin_user_archive') }}" class="active"><i class="fas fa-archive"></i> Inactive Users</a>
                     </div>
                 </div>
                 
@@ -150,12 +151,12 @@
                 <a href="{{ url_for('admin_enrollment.view_enrollments') }}"><i class="fas fa-user-graduate"></i> Student Acceptance</a>
                 <a href="{{ url_for('admin_user_update') }}"><i class="fas fa-user-edit"></i> User Update</a>
                 <a href="{{ url_for('admin_user_deletion') }}"><i class="fas fa-user-times"></i> User Deletion</a>
-                <a href="{{ url_for('admin_user_archive') }}" class="active"><i class="fas fa-archive"></i> User Archive</a>
+                <a href="{{ url_for('admin_user_archive') }}" class="active"><i class="fas fa-archive"></i> Inactive Users</a>
             </div>
         </nav>
     </div>
 
-    <!-- Logout Confirmation Modal -->
+    <!-- Logout Confirmation Modal (Keep this unchanged) -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -177,8 +178,8 @@
     <main class="content">
         <div class="container">
             <div class="page-header">
-                <h1><i class="fas fa-archive"></i> User Archive</h1>
-                <p class="subtitle">View and restore archived user accounts</p>
+                <h1><i class="fas fa-user-slash"></i> Inactive Users</h1>
+                <p class="subtitle">View and restore inactive user accounts</p>
             </div>
 
             <div class="search-filter-container">
@@ -187,6 +188,7 @@
                         <option value="all">All Roles</option>
                         <option value="staff">Staff</option>
                         <option value="student">Student</option>
+                        <option value="admin">Admin</option>
                     </select>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </div>
@@ -206,13 +208,13 @@
             </div>
             
             <div class="user-table-container">
-                <table id="archivedUserTable" class="user-table">
+                <table id="inactiveUserTable" class="user-table">
                     <thead>
                         <tr>
                             <th>User</th>
                             <th>Email</th>
                             <th>Contact No.</th>
-                            <th>Date Archived</th>
+                            <th>Date Registered</th>
                             <th>Role</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -223,7 +225,7 @@
                             <td colspan="7">
                                 <div class="loading-spinner">
                                     <div class="spinner"></div>
-                                    <span>Loading archived users...</span>
+                                    <span>Loading inactive users...</span>
                                 </div>
                             </td>
                         </tr>
@@ -271,90 +273,8 @@
         </div>
     </main>
 
-    <!-- Restore Confirmation Modal -->
-    <div id="restoreModal" class="modal">
-        <div class="modal-content user-details-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-undo-alt"></i> Confirm User Restoration</h3>
-                <button class="close-modal" id="close-restore-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="user-details-content" id="restoreUserDetailsContainer">
-                    <!-- User details will be inserted here by JavaScript -->
-                </div>
-                
-                <div class="info-section">
-                    <div class="info-icon">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="info-content">
-                        <h4>Restoration Process</h4>
-                        <p>This action will:</p>
-                        <ul>
-                            <li>Restore the user account to active status</li>
-                            <li>Move the user back to the active users list</li>
-                            <li>Preserve all user data and settings</li>
-                            <li>Allow the user to login again</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="confirmRestoreBtn">
-                    <i class="fas fa-check-circle"></i> Restore User
-                </button>
-                <button class="btn btn-secondary cancel-btn">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content user-details-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Permanent Deletion</h3>
-                <button class="close-modal" id="close-delete-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="user-details-content" id="deleteUserDetailsContainer">
-                    <!-- User details will be inserted here by JavaScript -->
-                </div>
-                
-                <div class="warning-section">
-                    <div class="warning-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="warning-content">
-                        <h4>Critical Warning</h4>
-                        <p>This action will permanently:</p>
-                        <ul>
-                            <li>Delete the user account from the archive</li>
-                            <li>Remove all associated user data permanently</li>
-                            <li>This action cannot be undone or recovered</li>
-                            <li>All user information will be lost forever</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash-alt"></i> Delete Permanently
-                </button>
-                <button class="btn btn-secondary cancel-btn">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="successModal" class="modal">
+    <!-- Success Modal (Optional - can be removed if using only SweetAlert) -->
+    <div id="successModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-check-circle"></i> Success</h3>

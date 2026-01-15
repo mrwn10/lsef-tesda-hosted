@@ -1,3 +1,4 @@
+# admin_user_deletion_bp.py - SIMPLIFIED SOFT DELETE VERSION
 from flask import Blueprint, render_template, request, jsonify, current_app, session
 from datetime import datetime
 from database import get_db
@@ -101,11 +102,11 @@ def get_active_users():
     return jsonify(result), status_code
 
 
-@admin_user_deletion_bp.route('/delete_user', methods=['POST'])
-def delete_user():
+@admin_user_deletion_bp.route('/deactivate_user', methods=['POST'])  # Changed from delete_user to deactivate_user
+def deactivate_user():
     """
-    Endpoint to delete an active user account.
-    Moves all user data to archive table before deletion.
+    Endpoint to deactivate a user account (soft delete).
+    Changes account_status from 'active' to 'inactive'.
     Only works for accounts with 'active' status.
     """
     db = None
@@ -153,7 +154,7 @@ def delete_user():
 
         # Check if user exists and get current status
         cursor.execute("""
-            SELECT user_id, account_status, role 
+            SELECT user_id, account_status, role, username, email
             FROM login 
             WHERE user_id = %s
             FOR UPDATE
@@ -171,7 +172,7 @@ def delete_user():
             db.rollback()
             return jsonify({
                 'success': False,
-                'message': f'Only active users can be deleted. Current status: {user_status["account_status"]}',
+                'message': f'Only active users can be deactivated. Current status: {user_status["account_status"]}',
                 'current_status': user_status['account_status']
             }), 400
 
@@ -179,84 +180,55 @@ def delete_user():
             db.rollback()
             return jsonify({
                 'success': False,
-                'message': 'Only staff or student accounts can be deleted through this endpoint'
+                'message': 'Only staff or student accounts can be deactivated through this endpoint'
             }), 400
 
-        # Get complete user data for archiving
+        # SOFT DELETE: Update status to inactive
         cursor.execute("""
-            SELECT 
-                l.user_id, l.username, l.password, l.email, l.role, l.account_status,
-                pi.province, pi.municipality, pi.baranggay, pi.contact_number,
-                pi.first_name, pi.middle_name, pi.last_name, pi.date_of_birth, pi.gender,
-                pi.profile_picture, pi.terms_accepted, pi.date_registered
-            FROM login l
-            JOIN personal_information pi ON l.user_id = pi.user_id
-            WHERE l.user_id = %s
+            UPDATE login 
+            SET account_status = 'inactive'
+            WHERE user_id = %s
         """, (user_id,))
-        user_data = cursor.fetchone()
 
-        if not user_data:
+        rows_affected = cursor.rowcount
+
+        if rows_affected == 0:
             db.rollback()
             return jsonify({
                 'success': False,
-                'message': 'User data incomplete - cannot archive'
-            }), 400
-
-        # Archive user data
-        cursor.execute("""
-            INSERT INTO user_archived (
-                original_user_id, username, password, email, role, account_status,
-                province, municipality, baranggay, contact_number,
-                first_name, middle_name, last_name, date_of_birth, gender,
-                profile_picture, terms_accepted, date_registered,
-                date_archived
-            ) VALUES (
-                %(user_id)s, %(username)s, %(password)s, %(email)s, %(role)s, %(account_status)s,
-                %(province)s, %(municipality)s, %(baranggay)s, %(contact_number)s,
-                %(first_name)s, %(middle_name)s, %(last_name)s, %(date_of_birth)s, %(gender)s,
-                %(profile_picture)s, %(terms_accepted)s, %(date_registered)s,
-                NOW()
-            )
-        """, user_data)
-
-        # Delete user data
-        cursor.execute("DELETE FROM personal_information WHERE user_id = %s", (user_id,))
-        rows_affected_pi = cursor.rowcount
-        
-        cursor.execute("DELETE FROM login WHERE user_id = %s", (user_id,))
-        rows_affected_login = cursor.rowcount
-
-        if rows_affected_pi == 0 or rows_affected_login == 0:
-            db.rollback()
-            return jsonify({
-                'success': False,
-                'message': 'No records were deleted - possible data inconsistency'
+                'message': 'No records were updated - possible data inconsistency'
             }), 400
 
         db.commit()
         
         current_app.logger.info(
-            f"User {user_id} ({user_data['email']}) archived and deleted successfully"
+            f"User {user_id} ({user_status['email']}) deactivated successfully (status changed to inactive)"
         )
 
         return jsonify({
             'success': True,
-            'message': 'User successfully deleted and archived',
-            'archived_user_id': user_id,
-            'archived_at': datetime.now().isoformat()
+            'message': 'User successfully deactivated',
+            'user_id': user_id,
+            'new_status': 'inactive',
+            'deactivated_at': datetime.now().isoformat(),
+            'user_info': {
+                'username': user_status['username'],
+                'email': user_status['email'],
+                'role': user_status['role']
+            }
         })
 
     except Exception as e:
         if db:
             db.rollback()
         current_app.logger.error(
-            f"Failed to delete user {user_id}: {str(e)}", 
+            f"Failed to deactivate user {user_id}: {str(e)}", 
             exc_info=True,
             extra={'user_id': user_id}
         )
         return jsonify({
             'success': False,
-            'message': 'An error occurred while deleting the user',
+            'message': 'An error occurred while deactivating the user',
             'error': str(e)
         }), 500
 

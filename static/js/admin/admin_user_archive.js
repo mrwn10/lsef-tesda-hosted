@@ -1,7 +1,7 @@
-// admin_user_archive.js - Complete Fixed Version with All Mobile Navigation Features
+// admin_user_archive.js - Updated for Inactive Users Management
 $(document).ready(function() {
     let users = [];
-    let currentArchiveId = null;
+    let selectedUserId = null;
     let selectedUserName = null;
     const $searchInput = $('#search-input');
     const $roleFilter = $('#role-filter');
@@ -15,9 +15,9 @@ $(document).ready(function() {
     // Initialize all functionality
     function init() {
         initMobileNavigation();
-        initModals();
+        initModals(); // Restored original modals functionality
         initPagination();
-        loadArchivedUsers();
+        loadInactiveUsers();
         
         // Search functionality with debounce
         let searchTimeout = null;
@@ -26,7 +26,7 @@ $(document).ready(function() {
             searchTimeout = setTimeout(() => {
                 const keyword = $searchInput.val().trim();
                 const role = $roleFilter.val();
-                loadArchivedUsers(keyword, role);
+                loadInactiveUsers(keyword, role);
             }, 300);
         }
 
@@ -34,27 +34,31 @@ $(document).ready(function() {
         $searchInput.on('input', doSearch);
         $roleFilter.on('change', doSearch);
         
-        // Restore button handler
+        // Restore button handler (using SweetAlert)
         $(document).on('click', '.restore-btn', function() {
-            const archiveId = $(this).data('archiveid');
-            showUserDetails(archiveId, 'restore');
+            const userId = $(this).data('userid');
+            const userName = $(this).data('username');
+            confirmRestoreUser(userId, userName);
         });
         
-        // Delete button handler
+        // Delete button handler (using SweetAlert)
         $(document).on('click', '.delete-btn', function() {
-            const archiveId = $(this).data('archiveid');
-            showUserDetails(archiveId, 'delete');
+            const userId = $(this).data('userid');
+            const userName = $(this).data('username');
+            confirmDeleteUser(userId, userName);
         });
         
-        // Mobile button handlers
+        // Mobile button handlers (using SweetAlert)
         $(document).on('click', '.mobile-restore-btn', function() {
-            const archiveId = $(this).data('archiveid');
-            showUserDetails(archiveId, 'restore');
+            const userId = $(this).data('userid');
+            const userName = $(this).data('username');
+            confirmRestoreUser(userId, userName);
         });
         
         $(document).on('click', '.mobile-delete-btn', function() {
-            const archiveId = $(this).data('archiveid');
-            showUserDetails(archiveId, 'delete');
+            const userId = $(this).data('userid');
+            const userName = $(this).data('username');
+            confirmDeleteUser(userId, userName);
         });
     }
     
@@ -97,52 +101,99 @@ $(document).ready(function() {
         });
     }
     
-    // Update pagination controls
-    function updatePagination() {
-        const totalUsers = filteredUsers.length;
-        totalPages = Math.ceil(totalUsers / pageSize);
-        
-        // Update pagination info
-        const start = ((currentPage - 1) * pageSize) + 1;
-        const end = Math.min(currentPage * pageSize, totalUsers);
-        $('#pagination-start').text(start);
-        $('#pagination-end').text(end);
-        $('#pagination-total').text(totalUsers);
-        
-        // Update button states
-        $('#first-page').prop('disabled', currentPage === 1);
-        $('#prev-page').prop('disabled', currentPage === 1);
-        $('#next-page').prop('disabled', currentPage === totalPages);
-        $('#last-page').prop('disabled', currentPage === totalPages);
-        
-        // Update page numbers
-        const $pagesContainer = $('#pagination-pages');
-        $pagesContainer.empty();
-        
-        // Show up to 5 page numbers
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-        
-        // Adjust if we're near the end
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
+    // Initialize all modals (keeping original logout modal behavior)
+    function initModals() {
+        // Close modal function - works for ALL modals
+        function closeAllModals() {
+            $('.modal').fadeOut(300);
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
-            pageBtn.on('click', function() {
-                currentPage = i;
-                renderUsers();
-            });
-            $pagesContainer.append(pageBtn);
+
+        // Open modal function
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                document.body.classList.add('modal-open');
+            }
         }
+
+        // Close modal when clicking outside - works for ALL modals
+        $(document).on('click', function(e) {
+            if ($(e.target).hasClass('modal')) {
+                closeAllModals();
+            }
+        });
+
+        // Escape key to close modals - works for ALL modals
+        $(document).keyup(function(e) {
+            if (e.keyCode === 27) {
+                closeAllModals();
+            }
+        });
+
+        // ===== SPECIFIC MODAL FUNCTIONALITY =====
+
+        // Logout Modal (KEEP ORIGINAL EXACTLY)
+        $('#logout-trigger').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openModal('logout-modal');
+        });
         
-        // Show/hide pagination
-        if (totalUsers > 0) {
-            $('#pagination-container').show();
-        } else {
-            $('#pagination-container').hide();
-        }
+        $('#mobile-logout-trigger').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // First close mobile nav properly
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileNav) {
+                mobileNav.classList.remove('active');
+            }
+            // Then open logout modal
+            setTimeout(() => {
+                openModal('logout-modal');
+            }, 10);
+        });
+        
+        $('#cancel-logout').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllModals();
+        });
+        
+        $('#close-logout-modal').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllModals();
+        });
+        
+        $('#confirm-logout').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const logoutUrl = document.body.getAttribute('data-logout-url');
+            if (logoutUrl) {
+                window.location.href = logoutUrl;
+            } else {
+                console.error('Logout URL not found');
+                window.location.href = "/logout";
+            }
+        });
+
+        // Success Modal close button (optional - can remove if not using)
+        $('#closeSuccessModal').click(function() {
+            closeAllModals();
+        });
+
+        $('#close-success-modal').click(function() {
+            closeAllModals();
+        });
+
+        // Alert close
+        $('.close-alert').click(function() {
+            $('#status-message').fadeOut();
+        });
     }
     
     // Mobile Navigation Functionality
@@ -214,126 +265,52 @@ $(document).ready(function() {
         }
     }
     
-    // Initialize all modal functionality
-    function initModals() {
-        // Close modal function - works for ALL modals
-        function closeAllModals() {
-            $('.modal').fadeOut(300);
-            document.body.style.overflow = '';
-            document.body.classList.remove('modal-open');
+    // Update pagination controls
+    function updatePagination() {
+        const totalUsers = filteredUsers.length;
+        totalPages = Math.ceil(totalUsers / pageSize);
+        
+        // Update pagination info
+        const start = ((currentPage - 1) * pageSize) + 1;
+        const end = Math.min(currentPage * pageSize, totalUsers);
+        $('#pagination-start').text(start);
+        $('#pagination-end').text(end);
+        $('#pagination-total').text(totalUsers);
+        
+        // Update button states
+        $('#first-page').prop('disabled', currentPage === 1);
+        $('#prev-page').prop('disabled', currentPage === 1);
+        $('#next-page').prop('disabled', currentPage === totalPages);
+        $('#last-page').prop('disabled', currentPage === totalPages);
+        
+        // Update page numbers
+        const $pagesContainer = $('#pagination-pages');
+        $pagesContainer.empty();
+        
+        // Show up to 5 page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // Adjust if we're near the end
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
         }
-
-        // Open modal function
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                document.body.classList.add('modal-open');
-            }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
+            pageBtn.on('click', function() {
+                currentPage = i;
+                renderUsers();
+            });
+            $pagesContainer.append(pageBtn);
         }
-
-        // Close modal when clicking outside - works for ALL modals
-        $(document).on('click', function(e) {
-            if ($(e.target).hasClass('modal')) {
-                closeAllModals();
-            }
-        });
-
-        // Escape key to close modals - works for ALL modals
-        $(document).keyup(function(e) {
-            if (e.keyCode === 27) {
-                closeAllModals();
-            }
-        });
-
-        // ===== SPECIFIC MODAL FUNCTIONALITY =====
-
-        // Logout Modal
-        $('#logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openModal('logout-modal');
-        });
         
-        $('#mobile-logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // First close mobile nav properly
-            const mobileNav = document.getElementById('mobileNav');
-            if (mobileNav) {
-                mobileNav.classList.remove('active');
-            }
-            // Then open logout modal
-            setTimeout(() => {
-                openModal('logout-modal');
-            }, 10);
-        });
-        
-        $('#cancel-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#close-logout-modal').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#confirm-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const logoutUrl = document.body.getAttribute('data-logout-url');
-            if (logoutUrl) {
-                window.location.href = logoutUrl;
-            } else {
-                console.error('Logout URL not found');
-                window.location.href = "/logout";
-            }
-        });
-
-        // Restore Modal Flow
-        $('#close-restore-modal').click(function() {
-            closeAllModals();
-        });
-
-        // Delete Modal Flow
-        $('#close-delete-modal').click(function() {
-            closeAllModals();
-        });
-
-        // Success Modals
-        $('#closeSuccessModal').click(function() {
-            closeAllModals();
-            loadArchivedUsers();
-        });
-
-        $('#close-success-modal').click(function() {
-            closeAllModals();
-            loadArchivedUsers();
-        });
-
-        // Alert close
-        $('.close-alert').click(function() {
-            $('#status-message').fadeOut();
-        });
-        
-        // Cancel button handler for both modals
-        $(document).on('click', '.cancel-btn', function() {
-            closeAllModals();
-        });
-        
-        // Confirm restore button handler
-        $(document).on('click', '#confirmRestoreBtn', function() {
-            restoreUser();
-        });
-        
-        // Confirm delete button handler
-        $(document).on('click', '#confirmDeleteBtn', function() {
-            deleteUser();
-        });
+        // Show/hide pagination
+        if (totalUsers > 0) {
+            $('#pagination-container').show();
+        } else {
+            $('#pagination-container').hide();
+        }
     }
     
     // Show loading screen during operations
@@ -347,12 +324,12 @@ $(document).ready(function() {
         $('#loading-screen').fadeOut();
     }
     
-    // Load archived users with optional search/filter
-    function loadArchivedUsers(query = '', role = 'all') {
+    // Load inactive users with optional search/filter
+    function loadInactiveUsers(query = '', role = 'all') {
         showLoadingState(true);
 
         $.ajax({
-            url: window.appUrls.archivedUsers,
+            url: window.appUrls.inactiveUsers,
             method: 'GET',
             success: function(response) {
                 showLoadingState(false);
@@ -364,9 +341,9 @@ $(document).ready(function() {
                     filteredUsers = users.filter(user => {
                         const matchesRole = role === 'all' || user.role.toLowerCase() === role.toLowerCase();
                         const matchesSearch = !query || 
-                            user.username.toLowerCase().includes(query.toLowerCase()) ||
-                            user.email.toLowerCase().includes(query.toLowerCase()) ||
-                            `${user.first_name} ${user.last_name}`.toLowerCase().includes(query.toLowerCase());
+                            (user.username && user.username.toLowerCase().includes(query.toLowerCase())) ||
+                            (user.email && user.email.toLowerCase().includes(query.toLowerCase())) ||
+                            (user.full_name && user.full_name.toLowerCase().includes(query.toLowerCase()));
                         
                         return matchesRole && matchesSearch;
                     });
@@ -381,7 +358,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 showLoadingState(false);
-                showStatusMessage('Error loading archived user data: ' + (xhr.responseJSON?.message || 'Server error'), 'danger');
+                showStatusMessage('Error loading inactive user data: ' + (xhr.responseJSON?.message || 'Server error'), 'danger');
             }
         });
     }
@@ -413,17 +390,17 @@ $(document).ready(function() {
         let tableHtml = '';
         
         currentUsers.forEach(user => {
-            const archiveDate = new Date(user.date_archived || user.date_registered);
-            const formattedDate = archiveDate.toLocaleDateString('en-US', {
+            const registerDate = new Date(user.date_registered);
+            const formattedDate = registerDate.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
             });
             
-            const fullName = [user.first_name, user.middle_name, user.last_name].filter(name => name).join(' ');
+            const fullName = user.full_name || 'N/A';
 
             tableHtml += `
-                <tr data-user-id="${user.archive_id}">
+                <tr data-user-id="${user.user_id}">
                     <td>
                         <div class="user-info">
                             <div class="user-avatar">
@@ -431,21 +408,27 @@ $(document).ready(function() {
                             </div>
                             <div class="user-details">
                                 <span class="user-name">${fullName}</span>
-                                <span class="user-id">ID: ${user.original_user_id || user.user_id}</span>
+                                <span class="user-id">ID: ${user.user_id}</span>
                             </div>
                         </div>
                     </td>
-                    <td>${user.email}</td>
+                    <td>${user.email || 'N/A'}</td>
                     <td>${user.contact_number || 'N/A'}</td>
                     <td>${formattedDate}</td>
                     <td><span class="role-badge role-${user.role}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></td>
-                    <td><span class="status-badge status-archived">Archived</span></td>
+                    <td><span class="status-badge status-inactive">Inactive</span></td>
                     <td>
                         <div class="action-btn-group">
-                            <button class="action-btn restore-btn" data-archiveid="${user.archive_id}" title="Restore User">
+                            <button class="action-btn restore-btn" 
+                                    data-userid="${user.user_id}" 
+                                    data-username="${fullName}"
+                                    title="Restore User">
                                 <i class="fas fa-undo-alt"></i> Restore
                             </button>
-                            <button class="action-btn delete-btn" data-archiveid="${user.archive_id}" title="Delete Permanently">
+                            <button class="action-btn delete-btn" 
+                                    data-userid="${user.user_id}"
+                                    data-username="${fullName}"
+                                    title="Delete Permanently">
                                 <i class="fas fa-trash-alt"></i> Delete
                             </button>
                         </div>
@@ -462,27 +445,27 @@ $(document).ready(function() {
         let cardsHtml = '';
         
         currentUsers.forEach(user => {
-            const archiveDate = new Date(user.date_archived || user.date_registered);
-            const formattedDate = archiveDate.toLocaleDateString('en-US', {
+            const registerDate = new Date(user.date_registered);
+            const formattedDate = registerDate.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
             });
             
-            const fullName = [user.first_name, user.middle_name, user.last_name].filter(name => name).join(' ');
+            const fullName = user.full_name || 'N/A';
             
             cardsHtml += `
-                <div class="mobile-user-card" data-user-id="${user.archive_id}">
+                <div class="mobile-user-card" data-user-id="${user.user_id}">
                     <div class="mobile-user-header">
                         <div class="mobile-user-info">
                             <div class="mobile-user-name">${fullName}</div>
-                            <div class="mobile-user-email">${user.email}</div>
+                            <div class="mobile-user-email">${user.email || 'N/A'}</div>
                         </div>
                     </div>
                     <div class="mobile-user-details">
                         <div class="mobile-user-detail">
                             <div class="mobile-detail-label">User ID</div>
-                            <div class="mobile-detail-value">${user.original_user_id || user.user_id}</div>
+                            <div class="mobile-detail-value">${user.user_id}</div>
                         </div>
                         <div class="mobile-user-detail">
                             <div class="mobile-detail-label">Contact</div>
@@ -493,19 +476,23 @@ $(document).ready(function() {
                             <div class="mobile-detail-value"><span class="role-badge role-${user.role}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></div>
                         </div>
                         <div class="mobile-user-detail">
-                            <div class="mobile-detail-label">Archived</div>
+                            <div class="mobile-detail-label">Registered</div>
                             <div class="mobile-detail-value">${formattedDate}</div>
                         </div>
                         <div class="mobile-user-detail">
                             <div class="mobile-detail-label">Status</div>
-                            <div class="mobile-detail-value"><span class="status-badge status-archived">Archived</span></div>
+                            <div class="mobile-detail-value"><span class="status-badge status-inactive">Inactive</span></div>
                         </div>
                     </div>
                     <div class="mobile-user-actions">
-                        <button class="mobile-action-btn restore-btn mobile-restore-btn" data-archiveid="${user.archive_id}">
+                        <button class="mobile-action-btn restore-btn mobile-restore-btn" 
+                                data-userid="${user.user_id}" 
+                                data-username="${fullName}">
                             <i class="fas fa-undo-alt"></i> Restore
                         </button>
-                        <button class="mobile-action-btn delete-btn mobile-delete-btn" data-archiveid="${user.archive_id}">
+                        <button class="mobile-action-btn delete-btn mobile-delete-btn"
+                                data-userid="${user.user_id}"
+                                data-username="${fullName}">
                             <i class="fas fa-trash-alt"></i> Delete
                         </button>
                     </div>
@@ -524,7 +511,7 @@ $(document).ready(function() {
                     <td colspan="7">
                         <div class="loading-spinner">
                             <div class="spinner"></div>
-                            <span>Loading archived users...</span>
+                            <span>Loading inactive users...</span>
                         </div>
                     </td>
                 </tr>
@@ -532,7 +519,7 @@ $(document).ready(function() {
             $('#mobile-users-container').html(`
                 <div class="loading-spinner" style="padding: 2rem; text-align: center;">
                     <div class="spinner" style="margin: 0 auto;"></div>
-                    <span>Loading archived users...</span>
+                    <span>Loading inactive users...</span>
                 </div>
             `);
         }
@@ -544,184 +531,195 @@ $(document).ready(function() {
             <tr>
                 <td colspan="7" class="no-results">
                     <div class="empty-state">
-                        <i class="fas fa-archive"></i>
-                        <h3>No Archived Users Found</h3>
-                        <p>There are currently no archived users to display.</p>
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Inactive Users Found</h3>
+                        <p>There are currently no inactive users to display.</p>
                     </div>
                 </td>
             </tr>
         `);
         $('#mobile-users-container').html(`
             <div class="empty-state" style="text-align: center; padding: 2rem;">
-                <i class="fas fa-archive" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem;"></i>
-                <h3 style="color: #64748b; margin-bottom: 0.5rem;">No Archived Users Found</h3>
-                <p style="color: #94a3b8;">There are currently no archived users to display.</p>
+                <i class="fas fa-user-slash" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem;"></i>
+                <h3 style="color: #64748b; margin-bottom: 0.5rem;">No Inactive Users Found</h3>
+                <p style="color: #94a3b8;">There are currently no inactive users to display.</p>
             </div>
         `);
         $('#pagination-container').hide();
     }
     
-    // Show user details in appropriate modal
-    function showUserDetails(archiveId, action) {
-        currentArchiveId = archiveId;
-        window.currentArchiveId = archiveId;
+    // Confirm restore user with SweetAlert
+    function confirmRestoreUser(userId, userName) {
+        selectedUserId = userId;
+        selectedUserName = userName;
         
-        // Find user in filtered users
-        const user = filteredUsers.find(u => u.archive_id == archiveId);
-        if (user) {
-            selectedUserName = [user.first_name, user.middle_name, user.last_name].filter(n => n).join(' ');
-            
-            const archiveDate = new Date(user.date_archived || user.date_registered);
-            const formattedDate = archiveDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-
-            const userDetailsHtml = `
-                <div class="user-details-content">
-                    <div class="user-detail-section">
-                        <h4><i class="fas fa-user"></i> User Information</h4>
-                        <div class="user-detail-grid">
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">User ID</div>
-                                <div class="user-detail-value">${user.original_user_id || user.user_id}</div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Full Name</div>
-                                <div class="user-detail-value">${selectedUserName}</div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Username</div>
-                                <div class="user-detail-value">${user.username}</div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Email</div>
-                                <div class="user-detail-value">${user.email}</div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Contact Number</div>
-                                <div class="user-detail-value">${user.contact_number || 'N/A'}</div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Role</div>
-                                <div class="user-detail-value"><span class="role-badge role-${user.role}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></div>
-                            </div>
-                            <div class="user-detail-item">
-                                <div class="user-detail-label">Date Archived</div>
-                                <div class="user-detail-value">${formattedDate}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            if (action === 'restore') {
-                $('#restoreUserDetailsContainer').html(userDetailsHtml);
-                $('#restoreModal').fadeIn();
-            } else if (action === 'delete') {
-                $('#deleteUserDetailsContainer').html(userDetailsHtml);
-                $('#deleteModal').fadeIn();
+        Swal.fire({
+            title: 'Restore User Account',
+            html: `Are you sure you want to restore <strong>${userName}</strong>?<br><br>
+                  <div style="text-align: left; background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #065f46;">This action will:</p>
+                    <ul style="margin: 0; padding-left: 20px; color: #065f46;">
+                        <li>Change account status to <strong>active</strong></li>
+                        <li>Allow the user to login again</li>
+                        <li>Preserve all user data and settings</li>
+                    </ul>
+                  </div>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Restore',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return restoreUser();
             }
-            
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('modal-open');
-        } else {
-            showStatusMessage('User not found', 'danger');
-        }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Success is handled in restoreUser function
+            }
+        });
     }
-
+    
+    // Confirm delete user with SweetAlert
+    function confirmDeleteUser(userId, userName) {
+        selectedUserId = userId;
+        selectedUserName = userName;
+        
+        Swal.fire({
+            title: 'Delete User Account',
+            html: `Are you sure you want to permanently delete <strong>${userName}</strong>?<br><br>
+                  <div style="text-align: left; background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #92400e;">Warning:</p>
+                    <ul style="margin: 0; padding-left: 20px; color: #92400e;">
+                        <li>This action is currently <strong>disabled</strong></li>
+                        <li>No data will be deleted at this time</li>
+                        <li>This is a placeholder for future implementation</li>
+                    </ul>
+                  </div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Delete (Placeholder)',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return deleteUser();
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Success is handled in deleteUser function
+            }
+        });
+    }
+    
     // Restore user function
     function restoreUser() {
-        if (!currentArchiveId) {
-            showStatusMessage('No user selected for restoration', 'danger');
-            return;
-        }
+        return new Promise((resolve, reject) => {
+            showLoadingScreen('Restoring user account...');
 
-        // Disable button and show loading state
-        $('#confirmRestoreBtn').prop('disabled', true).addClass('loading').html('<i class="fas fa-spinner fa-spin"></i> Restoring...');
-
-        showLoadingScreen('Restoring user account...');
-
-        $.ajax({
-            url: window.appUrls.restoreUser,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ archive_id: currentArchiveId }),
-            success: function(response) {
-                hideLoadingScreen();
-                if (response.success) {
-                    $('#restoreModal').fadeOut();
-                    document.body.style.overflow = '';
-                    document.body.classList.remove('modal-open');
-                    
-                    $('#successMessage').text(`User "${selectedUserName}" has been successfully restored.`);
-                    $('#successModal').fadeIn();
-                    
-                    loadArchivedUsers();
-                } else {
-                    showStatusMessage(response.message || 'Restoration failed', 'danger');
+            $.ajax({
+                url: window.appUrls.restoreUser,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ user_id: selectedUserId }),
+                success: function(response) {
+                    hideLoadingScreen();
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            html: `User <strong>${selectedUserName}</strong> has been successfully restored.<br><br>
+                                  <div style="background: #d1fae5; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <i class="fas fa-check-circle" style="color: #10b981; font-size: 2rem; margin-bottom: 10px;"></i><br>
+                                    <span style="color: #065f46;">Account status changed to <strong>active</strong></span>
+                                  </div>`,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Reload the user list
+                            loadInactiveUsers($searchInput.val().trim(), $roleFilter.val());
+                            resolve();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message || 'Restoration failed',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                        reject(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    hideLoadingScreen();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Error restoring user: ' + (xhr.responseJSON?.message || 'Server error'),
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                    reject(xhr.responseJSON?.message);
                 }
-            },
-            error: function(xhr) {
-                hideLoadingScreen();
-                showStatusMessage('Error restoring user: ' + (xhr.responseJSON?.message || 'Server error'), 'danger');
-            },
-            complete: function() {
-                // Reset button state
-                setTimeout(() => {
-                    $('#confirmRestoreBtn').prop('disabled', false).removeClass('loading').html('<i class="fas fa-check-circle"></i> Restore User');
-                }, 500);
-            }
+            });
         });
     }
-
-    // Delete user function
+    
+    // Delete user function (placeholder)
     function deleteUser() {
-        if (!currentArchiveId) {
-            showStatusMessage('No user selected for deletion', 'danger');
-            return;
-        }
+        return new Promise((resolve, reject) => {
+            showLoadingScreen('Processing delete request...');
 
-        // Disable button and show loading state
-        $('#confirmDeleteBtn').prop('disabled', true).addClass('loading').html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
-
-        showLoadingScreen('Permanently deleting user...');
-
-        $.ajax({
-            url: window.appUrls.deleteUser,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ archive_id: currentArchiveId }),
-            success: function(response) {
-                hideLoadingScreen();
-                if (response.success) {
-                    $('#deleteModal').fadeOut();
-                    document.body.style.overflow = '';
-                    document.body.classList.remove('modal-open');
-                    
-                    $('#successMessage').text(`User "${selectedUserName}" has been permanently deleted.`);
-                    $('#successModal').fadeIn();
-                    
-                    loadArchivedUsers();
-                } else {
-                    showStatusMessage(response.message || 'Deletion failed', 'danger');
+            $.ajax({
+                url: window.appUrls.deleteUser,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ user_id: selectedUserId }),
+                success: function(response) {
+                    hideLoadingScreen();
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Placeholder Function',
+                            html: `Delete function for <strong>${selectedUserName}</strong> is currently disabled.<br><br>
+                                  <div style="background: #fef3c7; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <i class="fas fa-info-circle" style="color: #f59e0b; font-size: 2rem; margin-bottom: 10px;"></i><br>
+                                    <span style="color: #92400e;">${response.message}</span><br>
+                                    <small style="color: #92400e;">${response.note || ''}</small>
+                                  </div>`,
+                            icon: 'info',
+                            confirmButtonColor: '#f59e0b',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            resolve();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message || 'Delete operation failed',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                        reject(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    hideLoadingScreen();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Error in delete operation: ' + (xhr.responseJSON?.message || 'Server error'),
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                    reject(xhr.responseJSON?.message);
                 }
-            },
-            error: function(xhr) {
-                hideLoadingScreen();
-                showStatusMessage('Error deleting user: ' + (xhr.responseJSON?.message || 'Server error'), 'danger');
-            },
-            complete: function() {
-                // Reset button state
-                setTimeout(() => {
-                    $('#confirmDeleteBtn').prop('disabled', false).removeClass('loading').html('<i class="fas fa-trash-alt"></i> Delete Permanently');
-                }, 500);
-            }
+            });
         });
     }
-
-    // Show status messages
+    
+    // Show status messages (for non-SweetAlert notifications)
     function showStatusMessage(message, type) {
         const statusMessage = $('#status-message');
         const messageText = $('#message-text');

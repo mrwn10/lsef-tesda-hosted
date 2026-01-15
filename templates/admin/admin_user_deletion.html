@@ -7,19 +7,117 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
     <title>User Deletion</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 Custom Styles -->
+    <style>
+        .swal2-popup {
+            border-radius: 12px !important;
+            max-width: 650px !important;
+            width: 90% !important;
+            max-height: 85vh !important;
+            overflow-y: auto !important;
+        }
+        
+        .swal2-title {
+            color: #003366 !important;
+            font-family: 'Poppins', sans-serif !important;
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .swal2-content {
+            font-family: 'Poppins', sans-serif !important;
+        }
+        
+        .swal2-confirm {
+            background-color: #d33 !important;
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 500 !important;
+            padding: 0.75rem 2rem !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .swal2-confirm:hover {
+            background-color: #b91c1c !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        .swal2-confirm:disabled {
+            background-color: #94a3b8 !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+        
+        .swal2-cancel {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 500 !important;
+            padding: 0.75rem 2rem !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .swal2-cancel:hover {
+            transform: translateY(-2px) !important;
+        }
+        
+        .swal2-actions {
+            margin-top: 1.5rem !important;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .swal2-popup {
+                width: 95% !important;
+                max-width: 500px !important;
+                margin: 10px !important;
+            }
+            
+            .swal2-title {
+                font-size: 1.3rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .swal2-popup {
+                width: 98% !important;
+                max-width: 400px !important;
+                padding: 1rem !important;
+            }
+            
+            .swal2-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .swal2-actions {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }
+            
+            .swal2-confirm,
+            .swal2-cancel {
+                width: 100% !important;
+            }
+        }
+    </style>
     
     <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
             activeUsers: "{{ url_for('admin_user_deletion.get_active_users') }}",
-            deleteUser: "{{ url_for('admin_user_deletion.delete_user') }}",
+            deleteUser: "{{ url_for('admin_user_deletion.deactivate_user') }}",
             logoutUrl: "{{ url_for('login.logout') }}"
         };
         
         // Store current user ID globally for modal actions
         window.currentUserId = null;
+        window.selectedUserName = null;
     </script>
 </head>
 <body data-logout-url="{{ url_for('login.logout') }}">
@@ -177,7 +275,7 @@
         <div class="container">
             <div class="page-header">
                 <h1><i class="fas fa-user-times"></i> User Deletion</h1>
-                <p class="subtitle">Manage and delete user accounts (will be archived before deletion)</p>
+                <p class="subtitle">Permanently delete user accounts from the system</p>
             </div>
 
             <div class="search-filter-container">
@@ -269,65 +367,6 @@
             </div>
         </div>
     </main>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="confirmationModal" class="modal">
-        <div class="modal-content user-details-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle"></i> Confirm User Deletion</h3>
-                <button class="close-modal" id="close-confirmation-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="user-details-content" id="userDetailsContainer">
-                    <!-- User details will be inserted here by JavaScript -->
-                </div>
-                
-                <div class="warning-section">
-                    <div class="warning-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="warning-content">
-                        <h4>Important Notice</h4>
-                        <p>This action will:</p>
-                        <ul>
-                            <li>Archive the user account first</li>
-                            <li>Permanently delete the user from the system</li>
-                            <li>Remove all associated data</li>
-                            <li>This action cannot be undone</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash-alt"></i> Archive User
-                </button>
-                <button class="btn btn-secondary cancel-btn">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-check-circle"></i> Success</h3>
-                <button class="close-modal" id="close-success-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage">User has been successfully deleted and archived.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="closeSuccessModal">OK</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Loading Screen -->
     <div id="loading-screen" class="modal" style="display: none; z-index: 3000;">
