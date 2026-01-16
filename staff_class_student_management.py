@@ -117,7 +117,7 @@ def view_class_students(class_id):
         flash('You are not authorized to manage this class.', 'error')
         return redirect(url_for('staff_class_management'))
 
-    # FIXED: Fetch ALL enrolled students with status from student_grades
+    # FIXED: Fetch enrolled students, EXCLUDING those with status = 'pending' from enrollment table
     cursor.execute("""
         SELECT 
             pi.first_name, 
@@ -136,7 +136,7 @@ def view_class_students(class_id):
         JOIN personal_information pi ON l.user_id = pi.user_id
         LEFT JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id
         WHERE e.class_id = %s 
-        AND e.status IN ('enrolled', 'completed', 'pending')
+        AND e.status NOT IN ('pending')  -- EXCLUDE pending enrollments
         ORDER BY pi.last_name, pi.first_name
     """, (class_id,))
     students = cursor.fetchall()
@@ -247,7 +247,6 @@ def edit_student_grade():
         'auto_status': status,
         'auto_remarks': remarks if use_auto_remarks else None
     })
-
 # ===================== GET AUTO STATUS AND REMARKS =====================
 @staff_class_student_management_bp.route('/staff_student/get_auto_status_remarks', methods=['POST'])
 def get_auto_status_remarks():

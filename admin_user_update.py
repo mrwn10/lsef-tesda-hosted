@@ -30,7 +30,7 @@ def get_active_users():
                 p.terms_accepted
             FROM login l
             INNER JOIN personal_information p ON l.user_id = p.user_id
-            WHERE l.account_status != 'pending'
+            WHERE l.account_status = 'active'  # CHANGED: only active users
               AND l.role != 'admin'
             ORDER BY p.date_registered DESC
         """)
@@ -189,7 +189,7 @@ def search_users():
                 p.terms_accepted
             FROM login l
             INNER JOIN personal_information p ON l.user_id = p.user_id
-            WHERE l.account_status != 'pending'
+            WHERE l.account_status = 'active'  # CHANGED: only active users
               AND l.role != 'admin'
               AND (
                   l.username LIKE %s OR

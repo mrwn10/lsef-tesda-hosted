@@ -24,15 +24,16 @@ def show_archive_page():
     return render_template('admin/admin_user_archive.html', profile_picture=profile_picture)
 
 
-@admin_user_archive_bp.route('/get_inactive_users')
-def get_inactive_users():
-    """Fetch inactive users for display"""
+@admin_user_archive_bp.route('/get_archived_users_hierarchy')
+def get_archived_users_hierarchy():
+    """Fetch archived users organized by year and month"""
     db = None
     cursor = None
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
+        # Get all archived users with their registration year/month
         query = """
             SELECT 
                 l.user_id,
@@ -47,7 +48,10 @@ def get_inactive_users():
                 pi.baranggay,
                 pi.date_of_birth,
                 pi.gender,
-                pi.date_registered
+                pi.date_registered,
+                YEAR(pi.date_registered) as reg_year,
+                MONTH(pi.date_registered) as reg_month,
+                DATE_FORMAT(pi.date_registered, '%M %Y') as formatted_date
             FROM login l
             LEFT JOIN personal_information pi ON l.user_id = pi.user_id
             WHERE l.account_status = 'inactive'
@@ -57,31 +61,91 @@ def get_inactive_users():
         cursor.execute(query)
         users = cursor.fetchall()
 
-        # Format dates for display
+        # Organize users into hierarchical structure
+        hierarchy = {}
+        
         for user in users:
+            # Format dates for display
             if user['date_registered']:
                 if isinstance(user['date_registered'], datetime):
-                    user['date_registered'] = user['date_registered'].strftime('%Y-%m-%d %H:%M:%S')
+                    user['date_registered_display'] = user['date_registered'].strftime('%Y-%m-%d %H:%M:%S')
+                    user['date_registered_short'] = user['date_registered'].strftime('%b %d, %Y')
                 elif isinstance(user['date_registered'], str):
                     try:
                         dt = datetime.strptime(user['date_registered'], '%Y-%m-%d %H:%M:%S')
-                        user['date_registered'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                        user['date_registered_display'] = dt.strftime('%Y-%m-%d %H:%M:%S')
+                        user['date_registered_short'] = dt.strftime('%b %d, %Y')
                     except ValueError:
-                        user['date_registered'] = user['date_registered']
-
-        return jsonify({'success': True, 'users': users})
+                        user['date_registered_display'] = user['date_registered']
+                        user['date_registered_short'] = user['date_registered']
+            
+            year = user['reg_year']
+            month = user['reg_month']
+            
+            # Initialize year if not exists
+            if year not in hierarchy:
+                hierarchy[year] = {
+                    'year': year,
+                    'month_count': 0,
+                    'user_count': 0,
+                    'months': {}
+                }
+            
+            # Initialize month if not exists
+            if month not in hierarchy[year]['months']:
+                month_names = {
+                    1: 'January', 2: 'February', 3: 'March', 4: 'April',
+                    5: 'May', 6: 'June', 7: 'July', 8: 'August',
+                    9: 'September', 10: 'October', 11: 'November', 12: 'December'
+                }
+                hierarchy[year]['months'][month] = {
+                    'month_number': month,
+                    'month_name': month_names.get(month, 'Unknown'),
+                    'user_count': 0,
+                    'users': []
+                }
+                hierarchy[year]['month_count'] += 1
+            
+            # Add user to month
+            hierarchy[year]['months'][month]['users'].append(user)
+            hierarchy[year]['months'][month]['user_count'] += 1
+            hierarchy[year]['user_count'] += 1
+        
+        # Convert hierarchy to list for JSON serialization
+        years_list = []
+        for year in sorted(hierarchy.keys(), reverse=True):  # Latest year first
+            year_data = hierarchy[year]
+            months_list = []
+            
+            # Sort months in descending order (latest month first)
+            for month_num in sorted(year_data['months'].keys(), reverse=True):
+                months_list.append(year_data['months'][month_num])
+            
+            years_list.append({
+                'year': year_data['year'],
+                'month_count': year_data['month_count'],
+                'user_count': year_data['user_count'],
+                'months': months_list
+            })
+        
+        return jsonify({
+            'success': True, 
+            'years': years_list,
+            'total_users': sum(year['user_count'] for year in years_list)
+        })
 
     except Exception as e:
-        current_app.logger.error(f"Error fetching inactive users: {str(e)}")
-        return jsonify({'success': False, 'message': 'Error fetching inactive users'}), 500
+        current_app.logger.error(f"Error fetching archived users hierarchy: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error fetching archived users'}), 500
 
     finally:
         if cursor: cursor.close()
         if db: db.close()
 
+
 @admin_user_archive_bp.route('/restore_user', methods=['POST'])
 def restore_user():
-    """Restore an inactive user by setting account_status to active"""
+    """Restore an archived user by setting account_status to active"""
     db = None
     cursor = None
 
@@ -125,26 +189,3 @@ def restore_user():
     finally:
         if cursor: cursor.close()
         if db: db.close()
-
-@admin_user_archive_bp.route('/delete_user', methods=['POST'])
-def delete_user():
-    """Temporary delete function - does nothing for now"""
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-
-        if not user_id:
-            return jsonify({'success': False, 'message': 'Missing user_id'}), 400
-
-        # For now, just return success without doing anything
-        # This is a placeholder for future implementation
-        return jsonify({
-            'success': True, 
-            'message': 'Delete function is currently disabled (placeholder)',
-            'note': 'No actual deletion performed',
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        })
-
-    except Exception as e:
-        current_app.logger.error(f"Error in delete placeholder: {str(e)}")
-        return jsonify({'success': False, 'message': 'Delete operation failed', 'error': str(e)}), 500

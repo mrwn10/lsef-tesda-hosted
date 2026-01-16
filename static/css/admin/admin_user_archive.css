@@ -772,7 +772,7 @@ body.modal-open {
     color: #15803d;
 }
 
-/* Action Buttons */
+/* Action Buttons - UPDATED FOR CONSISTENT SIZE */
 .action-btn-group {
     display: flex;
     gap: 0.5rem;
@@ -781,7 +781,7 @@ body.modal-open {
 
 .action-btn {
     border: none;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
@@ -789,10 +789,14 @@ body.modal-open {
     transition: all 0.3s;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     margin: 0.125rem;
     font-family: 'Poppins', sans-serif;
+    min-width: 100px;
+    height: 36px;
+    flex: 1;
 }
 
 .action-btn:hover {
@@ -1052,6 +1056,7 @@ body.modal-open {
     justify-content: center;
     gap: 0.5rem;
     font-family: 'Poppins', sans-serif;
+    min-height: 44px;
 }
 
 .mobile-action-btn.restore-btn {
@@ -1752,5 +1757,497 @@ body.modal-open {
     
     .btn {
         padding: 12px 20px;
+    }
+}
+
+/* ===== ARCHIVE TIMELINE STYLES ===== */
+.archive-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--tesda-blue), var(--tesda-dark-blue));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tesda-blue);
+    line-height: 1;
+    font-family: 'Poppins', sans-serif;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Timeline Container */
+.timeline-container {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.timeline-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+}
+
+.timeline-header h3 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.timeline-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.timeline-content {
+    padding: 1rem;
+}
+
+/* Year Section */
+.year-section {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.year-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.year-header:hover {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.year-header.expanded {
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    border-bottom-color: #7dd3fc;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tesda-blue);
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-title h4 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.3rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
+
+.header-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-family: 'Poppins', sans-serif;
+}
+
+.year-content {
+    padding: 1rem;
+}
+
+/* Month Section */
+.month-section {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+}
+
+.month-header {
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.month-header:hover {
+    background: #f1f5f9;
+}
+
+.month-header.expanded {
+    background: #e0f2fe;
+    border-bottom-color: #7dd3fc;
+}
+
+.month-header .header-title h5 {
+    margin: 0;
+    color: #334155;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.month-content {
+    padding: 1rem;
+}
+
+/* Button Styles */
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s;
+}
+
+.btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-secondary:hover {
+    background-color: #e2e8f0;
+}
+
+/* Loading State */
+.loading-state {
+    padding: 3rem;
+    text-align: center;
+}
+
+.loading-state .loading-spinner {
+    justify-content: center;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #334155;
+    margin-bottom: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.empty-state p {
+    color: #64748b;
+    margin: 0 0 1.5rem 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ===== MOBILE TIMELINE STYLES ===== */
+.mobile-timeline-container {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.mobile-timeline-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+}
+
+.mobile-timeline-header h3 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.mobile-timeline-content {
+    padding: 1rem;
+}
+
+/* Mobile Year Section */
+.mobile-year-section {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.mobile-year-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-year-header:hover {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.mobile-year-header.expanded {
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    border-bottom-color: #7dd3fc;
+}
+
+.mobile-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.mobile-header-icon {
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tesda-blue);
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-header-title h4 {
+    margin: 0;
+    color: var(--tesda-blue);
+    font-size: 1.2rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
+
+.mobile-header-subtitle {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-family: 'Poppins', sans-serif;
+}
+
+.mobile-year-content {
+    padding: 1rem;
+}
+
+/* Mobile Month Section */
+.mobile-month-section {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+}
+
+.mobile-month-header {
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-month-header:hover {
+    background: #f1f5f9;
+}
+
+.mobile-month-header.expanded {
+    background: #e0f2fe;
+    border-bottom-color: #7dd3fc;
+}
+
+.mobile-month-header .mobile-header-title h5 {
+    margin: 0;
+    color: #334155;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.mobile-month-content {
+    padding: 1rem;
+}
+
+/* Mobile User Card Updates */
+.mobile-user-card {
+    margin-bottom: 1rem;
+}
+
+.mobile-user-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mobile-action-btn {
+    min-width: 100%;
+}
+
+/* ===== RESPONSIVE DESIGN FOR TIMELINE ===== */
+@media (max-width: 768px) {
+    .timeline-container {
+        display: none;
+    }
+    
+    .mobile-timeline-container {
+        display: block;
+    }
+    
+    .archive-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline-actions {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .timeline-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .archive-stats {
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .mobile-year-header,
+    .mobile-month-header {
+        padding: 1rem;
+    }
+    
+    .mobile-header-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+    
+    .mobile-header-title h4 {
+        font-size: 1.1rem;
+    }
+    
+    .mobile-header-title h5 {
+        font-size: 0.95rem;
+    }
+}
+
+/* Animation for expand/collapse */
+.year-content,
+.month-content,
+.mobile-year-content,
+.mobile-month-content {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
     }
 }

@@ -545,7 +545,7 @@ $(document).ready(function() {
         let timeLeft = 5; // 5 second cooldown
         
         Swal.fire({
-            title: 'Are you sure you want to delete this user?',
+            title: 'Are you sure you want to archive this user?',
             html: `
                 <div style="text-align: left;">
                     <!-- User Details Section - SCROLLABLE -->
@@ -581,19 +581,19 @@ $(document).ready(function() {
                         </div>
                     </div>
                     
-                    <!-- Deletion Process Info -->
+                    <!-- Archive Process Info -->
                     <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                         <h4 style="margin: 0 0 10px 0; color: #92400e; font-size: 16px; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid #fbbf24;">
-                            <i class="fas fa-info-circle" style="margin-right: 8px; color: #d97706;"></i>Deletion Process
+                            <i class="fas fa-archive" style="margin-right: 8px; color: #d97706;"></i>Archive Process - Blockchain Preservation
                         </h4>
                         <div style="font-size: 14px; color: #92400e;">
-                            <p style="margin: 0 0 10px 0; font-weight: 500;">What happens when you delete a user:</p>
+                            <p style="margin: 0 0 10px 0; font-weight: 500;">What happens when you archive a user:</p>
                             <ul style="margin: 0; padding-left: 20px;">
-                                <li style="margin-bottom: 6px; padding-left: 5px;">Account will be immediately deactivated</li>
-                                <li style="margin-bottom: 6px; padding-left: 5px;">User will be moved to archive system</li>
-                                <li style="margin-bottom: 6px; padding-left: 5px;">Data preserved for 30 days</li>
-                                <li style="margin-bottom: 6px; padding-left: 5px;">Can be restored within 30 days</li>
-                                <li style="padding-left: 5px;">Permanent deletion may occur after 30 days</li>
+                                <li style="margin-bottom: 6px; padding-left: 5px;">Account will be immediately deactivated and moved to archive</li>
+                                <li style="margin-bottom: 6px; padding-left: 5px;"><strong>Blockchain certificates remain fully verifiable</strong> - all hash verification stays intact</li>
+                                <li style="margin-bottom: 6px; padding-left: 5px;">User data is preserved indefinitely for credential validation</li>
+                                <li style="margin-bottom: 6px; padding-left: 5px;">User can be restored at any time from the archive</li>
+                                <li style="padding-left: 5px;"><strong>No permanent deletion</strong> - maintains blockchain integrity</li>
                             </ul>
                         </div>
                     </div>
@@ -606,10 +606,10 @@ $(document).ready(function() {
                             </div>
                             <div style="flex: 1;">
                                 <p style="margin: 0; color: #b91c1c; font-weight: 600; font-size: 14px; margin-bottom: 3px;">
-                                    Please wait <span id="countdown-timer" style="font-weight: bold; font-size: 16px; color: #dc2626;">5</span> seconds before confirming deletion
+                                    Please wait <span id="countdown-timer" style="font-weight: bold; font-size: 16px; color: #dc2626;">5</span> seconds before confirming archive
                                 </p>
                                 <p style="margin: 0; color: #b91c1c; font-size: 12px; opacity: 0.9;">
-                                    This prevents accidental deletions
+                                    This prevents accidental archiving of user accounts
                                 </p>
                             </div>
                         </div>
@@ -620,14 +620,13 @@ $(document).ready(function() {
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Delete User',
+            confirmButtonText: 'Archive User',
             cancelButtonText: 'Cancel',
             showLoaderOnConfirm: true,
             allowOutsideClick: false,
             allowEscapeKey: true,
             width: '650px',
             padding: '1.5rem',
-            // REMOVED max-height to prevent outer dialog scrolling
             customClass: {
                 popup: 'sweetalert-popup',
                 title: 'sweetalert-title',
@@ -664,7 +663,7 @@ $(document).ready(function() {
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         confirmButton.disabled = false;
-                        confirmButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete User';
+                        confirmButton.innerHTML = '<i class="fas fa-archive"></i> Archive User';
                         confirmButton.style.opacity = '1';
                         confirmButton.style.cursor = 'pointer';
                         timerElement.style.color = '#065f46';
@@ -697,7 +696,7 @@ $(document).ready(function() {
     // Perform the actual AJAX deletion
     function deleteUserAjax() {
         return new Promise((resolve, reject) => {
-            showLoadingScreen('Moving user to archive...');
+            showLoadingScreen('Archiving user account...');
 
             $.ajax({
                 url: window.appUrls.deleteUser,
@@ -707,23 +706,10 @@ $(document).ready(function() {
                 success: function(response) {
                     hideLoadingScreen();
                     if (response.success) {
-                        // Show success message with SweetAlert2
+                        // Show clean, non-scrollable success message
                         Swal.fire({
-                            title: 'Success!',
-                            html: `
-                                <div style="text-align: center; padding: 10px;">
-                                    <div style="width: 60px; height: 60px; background: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
-                                        <i class="fas fa-check" style="font-size: 30px; color: #065f46;"></i>
-                                    </div>
-                                    <h3 style="color: #065f46; margin: 0 0 10px 0; font-weight: 600;">User Deleted</h3>
-                                    <p style="color: #334155; margin-bottom: 5px;">
-                                        <strong>"${selectedUserName}"</strong> has been successfully deleted.
-                                    </p>
-                                    <p style="color: #64748b; font-size: 14px; margin: 0;">
-                                        The user has been moved to archive and will be preserved for 30 days.
-                                    </p>
-                                </div>
-                            `,
+                            title: 'User Archived Successfully',
+                            text: `"${selectedUserName}" has been moved to archive. Blockchain certificates remain verifiable.`,
                             icon: 'success',
                             confirmButtonText: 'OK',
                             confirmButtonColor: '#065f46',
@@ -746,12 +732,12 @@ $(document).ready(function() {
                         
                         resolve(response);
                     } else {
-                        reject(response.message || 'Deletion failed');
+                        reject(response.message || 'Archiving failed');
                     }
                 },
                 error: function(xhr) {
                     hideLoadingScreen();
-                    reject('Error deleting user: ' + (xhr.responseJSON?.message || 'Server error'));
+                    reject('Error archiving user: ' + (xhr.responseJSON?.message || 'Server error'));
                 }
             });
         });

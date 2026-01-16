@@ -93,7 +93,7 @@ def view_grades():
     status = request.args.get('status')
     search = request.args.get('search', '')
     
-    # FIXED QUERY: Get ALL enrollments regardless of status, but join with student_grades
+    # MODIFIED QUERY: Exclude enrollments with status = 'pending'
     query = """
         SELECT 
             e.enrollment_id,
@@ -115,7 +115,7 @@ def view_grades():
         JOIN personal_information pi ON l.user_id = pi.user_id
         JOIN classes c ON e.class_id = c.class_id
         LEFT JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id
-        WHERE 1=1  -- Get ALL enrollments
+        WHERE e.status != 'pending'  -- EXCLUDE pending enrollments
     """
     
     params = []
@@ -132,8 +132,8 @@ def view_grades():
         elif status == 'Dropped':
             query += " AND (e.status = 'dropped' OR sg.remarks = 'Dropped')"
         elif status == 'enrolled':
-            # Show active enrollments that aren't completed or dropped
-            query += " AND e.status IN ('enrolled', 'pending')"
+            # Show only active enrollments (excluding pending)
+            query += " AND e.status = 'enrolled'"
         else:
             query += " AND e.status = %s"
             params.append(status)
