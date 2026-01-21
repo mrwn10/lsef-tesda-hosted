@@ -1,13 +1,13 @@
-// staff_class_creation.js - Updated with Mobile Navigation and Modal Management
+// staff_class_creation.js - Enhanced with Simple Batch Numbers
 $(document).ready(function() {
+    const createClassUrl = "/class/create";
+    
     // Initialize all functionality
     function init() {
         initMobileNavigation();
         initModals();
-        initClassCreationForm();
+        initClassCreation();
     }
-    
-    // ===== MOBILE NAVIGATION AND MODAL FUNCTIONS =====
     
     // Mobile Navigation Functionality
     function initMobileNavigation() {
@@ -30,6 +30,16 @@ $(document).ready(function() {
                 });
             }
             
+            // Close mobile nav when clicking on links
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('active');
+                    document.body.style.overflow = '';
+                    document.body.classList.remove('modal-open');
+                });
+            });
+            
             // Expandable mobile menu sections
             const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
             mobileNavHeaders.forEach(header => {
@@ -46,20 +56,10 @@ $(document).ready(function() {
                         submenu.classList.toggle('active');
                     }
                     
-                    // Rotate chevron icon
+                    // Rotate only the chevron icon
                     if (chevron) {
                         chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
-                });
-            });
-            
-            // Close mobile nav when clicking on links
-            const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
-            mobileNavLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    mobileNav.classList.remove('active');
-                    document.body.style.overflow = '';
-                    document.body.classList.remove('modal-open');
                 });
             });
             
@@ -85,14 +85,12 @@ $(document).ready(function() {
     
     // Initialize all modal functionality
     function initModals() {
-        // Close modal function - works for ALL modals
         function closeAllModals() {
             $('.modal').fadeOut(300);
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         }
 
-        // Open modal function
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -102,21 +100,17 @@ $(document).ready(function() {
             }
         }
 
-        // Close modal when clicking outside - works for ALL modals
         $(document).on('click', function(e) {
             if ($(e.target).hasClass('modal')) {
                 closeAllModals();
             }
         });
 
-        // Escape key to close modals - works for ALL modals
         $(document).keyup(function(e) {
             if (e.keyCode === 27) {
                 closeAllModals();
             }
         });
-
-        // ===== SPECIFIC MODAL FUNCTIONALITY =====
 
         // Logout Modal
         $('#logout-trigger').click(function(e) {
@@ -128,12 +122,10 @@ $(document).ready(function() {
         $('#mobile-logout-trigger').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
-            // First close mobile nav properly
             const mobileNav = document.getElementById('mobileNav');
             if (mobileNav) {
                 mobileNav.classList.remove('active');
             }
-            // Then open logout modal
             setTimeout(() => {
                 openModal('logout-modal');
             }, 10);
@@ -164,26 +156,14 @@ $(document).ready(function() {
         });
     }
     
-    // ===== CLASS CREATION FORM FUNCTIONALITY =====
-    
-    function initClassCreationForm() {
-        const createClassUrl = "/class/create";
-        
+    // Initialize class creation functionality
+    function initClassCreation() {
         // Check if instructor name exists
         const instructorNameField = document.getElementById('instructor_name');
         const instructorNameDisplay = document.getElementById('instructor_name_display');
         
         if (instructorNameField && !instructorNameField.value.trim()) {
             showMessage('Please complete your profile to get your instructor name. You cannot create a class without a valid instructor name.', 'error', true);
-            
-            // Disable form submission if no instructor name
-            document.getElementById('classCreationForm').addEventListener('submit', function(e) {
-                if (!instructorNameField.value.trim()) {
-                    e.preventDefault();
-                    showMessage('Cannot create class: Instructor name not found. Please complete your profile first.', 'error');
-                    return false;
-                }
-            });
         }
         
         // Template for day time slot
@@ -198,7 +178,7 @@ $(document).ready(function() {
                     </div>
                     <div class="time-inputs">
                         <div class="form-group">
-                            <label for="${day.toLowerCase()}-start">Start Time</label>
+                            <label for="${day.toLowerCase()}-start">Start Time <span class="required">*</span></label>
                             <div class="input-with-icon">
                                 <i class="fas fa-clock"></i>
                                 <select class="day-time-input" id="${day.toLowerCase()}-start" data-day="${day}" data-type="start" required>
@@ -208,7 +188,7 @@ $(document).ready(function() {
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="${day.toLowerCase()}-end">End Time</label>
+                            <label for="${day.toLowerCase()}-end">End Time <span class="required">*</span></label>
                             <div class="input-with-icon">
                                 <i class="fas fa-clock"></i>
                                 <select class="day-time-input" id="${day.toLowerCase()}-end" data-day="${day}" data-type="end" required>
@@ -235,129 +215,170 @@ $(document).ready(function() {
             return options;
         }
 
-        // Manage day selections and time slots
-        const daySelectors = document.querySelectorAll('.day-selector');
-        const dayTimeSlots = document.getElementById('dayTimeSlots');
-        const daySlots = new Set();
-
-        daySelectors.forEach(selector => {
-            selector.addEventListener('change', function() {
-                const day = this.value;
-                
-                if (this.checked && !daySlots.has(day)) {
-                    // Add new day slot
-                    daySlots.add(day);
-                    updateDaySlotsDisplay();
-                } else if (!this.checked && daySlots.has(day)) {
-                    // Remove day slot
-                    daySlots.delete(day);
-                    updateDaySlotsDisplay();
-                }
-            });
-        });
-
-        // Handle remove day button clicks (delegated event)
-        dayTimeSlots.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-day')) {
-                const daySlot = e.target.closest('.day-slot');
-                const day = daySlot.dataset.day;
-                
-                // Uncheck the corresponding checkbox
-                const checkbox = document.querySelector(`.day-selector[value="${day}"]`);
-                if (checkbox) {
-                    checkbox.checked = false;
-                }
-                
-                // Remove from set and update display
-                daySlots.delete(day);
-                updateDaySlotsDisplay();
+        // Calculate school year from dates
+        function calculateSchoolYear(startDate, endDate) {
+            const startYear = startDate.getFullYear();
+            const endYear = endDate.getFullYear();
+            
+            if (endYear > startYear) {
+                return `${startYear}-${endYear}`;
+            } else {
+                return `${startYear}-${startYear}`;
             }
-        });
+        }
 
-        // Update the day slots display
-        function updateDaySlotsDisplay() {
-            if (daySlots.size === 0) {
-                dayTimeSlots.innerHTML = `
-                    <div class="no-days-selected">
-                        <i class="far fa-calendar-plus"></i>
-                        <p>Select days above to add time slots</p>
-                    </div>
-                `;
+        // Format date for short display (e.g., "Jan 2025")
+        function formatShortMonthYear(date) {
+            return date.toLocaleString('en-US', { 
+                month: 'short', 
+                year: 'numeric' 
+            });
+        }
+
+        // Calculate months between dates
+        function calculateMonthsBetween(startDate, endDate) {
+            let totalMonths = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+            totalMonths += endDate.getMonth() - startDate.getMonth();
+            totalMonths += 1; // Include both start and end months
+            
+            return Math.max(1, totalMonths); // At least 1 month
+        }
+
+        // Format duration in human-readable years and months
+        function formatDuration(totalMonths) {
+            if (totalMonths < 12) {
+                return `${totalMonths} month${totalMonths !== 1 ? 's' : ''}`;
+            } else {
+                const years = Math.floor(totalMonths / 12);
+                const months = totalMonths % 12;
+                
+                if (months === 0) {
+                    return `${years} year${years !== 1 ? 's' : ''}`;
+                } else if (months === 1) {
+                    return `${years} year${years !== 1 ? 's' : ''} and 1 month`;
+                } else {
+                    return `${years} year${years !== 1 ? 's' : ''} and ${months} months`;
+                }
+            }
+        }
+
+        // Update date information display
+        function updateDateInfoDisplay(startDate, endDate) {
+            const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+            const schoolYearDisplay = document.getElementById('schoolYearDisplay');
+            const schedulePeriodDisplay = document.getElementById('schedulePeriodDisplay');
+            const durationDisplay = document.getElementById('durationDisplay');
+            const schoolYearHidden = document.getElementById('school_year');
+            
+            if (!startDate || !endDate) {
+                if (dateInfoDisplay) {
+                    dateInfoDisplay.classList.remove('show');
+                }
                 return;
             }
             
-            // Sort days in order (Monday to Sunday)
-            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            const sortedDays = Array.from(daySlots).sort((a, b) => {
-                return daysOrder.indexOf(a) - daysOrder.indexOf(b);
-            });
+            // Calculate values
+            const schoolYear = calculateSchoolYear(startDate, endDate);
+            const totalMonths = calculateMonthsBetween(startDate, endDate);
+            const durationText = formatDuration(totalMonths);
             
-            let html = '';
-            sortedDays.forEach(day => {
-                html += createDaySlot(day);
-            });
+            // Update displays
+            if (schoolYearDisplay) {
+                schoolYearDisplay.textContent = schoolYear;
+            }
+            if (schoolYearHidden) {
+                schoolYearHidden.value = schoolYear;
+            }
             
-            dayTimeSlots.innerHTML = html;
+            if (schedulePeriodDisplay) {
+                schedulePeriodDisplay.textContent = `${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}`;
+            }
+            if (durationDisplay) {
+                durationDisplay.textContent = durationText;
+            }
+            
+            // Show the display
+            if (dateInfoDisplay) {
+                dateInfoDisplay.classList.add('show');
+            }
         }
 
-        // Time validation for day slots
-        dayTimeSlots.addEventListener('change', function(e) {
-            if (e.target.classList.contains('day-time-input')) {
-                const day = e.target.dataset.day;
-                const type = e.target.dataset.type;
-                const otherType = type === 'start' ? 'end' : 'start';
+        // Update batch field when course is selected
+        function updateBatchField() {
+            const courseId = document.getElementById('course_id').value;
+            const batchField = document.getElementById('batch');
+            
+            if (!batchField) return;
+            
+            if (courseId) {
+                // Simple placeholder
+                batchField.value = "Will be generated (1, 2, 3...)";
+                batchField.classList.add('batch-preview');
+            } else {
+                batchField.value = "Select a course first";
+                batchField.classList.remove('batch-preview');
+            }
+        }
+
+        // Validate dates are within school year and not in the past
+        function validateDates() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput || !endDateInput) return true;
+            
+            if (!startDateInput.value || !endDateInput.value) {
+                return true; // Let form validation handle empty fields
+            }
+            
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0); // Reset time part for comparison
+            
+            // 1. Check if end date is after start date
+            if (endDate <= startDate) {
+                showMessage('End date must be after start date', 'error');
+                endDateInput.focus();
+                endDateInput.classList.add('date-error');
+                return false;
+            }
+            
+            // 2. Check if end date is in the past
+            if (endDate < currentDate) {
+                showMessage(`End date (${endDateInput.value}) is in the past. Cannot create a class that has already ended.`, 'error');
+                endDateInput.focus();
+                endDateInput.classList.add('date-error');
+                return false;
+            }
+            
+            // Clear error styling if valid
+            endDateInput.classList.remove('date-error');
+            return true;
+        }
+
+        // Update end date min based on start date
+        function updateEndDateMin() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput || !endDateInput) return;
+            
+            if (startDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const minEndDate = new Date(startDate);
+                minEndDate.setDate(startDate.getDate() + 1); // At least 1 day after start
                 
-                const currentTime = e.target.value;
-                const otherTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="${otherType}"]`);
+                // Format for input[type="date"]
+                const minDateStr = minEndDate.toISOString().split('T')[0];
+                endDateInput.min = minDateStr;
                 
-                if (currentTime && otherTimeInput && otherTimeInput.value) {
-                    if (type === 'start' && currentTime >= otherTimeInput.value) {
-                        showMessage('Start time must be before end time', 'error');
-                        e.target.value = '';
-                    } else if (type === 'end' && currentTime <= otherTimeInput.value) {
-                        showMessage('End time must be after start time', 'error');
-                        e.target.value = '';
-                    }
+                // If current end date is before min, clear it
+                if (endDateInput.value && new Date(endDateInput.value) <= startDate) {
+                    endDateInput.value = '';
+                    showMessage('End date must be after start date', 'warning');
                 }
             }
-        });
-
-        // Date validation to ensure end date is after start date
-        const endDateField = document.getElementById('end_date');
-        if (endDateField) {
-            endDateField.addEventListener('change', function() {
-                const startDateField = document.getElementById('start_date');
-                if (startDateField && startDateField.value) {
-                    const startDate = new Date(startDateField.value);
-                    const endDate = new Date(this.value);
-                    
-                    if (startDate && endDate && endDate < startDate) {
-                        showMessage('End date must be after start date', 'error');
-                        this.value = '';
-                    }
-                }
-            });
-        }
-
-        // Set minimum end date based on start date
-        const startDateField = document.getElementById('start_date');
-        if (startDateField) {
-            startDateField.addEventListener('change', function() {
-                const endDateField = document.getElementById('end_date');
-                
-                if (this.value && endDateField) {
-                    const startDate = new Date(this.value);
-                    startDate.setDate(startDate.getDate() + 1);
-                    const minEndDate = startDate.toISOString().split('T')[0];
-                    endDateField.min = minEndDate;
-                    
-                    if (endDateField.value && new Date(endDateField.value) < startDate) {
-                        endDateField.value = '';
-                    }
-                } else if (endDateField) {
-                    endDateField.min = '';
-                }
-            });
         }
 
         // Show message function
@@ -380,6 +401,253 @@ $(document).ready(function() {
                     messageContainer.style.display = 'none';
                 }, 5000);
             }
+        }
+
+        // Initialize date validation
+        function initDateValidation() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput || !endDateInput) return;
+            
+            // Update end date min when start date changes
+            startDateInput.addEventListener('change', function() {
+                updateEndDateMin();
+                if (this.value && endDateInput.value) {
+                    validateDates();
+                    updateDateInfoDisplay(new Date(this.value), new Date(endDateInput.value));
+                }
+            });
+            
+            // Update display when dates change
+            endDateInput.addEventListener('change', function() {
+                if (startDateInput.value && this.value) {
+                    validateDates();
+                    updateDateInfoDisplay(new Date(startDateInput.value), new Date(this.value));
+                }
+            });
+            
+            // Real-time update for date info display
+            [startDateInput, endDateInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    if (startDateInput.value && endDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const endDate = new Date(endDateInput.value);
+                        if (endDate > startDate) {
+                            updateDateInfoDisplay(startDate, endDate);
+                        }
+                    }
+                });
+            });
+            
+            // Set minimum start date to today
+            const today = new Date().toISOString().split('T')[0];
+            startDateInput.min = today;
+        }
+
+        // Manage day selections and time slots
+        const daySelectors = document.querySelectorAll('.day-selector');
+        const dayTimeSlots = document.getElementById('dayTimeSlots');
+        const daySlots = new Set();
+
+        if (daySelectors.length > 0) {
+            daySelectors.forEach(selector => {
+                selector.addEventListener('change', function() {
+                    const day = this.value;
+                    
+                    if (this.checked && !daySlots.has(day)) {
+                        // Add new day slot
+                        daySlots.add(day);
+                        updateDaySlotsDisplay();
+                    } else if (!this.checked && daySlots.has(day)) {
+                        // Remove day slot
+                        daySlots.delete(day);
+                        updateDaySlotsDisplay();
+                    }
+                });
+            });
+        }
+
+        // Handle remove day button clicks
+        if (dayTimeSlots) {
+            dayTimeSlots.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-day')) {
+                    const daySlot = e.target.closest('.day-slot');
+                    const day = daySlot.dataset.day;
+                    
+                    // Uncheck the corresponding checkbox
+                    const checkbox = document.querySelector(`.day-selector[value="${day}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                    
+                    // Remove from set and update display
+                    daySlots.delete(day);
+                    updateDaySlotsDisplay();
+                }
+            });
+        }
+
+        // Update the day slots display
+        function updateDaySlotsDisplay() {
+            if (!dayTimeSlots) return;
+            
+            if (daySlots.size === 0) {
+                dayTimeSlots.innerHTML = `
+                    <div class="no-days-selected">
+                        <i class="far fa-calendar-plus"></i>
+                        <p>Select days above to add time slots</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort days in order
+            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const sortedDays = Array.from(daySlots).sort((a, b) => {
+                return daysOrder.indexOf(a) - daysOrder.indexOf(b);
+            });
+            
+            let html = '';
+            sortedDays.forEach(day => {
+                html += createDaySlot(day);
+            });
+            
+            dayTimeSlots.innerHTML = html;
+        }
+
+        // Time validation for day slots
+        if (dayTimeSlots) {
+            dayTimeSlots.addEventListener('change', function(e) {
+                if (e.target.classList.contains('day-time-input')) {
+                    const day = e.target.dataset.day;
+                    const type = e.target.dataset.type;
+                    const otherType = type === 'start' ? 'end' : 'start';
+                    
+                    const currentTime = e.target.value;
+                    const otherTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="${otherType}"]`);
+                    
+                    if (currentTime && otherTimeInput && otherTimeInput.value) {
+                        if (type === 'start' && currentTime >= otherTimeInput.value) {
+                            showMessage('Start time must be before end time', 'error');
+                            e.target.value = '';
+                        } else if (type === 'end' && currentTime <= otherTimeInput.value) {
+                            showMessage('End time must be after start time', 'error');
+                            e.target.value = '';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load prerequisites when course is selected
+        const courseSelect = document.getElementById('course_id');
+        if (courseSelect) {
+            courseSelect.addEventListener('change', function() {
+                const courseId = this.value;
+                const prerequisitesField = document.getElementById('prerequisites');
+                
+                if (!prerequisitesField) return;
+                
+                if (courseId) {
+                    // Show loading message
+                    prerequisitesField.value = 'Loading prerequisites...';
+                    
+                    // Try multiple URL patterns to find the correct one
+                    const urlPatterns = [
+                        `/course/prerequisites/${courseId}`,
+                        `/staff/course/prerequisites/${courseId}`,
+                        `/class/course/prerequisites/${courseId}`
+                    ];
+                    
+                    console.log('Trying to fetch prerequisites for course:', courseId);
+                    
+                    let fetchAttempts = 0;
+                    const maxAttempts = urlPatterns.length;
+                    
+                    function tryFetch(index) {
+                        if (index >= maxAttempts) {
+                            prerequisitesField.value = 'Error: Could not load prerequisites. Please try again.';
+                            console.error('All fetch attempts failed');
+                            return;
+                        }
+                        
+                        const url = urlPatterns[index];
+                        console.log(`Attempt ${index + 1}: Fetching from ${url}`);
+                        
+                        fetch(url)
+                            .then(response => {
+                                console.log(`Attempt ${index + 1}: Response status:`, response.status);
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log(`Attempt ${index + 1}: Success! Data:`, data);
+                                if (data.status === 'success') {
+                                    prerequisitesField.value = data.prerequisites || 'No prerequisites specified.';
+                                    console.log('Prerequisites loaded successfully');
+                                } else {
+                                    prerequisitesField.value = `Error: ${data.message}`;
+                                    console.error('Server returned error:', data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.log(`Attempt ${index + 1}: Failed - ${error.message}`);
+                                // Try next URL
+                                tryFetch(index + 1);
+                            });
+                    }
+                    
+                    // Start trying URLs
+                    tryFetch(0);
+                } else {
+                    prerequisitesField.value = '';
+                }
+                
+                // Update batch field
+                updateBatchField();
+            });
+        }
+
+        // Form reset handler
+        const resetBtn = document.querySelector('.reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                // Reset day slots
+                daySlots.clear();
+                updateDaySlotsDisplay();
+                
+                // Reset date info display
+                const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+                if (dateInfoDisplay) {
+                    dateInfoDisplay.classList.remove('show');
+                }
+                
+                const schoolYearHidden = document.getElementById('school_year');
+                if (schoolYearHidden) {
+                    schoolYearHidden.value = '';
+                }
+                
+                const batchField = document.getElementById('batch');
+                if (batchField) {
+                    batchField.value = 'Will be generated (1, 2, 3...)';
+                    batchField.classList.remove('batch-preview');
+                }
+                
+                const prerequisitesField = document.getElementById('prerequisites');
+                if (prerequisitesField) {
+                    prerequisitesField.value = '';
+                }
+                
+                // Keep instructor name if exists
+                const instructorName = document.getElementById('instructor_name');
+                const instructorNameDisplay = document.getElementById('instructor_name_display');
+                if (instructorName && instructorNameDisplay && instructorName.value.trim()) {
+                    instructorNameDisplay.value = instructorName.value;
+                }
+            });
         }
 
         // Form submission
@@ -419,104 +687,164 @@ $(document).ready(function() {
                     return;
                 }
                 
-                // Validate date range
-                const startDate = startDateField ? new Date(startDateField.value) : null;
-                const endDate = endDateField ? new Date(endDateField.value) : null;
-                
-                if (!startDate || !endDate) {
-                    showMessage('Please provide both start and end dates', 'error');
+                // Date validation
+                if (!validateDates()) {
                     return;
                 }
                 
-                if (endDate < startDate) {
-                    showMessage('End date must be after start date', 'error');
-                    return;
-                }
+                // Submit form
+                submitFormData();
+            });
+        }
+        
+        // Function to handle actual form submission
+        function submitFormData() {
+            // Create days_of_week JSON and schedule text
+            const daysData = {};
+            let scheduleText = '';
+            
+            Array.from(daySlots).forEach(day => {
+                const startTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`).value;
+                const endTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`).value;
                 
-                // Create days_of_week JSON and schedule text
-                const daysData = {};
-                let scheduleText = '';
+                daysData[day] = {
+                    start: startTime,
+                    end: endTime
+                };
                 
-                Array.from(daySlots).forEach(day => {
-                    const startTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`);
-                    const endTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`);
+                // Format time for display (convert 24h to 12h)
+                const startHour = parseInt(startTime.split(':')[0]);
+                const endHour = parseInt(endTime.split(':')[0]);
+                
+                const startAmPm = startHour >= 12 ? 'PM' : 'AM';
+                const endAmPm = endHour >= 12 ? 'PM' : 'AM';
+                
+                const startHour12 = startHour % 12 || 12;
+                const endHour12 = endHour % 12 || 12;
+                
+                if (scheduleText) scheduleText += ", ";
+                scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
+            });
+            
+            // Set the hidden field values
+            const daysOfWeekField = document.getElementById('days_of_week');
+            const scheduleField = document.getElementById('schedule');
+            
+            if (daysOfWeekField) {
+                daysOfWeekField.value = JSON.stringify(daysData);
+            }
+            if (scheduleField) {
+                scheduleField.value = scheduleText;
+            }
+            
+            // Create form data
+            const formData = new FormData(document.getElementById('classCreationForm'));
+            
+            // Show loading state
+            document.getElementById('classCreationForm').classList.add('loading');
+            
+            // Submit the form
+            fetch(createClassUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const startDate = new Date(data.start_date);
+                    const endDate = new Date(data.end_date);
+                    const totalMonths = calculateMonthsBetween(startDate, endDate);
+                    const durationText = formatDuration(totalMonths);
                     
-                    if (startTimeInput && endTimeInput && startTimeInput.value && endTimeInput.value) {
-                        daysData[day] = {
-                            start: startTimeInput.value,
-                            end: endTimeInput.value
-                        };
-                        
-                        // Format time for display (convert 24h to 12h)
-                        const startHour = parseInt(startTimeInput.value.split(':')[0]);
-                        const endHour = parseInt(endTimeInput.value.split(':')[0]);
-                        
-                        const startAmPm = startHour >= 12 ? 'PM' : 'AM';
-                        const endAmPm = endHour >= 12 ? 'PM' : 'AM';
-                        
-                        const startHour12 = startHour % 12 || 12;
-                        const endHour12 = endHour % 12 || 12;
-                        
-                        if (scheduleText) scheduleText += ", ";
-                        scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
-                    }
-                });
-                
-                // Set the hidden field values
-                document.getElementById('days_of_week').value = JSON.stringify(daysData);
-                document.getElementById('schedule').value = scheduleText;
-                
-                // Create form data
-                const formData = new FormData(this);
-                
-                // Show loading state
-                form.classList.add('loading');
-                
-                // Submit the form
-                fetch(createClassUrl, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showMessage(data.message, 'success');
-                        form.reset();
+                    console.log('Class created successfully. Batch:', data.batch);
+                    
+                    Swal.fire({
+                        title: 'Success!',
+                        html: `<p>${data.message}</p>
+                               <div class="batch-info">
+                                   <p><strong>Course:</strong> ${document.getElementById('class_title').value}</p>
+                                   <p><strong>Batch:</strong> ${data.batch}</p>
+                                   <p><strong>School Year:</strong> ${data.school_year}</p>
+                                   <p><strong>Schedule Period:</strong> ${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}</p>
+                                   <p><strong>Duration:</strong> ${durationText}</p>
+                               </div>
+                               <div class="staff-note-alert">
+                                   <p><i class="fas fa-clock"></i> This class is now <strong>PENDING</strong> and requires admin approval before activation.</p>
+                               </div>`,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#003366'
+                    }).then(() => {
+                        // Reset form
+                        document.getElementById('classCreationForm').reset();
                         daySlots.clear();
                         updateDaySlotsDisplay();
                         
-                        // Reset date fields
-                        if (startDateField) startDateField.value = '';
-                        if (endDateField) endDateField.value = '';
+                        const prerequisitesField = document.getElementById('prerequisites');
+                        if (prerequisitesField) {
+                            prerequisitesField.value = '';
+                        }
+                        
+                        const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+                        if (dateInfoDisplay) {
+                            dateInfoDisplay.classList.remove('show');
+                        }
+                        
+                        const batchField = document.getElementById('batch');
+                        if (batchField) {
+                            batchField.value = 'Will be generated (1, 2, 3...)';
+                            batchField.classList.remove('batch-preview');
+                        }
                         
                         // Keep instructor name
-                        if (instructorNameDisplay) {
-                            instructorNameDisplay.value = instructorName;
+                        if (instructorNameDisplay && instructorNameField.value.trim()) {
+                            instructorNameDisplay.value = instructorNameField.value;
                         }
-                        
-                        // Scroll to top
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                } else {
+                    showMessage(data.message, 'error');
+                    
+                    // Handle redirect for profile completion
+                    if (data.redirect) {
+                        Swal.fire({
+                            title: 'Action Required',
+                            text: data.message,
+                            icon: 'warning',
+                            confirmButtonText: 'Go to Profile',
+                            confirmButtonColor: '#003366'
+                        }).then(() => {
+                            window.location.href = data.redirect;
+                        });
                     } else {
-                        showMessage(data.message, 'error');
-                        
-                        // Handle redirect for profile completion
-                        if (data.redirect) {
-                            setTimeout(() => {
-                                window.location.href = data.redirect;
-                            }, 2000);
-                        }
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#800000'
+                        });
                     }
-                })
-                .catch(error => {
-                    showMessage('Error creating class. Please try again.', 'error');
-                    console.error('Error:', error);
-                })
-                .finally(() => {
-                    form.classList.remove('loading');
+                }
+            })
+            .catch(error => {
+                showMessage('Error creating class. Please try again.', 'error');
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Error creating class. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#800000'
                 });
+            })
+            .finally(() => {
+                const form = document.getElementById('classCreationForm');
+                if (form) {
+                    form.classList.remove('loading');
+                }
             });
         }
-
+        
         // Force maximum students to 25 and disable input
         const maxStudentsInput = document.getElementById('max_students');
         if (maxStudentsInput) {
@@ -537,6 +865,12 @@ $(document).ready(function() {
                 this.value = 25;
             });
         }
+        
+        // Initialize date validation
+        initDateValidation();
+        
+        // Initial update of batch field
+        updateBatchField();
     }
     
     // Initialize everything

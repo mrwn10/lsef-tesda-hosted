@@ -9,11 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Define URLs for JavaScript -->
     <script>
         window.appUrls = {
-            logoutUrl: "{{ url_for('login.logout') }}"
+            logoutUrl: "{{ url_for('login.logout') }}",
+            prerequisitesUrl: "{{ url_for('staff_class_creation.get_prerequisites', course_id=0) }}".replace('/0', '')
         };
     </script>
 </head>
@@ -110,17 +112,17 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Class Management Subnav -->
-    <nav class="courses-subnav">
-        <div class="subnav-right">
-            <a href="{{ url_for('staff_class_management') }}">Class Management</a>
-            <a href="{{ url_for('staff_class_creation.create_class') }}" class="active">Class Creation</a>
-            <a href="{{ url_for('staff_class_edit_req') }}">Class Edit Request</a>
-            <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}">Enrollment Acceptance</a>
-        </div>
-    </nav>
+        <!-- Class Management Subnav -->
+        <nav class="courses-subnav">
+            <div class="subnav-right">
+                <a href="{{ url_for('staff_class_management') }}"><i class="fas fa-users"></i> Class Management</a>
+                <a href="{{ url_for('staff_class_creation.create_class') }}" class="active"><i class="fas fa-plus-circle"></i> Class Creation</a>
+                <a href="{{ url_for('staff_class_edit_req') }}"><i class="fas fa-edit"></i> Class Edit Request</a>
+                <a href="{{ url_for('staff_enrollment_acceptance.view_enrollment_requests') }}"><i class="fas fa-user-check"></i> Enrollment Acceptance</a>
+            </div>
+        </nav>
+    </div>
 
     <!-- Logout Confirmation Modal -->
     <div class="modal" id="logout-modal">
@@ -148,6 +150,7 @@
                 <div class="breadcrumb">
                     <span>Class Management</span> / <span>Class Creation</span>
                 </div>
+                <p class="staff-note"><i class="fas fa-clock"></i> Note: Classes created by staff require admin approval and will be set to <strong>PENDING</strong> status.</p>
             </div>
             
             <div id="message-container">
@@ -163,14 +166,16 @@
                             <h2><i class="fas fa-book"></i> Course Information</h2>
                             
                             <div class="form-group">
-                                <label for="course_id">Course</label>
+                                <label for="course_id">Course <span class="required">*</span></label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-graduation-cap"></i>
                                     <select id="course_id" name="course_id" required>
                                         <option value="" selected disabled>Select Course</option>
                                         {% if courses %}
                                             {% for course in courses %}
-                                                <option value="{{ course.course_id }}">{{ course.course_title }}</option>
+                                                <option value="{{ course.course_id }}" data-course-code="{{ course.course_code }}">
+                                                    {{ course.course_title }} ({{ course.course_code }})
+                                                </option>
                                             {% endfor %}
                                         {% else %}
                                             <option value="" disabled>No active courses available</option>
@@ -180,7 +185,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="class_title">Class Title</label>
+                                <label for="class_title">Class Title <span class="required">*</span></label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-heading"></i>
                                     <input type="text" id="class_title" name="class_title" placeholder="Enter class title" required>
@@ -188,19 +193,16 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="school_year">School Year</label>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <input type="text" id="school_year" name="school_year" placeholder="e.g. 2023-2024" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
                                 <label for="batch">Batch</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-layer-group"></i>
-                                    <input type="text" id="batch" name="batch" placeholder="e.g. Batch 2023">
+                                    <input type="text" id="batch" name="batch" placeholder="Will be auto-generated (1, 2, 3...)" readonly 
+                                           style="background-color: #f8f9fa; color: #666;">
                                 </div>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                                    Batch number will be auto-generated sequentially for each course (e.g., 1, 2, 3...)
+                                    <br>Bookkeeping classes: 1, 2, 3... | Cooking classes: 1, 2, 3...
+                                </small>
                             </div>
                         </div>
 
@@ -209,18 +211,20 @@
                             <h2><i class="fas fa-user-tie"></i> Instructor Information</h2>
                             
                             <div class="form-group">
-                                <label>Instructor Name</label>
+                                <label>Instructor Name <span class="required">*</span></label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-user"></i>
-                                    <input type="text" id="instructor_name_display" value="{{ instructor_name or 'Instructor name not found' }}" readonly disabled class="readonly-input">
+                                    <input type="text" id="instructor_name_display" value="{{ instructor_name or 'Please complete your profile' }}" readonly disabled class="readonly-input">
                                 </div>
-                                <small class="form-text">Your name is automatically assigned as the instructor</small>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                                    Your name is automatically assigned as the instructor
+                                </small>
                                 <!-- Hidden field for form submission -->
                                 <input type="hidden" id="instructor_name" name="instructor_name" value="{{ instructor_name or '' }}">
                             </div>
 
                             <div class="form-group">
-                                <label for="venue">Venue</label>
+                                <label for="venue">Venue <span class="required">*</span></label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-map-marker-alt"></i>
                                     <input type="text" id="venue" name="venue" placeholder="Enter venue" required>
@@ -231,9 +235,9 @@
                                 <label for="max_students">Maximum Students</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-users"></i>
-                                    <input type="number" id="max_students" name="max_students" value="25" min="25" max="25" readonly required>
+                                    <input type="number" id="max_students" name="max_students" value="25" readonly style="background-color: #f8f9fa; color: #666;">
                                 </div>
-                                <small class="form-text">Maximum students is fixed at 25</small>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">Fixed at 25 students per class</small>
                             </div>
                         </div>
                     </div>
@@ -244,8 +248,56 @@
                         <div class="form-section">
                             <h2><i class="fas fa-calendar-check"></i> Schedule Information</h2>
                             
+                            <!-- Date Range Inputs -->
+                            <div class="date-range-group">
+                                <label>Class Date Range <span class="required">*</span></label>
+                                
+                                <div class="date-inputs">
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <input type="date" id="start_date" name="start_date" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end_date">End Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-minus"></i>
+                                            <input type="date" id="end_date" name="end_date" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Date Information Display -->
+                                <div class="date-info-display" id="dateInfoDisplay">
+                                    <div class="date-info-header">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Class Schedule Information</span>
+                                    </div>
+                                    <div class="date-info-content">
+                                        <div class="info-item">
+                                            <span class="info-label">School Year</span>
+                                            <span class="info-value" id="schoolYearDisplay">Not calculated</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Schedule Period</span>
+                                            <span class="info-value" id="schedulePeriodDisplay">Not set</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Duration</span>
+                                            <span class="info-value duration-display" id="durationDisplay">0 months</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="date-warning">
+                                    <small><i class="fas fa-exclamation-triangle"></i> End date cannot be in the past.</small>
+                                </div>
+                            </div>
+
                             <div class="form-group">
-                                <label>Select Days</label>
+                                <label>Select Days <span class="required">*</span></label>
                                 <div class="day-checkboxes">
                                     <div class="day-checkbox">
                                         <input type="checkbox" id="monday" name="days" value="Monday" class="d-none day-selector">
@@ -284,26 +336,6 @@
                                     <p>Select days above to add time slots</p>
                                 </div>
                             </div>
-
-                            <div class="form-group date-range-group">
-                                <label>Class Date Range</label>
-                                <div class="date-inputs">
-                                    <div class="form-group">
-                                        <label for="start_date">Start Date</label>
-                                        <div class="input-with-icon">
-                                            <i class="fas fa-calendar-plus"></i>
-                                            <input type="date" id="start_date" name="start_date" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="end_date">End Date</label>
-                                        <div class="input-with-icon">
-                                            <i class="fas fa-calendar-minus"></i>
-                                            <input type="date" id="end_date" name="end_date" required>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Additional Information -->
@@ -314,7 +346,7 @@
                                 <label for="prerequisites">Prerequisites</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-clipboard-list"></i>
-                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Optional prerequisites"></textarea>
+                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Prerequisites will be loaded from selected course" readonly style="background-color: #f8f9fa; color: #666;"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -324,6 +356,7 @@
                 <!-- Hidden fields -->
                 <input type="hidden" id="days_of_week" name="days_of_week">
                 <input type="hidden" id="schedule" name="schedule">
+                <input type="hidden" id="school_year" name="school_year">
 
                 <div class="form-actions">
                     <button type="reset" class="reset-btn">
@@ -336,18 +369,6 @@
             </form>
         </div>
     </main>
-
-    <!-- Loading Screen Modal -->
-    <div id="loading-screen" class="modal" style="display: none; z-index: 3000;">
-        <div class="modal-content" style="width: 300px; text-align: center;">
-            <div class="modal-body">
-                <div class="loading-spinner" style="margin-bottom: 15px;">
-                    <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto;"></div>
-                </div>
-                <p id="loading-message" style="margin: 0; font-size: 16px; color: #333;">Loading...</p>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/staff/staff_class_creation.js') }}"></script>
 </body>

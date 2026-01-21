@@ -464,6 +464,11 @@ body.modal-open {
     font-family: 'Poppins', sans-serif;
 }
 
+.courses-subnav .subnav-right a i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
 .courses-subnav .subnav-right a:hover {
     color: var(--tesda-blue);
     background-color: #f1f5f9;
@@ -518,13 +523,32 @@ body.modal-open {
 
 .breadcrumb {
     color: #64748b;
-    font-size: 1rem;
+    font-size: 14px;
+    margin-bottom: 0.5rem;
     font-family: 'Poppins', sans-serif;
 }
 
 .breadcrumb span {
     color: var(--tesda-blue);
     font-weight: 500;
+}
+
+.staff-note {
+    color: #d97706;
+    background-color: #fef3c7;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+    border-left: 4px solid #d97706;
+}
+
+.staff-note i {
+    color: #d97706;
 }
 
 /* ===== Class Creation Form Styles ===== */
@@ -601,6 +625,11 @@ body.modal-open {
 .form-group {
     margin-bottom: 1.25rem;
     position: relative;
+}
+
+.required {
+    color: #ef4444;
+    font-weight: bold;
 }
 
 label {
@@ -684,6 +713,12 @@ select {
     background-size: 1rem;
 }
 
+.readonly-input {
+    background-color: #f8f9fa !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
 /* Day selection styles */
 .day-checkboxes {
     display: flex;
@@ -694,6 +729,13 @@ select {
 
 .day-checkbox {
     position: relative;
+}
+
+.day-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .day-checkbox input[type="checkbox"] + label {
@@ -806,6 +848,91 @@ select {
     margin-bottom: 0;
 }
 
+/* Additional styles for improved date experience */
+.date-info-display {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background-color: #f0f8ff;
+    border-radius: 6px;
+    border-left: 4px solid #003366;
+    display: none;
+}
+
+.date-info-display.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.date-info-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #003366;
+    font-weight: 600;
+}
+
+.date-info-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #003366;
+}
+
+.duration-display {
+    color: #800000;
+    font-weight: 600;
+}
+
+.date-warning {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
+.date-warning i {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.date-error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.batch-preview {
+    font-weight: 600;
+    color: #003366;
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
 /* Form actions */
 .form-actions {
     display: flex;
@@ -893,7 +1020,7 @@ select {
     border: 1px solid #bfdbfe;
 }
 
-/* ===== MODAL STYLES - FIXED FOR SCROLL OVERLAP ===== */
+/* ===== MODAL STYLES ===== */
 .modal {
     display: none;
     position: fixed;
@@ -980,7 +1107,6 @@ select {
     text-align: center;
 }
 
-/* ===== UPDATED MODAL FOOTER FOR CONSISTENT BUTTON SIZES ===== */
 .modal-footer {
     padding: 15px 20px;
     display: flex;
@@ -1021,38 +1147,39 @@ select {
     background-color: #e2e8f0;
 }
 
-/* Loading Spinner */
-.loading-spinner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    color: #64748b;
-    font-family: 'Poppins', sans-serif;
+/* Animation */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(0, 51, 160, 0.1);
-    border-top-color: var(--tesda-blue);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* Responsive adjustments */
-@media (max-width: 992px) {
-    .form-columns {
-        flex-direction: column;
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+    .top-nav a {
+        padding: 0 15px;
+        font-size: 0.9rem;
+    }
+    
+    .brand-content {
+        gap: 20px;
+    }
+    
+    .brand-name {
+        font-size: 1.3rem;
+    }
+    
+    .logo-container {
+        gap: 15px;
     }
 }
 
 @media (max-width: 768px) {
-    /* Hide subnav on mobile - it's already in hamburger menu */
-    .courses-subnav {
-        display: none;
-    }
-    
     .top-nav {
         padding: 0 3%;
         height: 60px;
@@ -1121,12 +1248,21 @@ select {
         height: 36px;
     }
     
+    /* Hide desktop subnav on mobile */
+    .courses-subnav {
+        display: none;
+    }
+    
     .content {
         padding: 20px 3%;
     }
     
     .container {
         padding: 20px;
+    }
+    
+    .form-columns {
+        flex-direction: column;
     }
     
     .time-inputs {
@@ -1148,8 +1284,27 @@ select {
         justify-content: center;
     }
     
-    .courses-subnav .subnav-right a.active:after {
-        bottom: -15px;
+    /* Modal adjustments for mobile */
+    .modal {
+        padding: 10px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .btn {
+        min-width: 100%;
+    }
+    
+    .date-info-content {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 }
 
@@ -1222,16 +1377,56 @@ select {
     .modal-footer {
         padding: 15px;
     }
+    
+    .day-checkboxes {
+        justify-content: center;
+    }
 }
 
-/* Animation */
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
+/* Extra small devices */
+@media (max-width: 360px) {
+    .brand-name {
+        font-size: 0.9rem;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .logo-container {
+        gap: 5px;
     }
+    
+    .logo-container img {
+        height: 22px;
+    }
+    
+    .profile-img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .modal-footer {
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+    }
+}
+
+/* SweetAlert2 custom styles */
+.swal2-popup .batch-info {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f0f8ff;
+    border-radius: 5px;
+    border-left: 4px solid #003366;
+    font-size: 0.9em;
+}
+
+.swal2-popup .staff-note-alert {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fef3c7;
+    border-radius: 5px;
+    border-left: 4px solid #d97706;
+    font-size: 0.9em;
+    color: #92400e;
 }
