@@ -2,10 +2,12 @@ from flask import Blueprint, request, jsonify, session, render_template, flash, 
 from datetime import datetime
 from database import get_db
 import json
+import re
 
 admin_class_creation_bp = Blueprint('admin_class_creation', __name__)
 
 def validate_time_format(time_str):
+    """Validate time format (HH:00) between 6AM and 6PM"""
     try:
         if not time_str.endswith(':00'):
             return False
@@ -14,6 +16,42 @@ def validate_time_format(time_str):
     except (ValueError, AttributeError):
         return False
 
+def calculate_school_year_from_dates(start_date, end_date):
+    """Calculate school year in format 'YYYY-YYYY' from start and end dates"""
+    try:
+        start_year = start_date.year
+        end_year = end_date.year
+        
+        # If end date is in same year as start, it's still the same school year
+        # (e.g., Jan 2025 - Dec 2025 = 2025-2025)
+        # If spans across years (e.g., Aug 2025 - May 2026 = 2025-2026)
+        if end_date.year > start_date.year:
+            return f"{start_year}-{end_year}"
+        else:
+            return f"{start_year}-{start_year}"
+    except Exception:
+        return None
+
+def generate_batch_number(school_year, course_id):
+    """Generate batch number like 2025-2026-BOOK-101-001"""
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    # Get course code
+    cursor.execute("SELECT course_code FROM courses WHERE course_id = %s", (course_id,))
+    course = cursor.fetchone()
+    course_code = course['course_code'] if course else "UNK"
+    
+    # Count existing batches for this course and school year
+    cursor.execute("""
+        SELECT COUNT(*) as count 
+        FROM classes 
+        WHERE course_id = %s AND school_year = %s
+    """, (course_id, school_year))
+    result = cursor.fetchone()
+    batch_num = result['count'] + 1 if result else 1
+    
+    return f"{school_year}-{course_code}-{batch_num:03d}"
 
 @admin_class_creation_bp.route('/admin/class/create', methods=['GET', 'POST'])
 def create_class():
@@ -26,26 +64,28 @@ def create_class():
 
     if request.method == 'GET':
         try:
-           
+            # Get active courses
             cursor.execute("""
-                SELECT course_id, course_title 
+                SELECT course_id, course_title, course_code
                 FROM courses 
                 WHERE course_status = 'active'
             """)
             courses = cursor.fetchall()
 
+            # Get verified staff instructors
             cursor.execute("""
                 SELECT 
                     u.user_id,
                     CONCAT(p.first_name, ' ', p.last_name) AS full_name
                 FROM login u
                 JOIN personal_information p ON u.user_id = p.user_id
-                WHERE u.account_status = 'active'AND u.verified = 'verified'
+                WHERE u.account_status = 'active' AND u.verified = 'verified'
                   AND u.role = 'staff'
                 ORDER BY full_name ASC
             """)
             instructors = cursor.fetchall()
 
+            # Get admin profile picture
             profile_picture = 'default.png'
             cursor.execute("""
                 SELECT profile_picture 
@@ -60,7 +100,8 @@ def create_class():
                 'admin/admin_class_creation.html',
                 courses=courses,
                 instructors=instructors,
-                profile_picture=profile_picture
+                profile_picture=profile_picture,
+                now=datetime.now()
             )
 
         except Exception as e:
@@ -72,8 +113,6 @@ def create_class():
         required_fields = {
             'course_id': 'Course',
             'class_title': 'Class Title',
-            'school_year': 'School Year',
-            'schedule': 'Schedule',
             'venue': 'Venue',
             'max_students': 'Maximum Students',
             'start_date': 'Start Date',
@@ -89,14 +128,51 @@ def create_class():
                 'message': f"Missing required fields: {', '.join(required_fields[f] for f in missing)}"
             }), 400
 
+        # Validate dates
+        start_date = datetime.strptime(data['start_date'], '%Y-%m-%d')
+        end_date = datetime.strptime(data['end_date'], '%Y-%m-%d')
+
+        # Validate that end date is after start date
+        if end_date <= start_date:
+            return jsonify({
+                'status': 'error',
+                'message': 'End date must be after start date'
+            }), 400
+
+        # NEW: Check if end date is in the past
+        current_date = datetime.now().date()
+        end_date_obj = end_date.date()
+        if end_date_obj < current_date:
+            return jsonify({
+                'status': 'error',
+                'message': f'End date ({data["end_date"]}) is in the past. Cannot create a class that has already ended.'
+            }), 400
+
+        # Calculate school year from dates
+        school_year = calculate_school_year_from_dates(start_date, end_date)
+        if not school_year:
+            return jsonify({
+                'status': 'error',
+                'message': 'Could not determine school year from dates'
+            }), 400
+
+        # Validate school year format
+        if not re.match(r'^\d{4}-\d{4}$', school_year):
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid school year calculated: {school_year}'
+            }), 400
+
+        # Validate time slots
         days_json = json.loads(data['days_of_week'])
         for _, times in days_json.items():
             if not validate_time_format(times.get('start')) or not validate_time_format(times.get('end')):
                 return jsonify({
                     'status': 'error',
-                    'message': 'Invalid time format. Times must be on the hour.'
+                    'message': 'Invalid time format. Times must be on the hour (6:00 AM to 6:00 PM).'
                 }), 400
 
+        # Get instructor name
         cursor.execute("""
             SELECT CONCAT(p.first_name, ' ', p.last_name) AS full_name
             FROM personal_information p
@@ -109,6 +185,7 @@ def create_class():
 
         instructor_name = instructor['full_name']
 
+        # Get course prerequisites
         cursor.execute(
             "SELECT prerequisites FROM courses WHERE course_id = %s",
             (data['course_id'],)
@@ -116,6 +193,10 @@ def create_class():
         course = cursor.fetchone()
         prerequisites = course['prerequisites'] if course else None
 
+        # Generate batch number
+        batch = generate_batch_number(school_year, data['course_id'])
+
+        # Insert class with status 'open'
         cursor.execute("""
             INSERT INTO classes (
                 course_id, class_title, school_year, batch, schedule,
@@ -123,12 +204,12 @@ def create_class():
                 instructor_id, instructor_name,
                 start_date, end_date, prerequisites,
                 status, date_created
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'active', %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'open', %s)
         """, (
             data['course_id'],
             data['class_title'],
-            data['school_year'],
-            data.get('batch'),
+            school_year,  # Calculated from dates
+            batch,
             data['schedule'],
             data['days_of_week'],
             data['venue'],
@@ -143,8 +224,39 @@ def create_class():
 
         db.commit()
 
-        return jsonify({'status': 'success', 'message': 'Class created successfully.'})
+        return jsonify({
+            'status': 'success', 
+            'message': f'Class created successfully.',
+            'school_year': school_year,
+            'batch': batch,
+            'start_date': data['start_date'],
+            'end_date': data['end_date']
+        })
 
     except Exception as e:
         db.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@admin_class_creation_bp.route('/course/prerequisites/<int:course_id>')
+def get_prerequisites(course_id):
+    """API endpoint to get prerequisites for a course"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+    
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT prerequisites FROM courses WHERE course_id = %s
+        """, (course_id,))
+        course = cursor.fetchone()
+        
+        if course:
+            return jsonify({
+                'status': 'success',
+                'prerequisites': course['prerequisites'] or 'No prerequisites specified.'
+            })
+        else:
+            return jsonify({'status': 'error', 'message': 'Course not found'}), 404
+    except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

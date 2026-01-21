@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 11, 2026 at 08:11 AM
+-- Generation Time: Jan 21, 2026 at 02:28 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -68,7 +68,7 @@ CREATE TABLE `classes` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `prerequisites` text DEFAULT NULL COMMENT 'Fetched from courses table for reference',
-  `status` enum('Draft','active','pending','edited') NOT NULL DEFAULT 'Draft',
+  `status` enum('pending','open','ongoing','completed','edited') NOT NULL DEFAULT 'pending',
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   `date_updated` datetime DEFAULT NULL ON UPDATE current_timestamp(),
   `edit_reason` text DEFAULT NULL
@@ -79,7 +79,7 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `batch`, `schedule`, `days_of_week`, `venue`, `max_students`, `instructor_id`, `instructor_name`, `start_date`, `end_date`, `prerequisites`, `status`, `date_created`, `date_updated`, `edit_reason`) VALUES
-(1, 1, 'BOOK 101', '2025', '2026 - 2027', 'Saturday 07:00-15:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Wednesday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Saturday\": {\"start\": \"07:00\", \"end\": \"15:00\"}}', 'LSEF TESDA', 25, 2, 'Vincent Octavio', '2026-01-11', '2027-01-12', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'active', '2026-01-11 15:04:53', '2026-01-11 15:05:14', NULL);
+(1, 1, 'BOOK 101', '2025', '2026 - 2027', 'Saturday 07:00-15:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Wednesday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Saturday\": {\"start\": \"07:00\", \"end\": \"15:00\"}}', 'LSEF TESDA', 25, 2, 'Vincent Octavio', '2026-01-11', '2027-01-12', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'pending', '2026-01-11 15:04:53', '2026-01-21 09:26:44', NULL);
 
 -- --------------------------------------------------------
 
@@ -160,7 +160,7 @@ CREATE TABLE `login` (
 
 INSERT INTO `login` (`user_id`, `username`, `password`, `email`, `role`, `account_status`, `verified`) VALUES
 (1, 'admin', '12345', 'adminakoo@gmail.com', 'admin', 'active', 'verified'),
-(2, 'niko', '123', 'niko@gmail.com', 'staff', 'active', 'verified'),
+(2, 'niko', '123', 'niko1@gmail.com', 'staff', 'active', 'verified'),
 (3, 'marwindalin', 'Marwindalin09!', 'marwindalin10@gmail.com', 'student', 'active', 'verified');
 
 -- --------------------------------------------------------
@@ -216,7 +216,7 @@ CREATE TABLE `personal_information` (
 
 INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`, `signature`) VALUES
 (1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09172468147', 'Enrico Ariel', 'T.', 'Ting', '1990-06-03', 'male', '1_1ad7293dcd594a5eb423b0cac628e78c.jpg', 1, '2025-06-05 22:58:27', '1_881260fd21c64829b6458605ecb810db.png'),
-(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', '', 'Octavio', '2000-11-05', 'male', '2_ad6f4478904e46199b30c680096bfb2d.jpeg', 1, '2025-06-08 09:55:38', '2_70a2a5bc8de6481e8dd56e04197a418e.png'),
+(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', NULL, 'Octavio', '2000-11-05', 'male', '2_ad6f4478904e46199b30c680096bfb2d.jpeg', 1, '2025-06-08 09:55:38', '2_70a2a5bc8de6481e8dd56e04197a418e.png'),
 (3, 3, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Marwin', 'Mejorada', 'Dalin', '2004-03-01', 'male', '20260111150021_Formal_Picture.jpeg', 1, '2026-01-11 15:00:21', NULL);
 
 -- --------------------------------------------------------

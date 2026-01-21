@@ -1,4 +1,4 @@
-// admin_class_creation.js - Complete Fixed Version with Consistent UI/UX
+// admin_class_creation.js - Improved Date Range Experience
 $(document).ready(function() {
     const createClassUrl = "/admin/class/create";
     
@@ -80,14 +80,12 @@ $(document).ready(function() {
     
     // Initialize all modal functionality
     function initModals() {
-        // Close modal function - works for ALL modals
         function closeAllModals() {
             $('.modal').fadeOut(300);
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         }
 
-        // Open modal function
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -97,21 +95,17 @@ $(document).ready(function() {
             }
         }
 
-        // Close modal when clicking outside - works for ALL modals
         $(document).on('click', function(e) {
             if ($(e.target).hasClass('modal')) {
                 closeAllModals();
             }
         });
 
-        // Escape key to close modals - works for ALL modals
         $(document).keyup(function(e) {
             if (e.keyCode === 27) {
                 closeAllModals();
             }
         });
-
-        // ===== SPECIFIC MODAL FUNCTIONALITY =====
 
         // Logout Modal
         $('#logout-trigger').click(function(e) {
@@ -123,12 +117,10 @@ $(document).ready(function() {
         $('#mobile-logout-trigger').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
-            // First close mobile nav properly
             const mobileNav = document.getElementById('mobileNav');
             if (mobileNav) {
                 mobileNav.classList.remove('active');
             }
-            // Then open logout modal
             setTimeout(() => {
                 openModal('logout-modal');
             }, 10);
@@ -210,6 +202,230 @@ $(document).ready(function() {
             return options;
         }
 
+        // Calculate school year from dates
+        function calculateSchoolYear(startDate, endDate) {
+            const startYear = startDate.getFullYear();
+            const endYear = endDate.getFullYear();
+            
+            // If dates span across years (e.g., Aug 2025 - May 2026)
+            if (endYear > startYear) {
+                return `${startYear}-${endYear}`;
+            } else {
+                // Same year (e.g., Jan 2025 - Dec 2025)
+                return `${startYear}-${startYear}`;
+            }
+        }
+
+        // Format date for display (e.g., "January 2025")
+        function formatMonthYear(date) {
+            return date.toLocaleString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+        }
+
+        // Format date for short display (e.g., "Jan 2025")
+        function formatShortMonthYear(date) {
+            return date.toLocaleString('en-US', { 
+                month: 'short', 
+                year: 'numeric' 
+            });
+        }
+
+        // Calculate months between dates
+        function calculateMonthsBetween(startDate, endDate) {
+            // Calculate total months
+            let totalMonths = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+            totalMonths += endDate.getMonth() - startDate.getMonth();
+            totalMonths += 1; // Include both start and end months
+            
+            return Math.max(1, totalMonths); // At least 1 month
+        }
+
+        // Format duration in human-readable years and months
+        function formatDuration(totalMonths) {
+            if (totalMonths < 12) {
+                return `${totalMonths} month${totalMonths !== 1 ? 's' : ''}`;
+            } else {
+                const years = Math.floor(totalMonths / 12);
+                const months = totalMonths % 12;
+                
+                if (months === 0) {
+                    return `${years} year${years !== 1 ? 's' : ''}`;
+                } else if (months === 1) {
+                    return `${years} year${years !== 1 ? 's' : ''} and 1 month`;
+                } else {
+                    return `${years} year${years !== 1 ? 's' : ''} and ${months} months`;
+                }
+            }
+        }
+
+        // Update date information display
+        function updateDateInfoDisplay(startDate, endDate) {
+            const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+            const schoolYearDisplay = document.getElementById('schoolYearDisplay');
+            const schedulePeriodDisplay = document.getElementById('schedulePeriodDisplay');
+            const durationDisplay = document.getElementById('durationDisplay');
+            const schoolYearHidden = document.getElementById('school_year');
+            
+            if (!startDate || !endDate) {
+                dateInfoDisplay.classList.remove('show');
+                return;
+            }
+            
+            // Calculate values
+            const schoolYear = calculateSchoolYear(startDate, endDate);
+            const totalMonths = calculateMonthsBetween(startDate, endDate);
+            const durationText = formatDuration(totalMonths);
+            
+            // Update displays
+            schoolYearDisplay.textContent = schoolYear;
+            schoolYearHidden.value = schoolYear;
+            
+            schedulePeriodDisplay.textContent = `${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}`;
+            durationDisplay.textContent = durationText;
+            
+            // Show the display
+            dateInfoDisplay.classList.add('show');
+            
+            // Update batch field
+            updateBatchField();
+        }
+
+        // Update batch field when course or dates change
+        function updateBatchField() {
+            const courseId = document.getElementById('course_id').value;
+            const schoolYear = document.getElementById('school_year').value;
+            const batchField = document.getElementById('batch');
+            
+            if (courseId && schoolYear) {
+                // Get course code from selected option
+                const courseSelect = document.getElementById('course_id');
+                const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+                const courseCode = selectedOption.getAttribute('data-course-code') || 'UNK';
+                
+                // Generate batch preview client-side
+                const batchNumber = "001"; // This would be sequential from server
+                const batchPreview = `${schoolYear}-${courseCode}-${batchNumber}`;
+                batchField.value = batchPreview;
+                batchField.classList.add('batch-preview');
+            } else {
+                batchField.value = "Select course and set dates";
+                batchField.classList.remove('batch-preview');
+            }
+        }
+
+        // Validate dates are within school year and not in the past
+        function validateDates() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput.value || !endDateInput.value) {
+                return true; // Let form validation handle empty fields
+            }
+            
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0); // Reset time part for comparison
+            
+            // 1. Check if end date is after start date
+            if (endDate <= startDate) {
+                showMessage('End date must be after start date', 'error');
+                endDateInput.focus();
+                endDateInput.classList.add('date-error');
+                return false;
+            }
+            
+            // 2. Check if end date is in the past
+            if (endDate < currentDate) {
+                showMessage(`End date (${endDateInput.value}) is in the past. Cannot create a class that has already ended.`, 'error');
+                endDateInput.focus();
+                endDateInput.classList.add('date-error');
+                return false;
+            }
+            
+            // Clear error styling if valid
+            endDateInput.classList.remove('date-error');
+            return true;
+        }
+
+        // Update end date min based on start date
+        function updateEndDateMin() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            if (startDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const minEndDate = new Date(startDate);
+                minEndDate.setDate(startDate.getDate() + 1); // At least 1 day after start
+                
+                // Format for input[type="date"]
+                const minDateStr = minEndDate.toISOString().split('T')[0];
+                endDateInput.min = minDateStr;
+                
+                // If current end date is before min, clear it
+                if (endDateInput.value && new Date(endDateInput.value) <= startDate) {
+                    endDateInput.value = '';
+                    showMessage('End date must be after start date', 'warning');
+                }
+            }
+        }
+
+        // Show message function
+        function showMessage(message, type = 'success') {
+            const messageContainer = document.getElementById('message-container');
+            const messageContent = document.getElementById('message-content');
+            
+            messageContent.textContent = message;
+            messageContent.className = 'message ' + type;
+            messageContainer.style.display = 'block';
+            
+            // Scroll to message
+            messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // Initialize date validation
+        function initDateValidation() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            
+            // Update end date min when start date changes
+            startDateInput.addEventListener('change', function() {
+                updateEndDateMin();
+                if (this.value && endDateInput.value) {
+                    validateDates();
+                    updateDateInfoDisplay(new Date(this.value), new Date(endDateInput.value));
+                }
+            });
+            
+            // Update display when dates change
+            endDateInput.addEventListener('change', function() {
+                if (startDateInput.value && this.value) {
+                    validateDates();
+                    updateDateInfoDisplay(new Date(startDateInput.value), new Date(this.value));
+                }
+            });
+            
+            // Real-time update for date info display
+            [startDateInput, endDateInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    if (startDateInput.value && endDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const endDate = new Date(endDateInput.value);
+                        if (endDate > startDate) {
+                            updateDateInfoDisplay(startDate, endDate);
+                        }
+                    }
+                });
+            });
+        }
+
         // Manage day selections and time slots
         const daySelectors = document.querySelectorAll('.day-selector');
         const dayTimeSlots = document.getElementById('dayTimeSlots');
@@ -231,7 +447,7 @@ $(document).ready(function() {
             });
         });
 
-        // Handle remove day button clicks (delegated event)
+        // Handle remove day button clicks
         dayTimeSlots.addEventListener('click', function(e) {
             if (e.target.closest('.remove-day')) {
                 const daySlot = e.target.closest('.day-slot');
@@ -258,7 +474,7 @@ $(document).ready(function() {
                 return;
             }
             
-            // Sort days in order (Monday to Sunday)
+            // Sort days in order
             const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             const sortedDays = Array.from(daySlots).sort((a, b) => {
                 return daysOrder.indexOf(a) - daysOrder.indexOf(b);
@@ -294,35 +510,6 @@ $(document).ready(function() {
             }
         });
 
-        // Date validation to ensure end date is after start date
-        document.getElementById('end_date').addEventListener('change', function() {
-            const startDate = new Date(document.getElementById('start_date').value);
-            const endDate = new Date(this.value);
-            
-            if (startDate && endDate && endDate < startDate) {
-                showMessage('End date must be after start date', 'error');
-                this.value = '';
-            }
-        });
-
-        // Set minimum end date based on start date
-        document.getElementById('start_date').addEventListener('change', function() {
-            const startDate = new Date(this.value);
-            const endDateField = document.getElementById('end_date');
-            
-            if (this.value) {
-                startDate.setDate(startDate.getDate() + 1);
-                const minEndDate = startDate.toISOString().split('T')[0];
-                endDateField.min = minEndDate;
-                
-                if (endDateField.value && new Date(endDateField.value) < startDate) {
-                    endDateField.value = '';
-                }
-            } else {
-                endDateField.min = '';
-            }
-        });
-
         // Load prerequisites when course is selected
         document.getElementById('course_id').addEventListener('change', function() {
             const courseId = this.value;
@@ -331,34 +518,36 @@ $(document).ready(function() {
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            document.getElementById('prerequisites').value = data.prerequisites || 'None specified';
+                            document.getElementById('prerequisites').value = data.prerequisites || 'No prerequisites specified.';
+                        } else {
+                            document.getElementById('prerequisites').value = 'Error loading prerequisites.';
                         }
                     })
                     .catch(error => {
                         console.error('Error fetching prerequisites:', error);
+                        document.getElementById('prerequisites').value = 'Error loading prerequisites.';
                     });
             } else {
                 document.getElementById('prerequisites').value = '';
             }
+            
+            // Update batch field
+            updateBatchField();
         });
 
-        // Show message function
-        function showMessage(message, type = 'success') {
-            const messageContainer = document.getElementById('message-container');
-            const messageContent = document.getElementById('message-content');
+        // Form reset handler
+        document.querySelector('.reset-btn').addEventListener('click', function() {
+            // Reset day slots
+            daySlots.clear();
+            updateDaySlotsDisplay();
             
-            messageContent.textContent = message;
-            messageContent.className = 'message ' + type;
-            messageContainer.style.display = 'block';
-            
-            // Scroll to message
-            messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            // Hide message after 5 seconds
-            setTimeout(() => {
-                messageContainer.style.display = 'none';
-            }, 5000);
-        }
+            // Reset date info display
+            document.getElementById('dateInfoDisplay').classList.remove('show');
+            document.getElementById('school_year').value = '';
+            document.getElementById('batch').value = 'Select course and set dates';
+            document.getElementById('batch').classList.remove('batch-preview');
+            document.getElementById('prerequisites').value = '';
+        });
 
         // Form submission
         document.getElementById('classCreationForm').addEventListener('submit', function(e) {
@@ -388,27 +577,23 @@ $(document).ready(function() {
                 return;
             }
             
-            // Validate date range
-            const startDate = new Date(document.getElementById('start_date').value);
-            const endDate = new Date(document.getElementById('end_date').value);
-            
-            if (!startDate || !endDate) {
-                showMessage('Please provide both start and end dates', 'error');
-                return;
-            }
-            
-            if (endDate < startDate) {
-                showMessage('End date must be after start date', 'error');
-                return;
-            }
-            
             const instructorId = document.getElementById('instructor_id').value;
             if (!instructorId) {
                 showMessage('Please select an instructor', 'error');
                 return;
             }
 
+            // Date validation
+            if (!validateDates()) {
+                return;
+            }
             
+            // Submit form
+            submitFormData();
+        });
+        
+        // Function to handle actual form submission
+        function submitFormData() {
             // Create days_of_week JSON and schedule text
             const daysData = {};
             let scheduleText = '';
@@ -454,29 +639,65 @@ $(document).ready(function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    const startDate = new Date(data.start_date);
+                    const endDate = new Date(data.end_date);
+                    const totalMonths = calculateMonthsBetween(startDate, endDate);
+                    const durationText = formatDuration(totalMonths);
+                    
                     Swal.fire({
                         title: 'Success!',
-                        text: data.message,
+                        html: `<p>${data.message}</p>
+                               <div class="batch-info">
+                                   <p><strong>School Year:</strong> ${data.school_year}</p>
+                                   <p><strong>Batch:</strong> ${data.batch}</p>
+                                   <p><strong>Schedule Period:</strong> ${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}</p>
+                                   <p><strong>Duration:</strong> ${durationText}</p>
+                               </div>`,
                         icon: 'success',
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#003366'
                     }).then(() => {
+                        // Reset form
                         document.getElementById('classCreationForm').reset();
                         daySlots.clear();
                         updateDaySlotsDisplay();
                         document.getElementById('prerequisites').value = '';
+                        document.getElementById('dateInfoDisplay').classList.remove('show');
+                        document.getElementById('batch').value = 'Select course and set dates';
+                        document.getElementById('batch').classList.remove('batch-preview');
                     });
                 } else {
                     showMessage(data.message, 'error');
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#800000'
+                    });
                 }
             })
             .catch(error => {
                 showMessage('Error creating class. Please try again.', 'error');
                 console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Error creating class. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#800000'
+                });
             })
             .finally(() => {
                 document.getElementById('classCreationForm').classList.remove('loading');
             });
-        });
+        }
+        
+        // Initialize date validation
+        initDateValidation();
+        
+        // Initial update of batch field
+        updateBatchField();
     }
     
     // Initialize everything

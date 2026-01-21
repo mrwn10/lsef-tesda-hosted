@@ -28,7 +28,6 @@
                     <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
                     <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
                     <a href="{{ url_for('admin_class_management.view_active_classes') }}" class="active"><i class="fas fa-users"></i> Classes</a>
-                    <!--<a href="{{ url_for('admin_student_grades.view_grades') }}"><i class="fas fa-user-plus"></i> Student Grade</a>-->
                     <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
                     <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
                     <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
@@ -176,7 +175,7 @@
                 <div class="breadcrumb">
                     <span>Class Management</span> / <span>Class Creation</span>
                 </div>
-                <p class="admin-note"><i class="fas fa-shield-alt"></i> Note: Classes created by admins are activated immediately.</p>
+                <p class="admin-note"><i class="fas fa-shield-alt"></i> Note: Classes created by admins are activated immediately with status: <strong>OPEN</strong>.</p>
             </div>
             
             <div id="message-container">
@@ -199,7 +198,9 @@
                                         <option value="" selected disabled>Select Course</option>
                                         {% if courses %}
                                             {% for course in courses %}
-                                                <option value="{{ course.course_id }}">{{ course.course_title }}</option>
+                                                <option value="{{ course.course_id }}" data-course-code="{{ course.course_code }}">
+                                                    {{ course.course_title }} ({{ course.course_code }})
+                                                </option>
                                             {% endfor %}
                                         {% else %}
                                             <option value="" disabled>No active courses available</option>
@@ -217,19 +218,15 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="school_year">School Year <span class="required">*</span></label>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <input type="text" id="school_year" name="school_year" placeholder="e.g. 2023-2024" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
                                 <label for="batch">Batch</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-layer-group"></i>
-                                    <input type="text" id="batch" name="batch" placeholder="e.g. Batch 2023">
+                                    <input type="text" id="batch" name="batch" placeholder="Select course and set dates" readonly 
+                                           style="background-color: #f8f9fa; color: #666;">
                                 </div>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                                    Batch number will be auto-generated (e.g., 2025-2026-BOOK-101-001)
+                                </small>
                             </div>
                         </div>
 
@@ -277,6 +274,54 @@
                         <div class="form-section">
                             <h2><i class="fas fa-calendar-check"></i> Schedule Information</h2>
                             
+                            <!-- Date Range Inputs -->
+                            <div class="date-range-group">
+                                <label>Class Date Range <span class="required">*</span></label>
+                                
+                                <div class="date-inputs">
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <input type="date" id="start_date" name="start_date" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end_date">End Date <span class="required">*</span></label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-calendar-minus"></i>
+                                            <input type="date" id="end_date" name="end_date" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Date Information Display -->
+                                <div class="date-info-display" id="dateInfoDisplay">
+                                    <div class="date-info-header">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Class Schedule Information</span>
+                                    </div>
+                                    <div class="date-info-content">
+                                        <div class="info-item">
+                                            <span class="info-label">School Year</span>
+                                            <span class="info-value" id="schoolYearDisplay">Not calculated</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Schedule Period</span>
+                                            <span class="info-value" id="schedulePeriodDisplay">Not set</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Duration</span>
+                                            <span class="info-value duration-display" id="durationDisplay">0 months</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="date-warning">
+                                    <small><i class="fas fa-exclamation-triangle"></i> End date cannot be in the past.</small>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Select Days <span class="required">*</span></label>
                                 <div class="day-checkboxes">
@@ -317,26 +362,6 @@
                                     <p>Select days above to add time slots</p>
                                 </div>
                             </div>
-
-                            <div class="form-group date-range-group">
-                                <label>Class Date Range <span class="required">*</span></label>
-                                <div class="date-inputs">
-                                    <div class="form-group">
-                                        <label for="start_date">Start Date <span class="required">*</span></label>
-                                        <div class="input-with-icon">
-                                            <i class="fas fa-calendar-plus"></i>
-                                            <input type="date" id="start_date" name="start_date" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="end_date">End Date <span class="required">*</span></label>
-                                        <div class="input-with-icon">
-                                            <i class="fas fa-calendar-minus"></i>
-                                            <input type="date" id="end_date" name="end_date" required>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Additional Information -->
@@ -347,7 +372,7 @@
                                 <label for="prerequisites">Prerequisites</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-clipboard-list"></i>
-                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Optional prerequisites"></textarea>
+                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Prerequisites will be loaded from selected course" readonly></textarea>
                                 </div>
                             </div>
                         </div>
@@ -357,6 +382,7 @@
                 <!-- Hidden fields -->
                 <input type="hidden" id="days_of_week" name="days_of_week">
                 <input type="hidden" id="schedule" name="schedule">
+                <input type="hidden" id="school_year" name="school_year">
 
                 <div class="form-actions">
                     <button type="reset" class="reset-btn">
