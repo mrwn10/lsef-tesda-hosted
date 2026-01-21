@@ -19,12 +19,14 @@ $(document).ready(function() {
             hamburgerMenu.addEventListener('click', function() {
                 mobileNav.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                document.body.classList.add('modal-open');
             });
             
             if (closeMobileNav) {
                 closeMobileNav.addEventListener('click', function() {
                     mobileNav.classList.remove('active');
                     document.body.style.overflow = '';
+                    document.body.classList.remove('modal-open');
                 });
             }
             
@@ -34,6 +36,7 @@ $(document).ready(function() {
                 link.addEventListener('click', function() {
                     mobileNav.classList.remove('active');
                     document.body.style.overflow = '';
+                    document.body.classList.remove('modal-open');
                 });
             });
             
@@ -65,6 +68,7 @@ $(document).ready(function() {
                 if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
                     document.body.style.overflow = '';
+                    document.body.classList.remove('modal-open');
                 }
             });
             
@@ -73,6 +77,7 @@ $(document).ready(function() {
                 if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
                     document.body.style.overflow = '';
+                    document.body.classList.remove('modal-open');
                 }
             });
         }
@@ -269,7 +274,9 @@ $(document).ready(function() {
             const schoolYearHidden = document.getElementById('school_year');
             
             if (!startDate || !endDate) {
-                dateInfoDisplay.classList.remove('show');
+                if (dateInfoDisplay) {
+                    dateInfoDisplay.classList.remove('show');
+                }
                 return;
             }
             
@@ -279,38 +286,42 @@ $(document).ready(function() {
             const durationText = formatDuration(totalMonths);
             
             // Update displays
-            schoolYearDisplay.textContent = schoolYear;
-            schoolYearHidden.value = schoolYear;
+            if (schoolYearDisplay) {
+                schoolYearDisplay.textContent = schoolYear;
+            }
+            if (schoolYearHidden) {
+                schoolYearHidden.value = schoolYear;
+            }
             
-            schedulePeriodDisplay.textContent = `${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}`;
-            durationDisplay.textContent = durationText;
+            if (schedulePeriodDisplay) {
+                schedulePeriodDisplay.textContent = `${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}`;
+            }
+            if (durationDisplay) {
+                durationDisplay.textContent = durationText;
+            }
             
             // Show the display
-            dateInfoDisplay.classList.add('show');
+            if (dateInfoDisplay) {
+                dateInfoDisplay.classList.add('show');
+            }
             
             // Update batch field
             updateBatchField();
         }
 
-        // Update batch field when course or dates change
+        // Update batch field when course is selected
         function updateBatchField() {
-            const courseId = document.getElementById('course_id').value;
-            const schoolYear = document.getElementById('school_year').value;
+            const courseId = document.getElementById('course_id')?.value;
             const batchField = document.getElementById('batch');
             
-            if (courseId && schoolYear) {
-                // Get course code from selected option
-                const courseSelect = document.getElementById('course_id');
-                const selectedOption = courseSelect.options[courseSelect.selectedIndex];
-                const courseCode = selectedOption.getAttribute('data-course-code') || 'UNK';
-                
-                // Generate batch preview client-side
-                const batchNumber = "001"; // This would be sequential from server
-                const batchPreview = `${schoolYear}-${courseCode}-${batchNumber}`;
-                batchField.value = batchPreview;
+            if (!batchField) return;
+            
+            if (courseId) {
+                // Simple placeholder
+                batchField.value = "Will be generated (1, 2, 3...)";
                 batchField.classList.add('batch-preview');
             } else {
-                batchField.value = "Select course and set dates";
+                batchField.value = "Select a course first";
                 batchField.classList.remove('batch-preview');
             }
         }
@@ -319,6 +330,8 @@ $(document).ready(function() {
         function validateDates() {
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput || !endDateInput) return true;
             
             if (!startDateInput.value || !endDateInput.value) {
                 return true; // Let form validation handle empty fields
@@ -355,6 +368,8 @@ $(document).ready(function() {
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
             
+            if (!startDateInput || !endDateInput) return;
+            
             if (startDateInput.value) {
                 const startDate = new Date(startDateInput.value);
                 const minEndDate = new Date(startDate);
@@ -377,6 +392,8 @@ $(document).ready(function() {
             const messageContainer = document.getElementById('message-container');
             const messageContent = document.getElementById('message-content');
             
+            if (!messageContainer || !messageContent) return;
+            
             messageContent.textContent = message;
             messageContent.className = 'message ' + type;
             messageContainer.style.display = 'block';
@@ -394,6 +411,8 @@ $(document).ready(function() {
         function initDateValidation() {
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
+            
+            if (!startDateInput || !endDateInput) return;
             
             // Update end date min when start date changes
             startDateInput.addEventListener('change', function() {
@@ -424,6 +443,10 @@ $(document).ready(function() {
                     }
                 });
             });
+            
+            // Set minimum start date to today
+            const today = new Date().toISOString().split('T')[0];
+            startDateInput.min = today;
         }
 
         // Manage day selections and time slots
@@ -431,39 +454,48 @@ $(document).ready(function() {
         const dayTimeSlots = document.getElementById('dayTimeSlots');
         const daySlots = new Set();
 
-        daySelectors.forEach(selector => {
-            selector.addEventListener('change', function() {
-                const day = this.value;
-                
-                if (this.checked && !daySlots.has(day)) {
-                    // Add new day slot
-                    daySlots.add(day);
-                    updateDaySlotsDisplay();
-                } else if (!this.checked && daySlots.has(day)) {
-                    // Remove day slot
+        if (daySelectors.length > 0) {
+            daySelectors.forEach(selector => {
+                selector.addEventListener('change', function() {
+                    const day = this.value;
+                    
+                    if (this.checked && !daySlots.has(day)) {
+                        // Add new day slot
+                        daySlots.add(day);
+                        updateDaySlotsDisplay();
+                    } else if (!this.checked && daySlots.has(day)) {
+                        // Remove day slot
+                        daySlots.delete(day);
+                        updateDaySlotsDisplay();
+                    }
+                });
+            });
+        }
+
+        // Handle remove day button clicks
+        if (dayTimeSlots) {
+            dayTimeSlots.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-day')) {
+                    const daySlot = e.target.closest('.day-slot');
+                    const day = daySlot.dataset.day;
+                    
+                    // Uncheck the corresponding checkbox
+                    const checkbox = document.querySelector(`.day-selector[value="${day}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                    
+                    // Remove from set and update display
                     daySlots.delete(day);
                     updateDaySlotsDisplay();
                 }
             });
-        });
-
-        // Handle remove day button clicks
-        dayTimeSlots.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-day')) {
-                const daySlot = e.target.closest('.day-slot');
-                const day = daySlot.dataset.day;
-                
-                // Uncheck the corresponding checkbox
-                document.querySelector(`.day-selector[value="${day}"]`).checked = false;
-                
-                // Remove from set and update display
-                daySlots.delete(day);
-                updateDaySlotsDisplay();
-            }
-        });
+        }
 
         // Update the day slots display
         function updateDaySlotsDisplay() {
+            if (!dayTimeSlots) return;
+            
             if (daySlots.size === 0) {
                 dayTimeSlots.innerHTML = `
                     <div class="no-days-selected">
@@ -489,108 +521,141 @@ $(document).ready(function() {
         }
 
         // Time validation for day slots
-        dayTimeSlots.addEventListener('change', function(e) {
-            if (e.target.classList.contains('day-time-input')) {
-                const day = e.target.dataset.day;
-                const type = e.target.dataset.type;
-                const otherType = type === 'start' ? 'end' : 'start';
-                
-                const currentTime = e.target.value;
-                const otherTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="${otherType}"]`);
-                
-                if (currentTime && otherTimeInput.value) {
-                    if (type === 'start' && currentTime >= otherTimeInput.value) {
-                        showMessage('Start time must be before end time', 'error');
-                        e.target.value = '';
-                    } else if (type === 'end' && currentTime <= otherTimeInput.value) {
-                        showMessage('End time must be after start time', 'error');
-                        e.target.value = '';
+        if (dayTimeSlots) {
+            dayTimeSlots.addEventListener('change', function(e) {
+                if (e.target.classList.contains('day-time-input')) {
+                    const day = e.target.dataset.day;
+                    const type = e.target.dataset.type;
+                    const otherType = type === 'start' ? 'end' : 'start';
+                    
+                    const currentTime = e.target.value;
+                    const otherTimeInput = document.querySelector(`.day-time-input[data-day="${day}"][data-type="${otherType}"]`);
+                    
+                    if (currentTime && otherTimeInput && otherTimeInput.value) {
+                        if (type === 'start' && currentTime >= otherTimeInput.value) {
+                            showMessage('Start time must be before end time', 'error');
+                            e.target.value = '';
+                        } else if (type === 'end' && currentTime <= otherTimeInput.value) {
+                            showMessage('End time must be after start time', 'error');
+                            e.target.value = '';
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Load prerequisites when course is selected
-        document.getElementById('course_id').addEventListener('change', function() {
-            const courseId = this.value;
-            if (courseId) {
-                fetch(`/course/prerequisites/${courseId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.getElementById('prerequisites').value = data.prerequisites || 'No prerequisites specified.';
-                        } else {
-                            document.getElementById('prerequisites').value = 'Error loading prerequisites.';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching prerequisites:', error);
-                        document.getElementById('prerequisites').value = 'Error loading prerequisites.';
-                    });
-            } else {
-                document.getElementById('prerequisites').value = '';
-            }
-            
-            // Update batch field
-            updateBatchField();
-        });
+        const courseSelect = document.getElementById('course_id');
+        if (courseSelect) {
+            courseSelect.addEventListener('change', function() {
+                const courseId = this.value;
+                const prerequisitesField = document.getElementById('prerequisites');
+                
+                if (!prerequisitesField) return;
+                
+                if (courseId) {
+                    // Show loading message
+                    prerequisitesField.value = 'Loading prerequisites...';
+                    
+                    fetch(`/course/prerequisites/${courseId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                prerequisitesField.value = data.prerequisites || 'No prerequisites specified.';
+                            } else {
+                                prerequisitesField.value = 'Error loading prerequisites.';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching prerequisites:', error);
+                            prerequisitesField.value = 'Error loading prerequisites.';
+                        });
+                } else {
+                    prerequisitesField.value = '';
+                }
+                
+                // Update batch field
+                updateBatchField();
+            });
+        }
 
         // Form reset handler
-        document.querySelector('.reset-btn').addEventListener('click', function() {
-            // Reset day slots
-            daySlots.clear();
-            updateDaySlotsDisplay();
-            
-            // Reset date info display
-            document.getElementById('dateInfoDisplay').classList.remove('show');
-            document.getElementById('school_year').value = '';
-            document.getElementById('batch').value = 'Select course and set dates';
-            document.getElementById('batch').classList.remove('batch-preview');
-            document.getElementById('prerequisites').value = '';
-        });
-
-        // Form submission
-        document.getElementById('classCreationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate at least one day is selected
-            if (daySlots.size === 0) {
-                showMessage('Please select at least one day', 'error');
-                return;
-            }
-            
-            // Validate all day slots have times
-            let allTimesValid = true;
-            const dayInputs = document.querySelectorAll('.day-time-input');
-            
-            dayInputs.forEach(input => {
-                if (!input.value) {
-                    allTimesValid = false;
-                    input.classList.add('error');
-                } else {
-                    input.classList.remove('error');
+        const resetBtn = document.querySelector('.reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                // Reset day slots
+                daySlots.clear();
+                updateDaySlotsDisplay();
+                
+                // Reset date info display
+                const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+                if (dateInfoDisplay) {
+                    dateInfoDisplay.classList.remove('show');
+                }
+                
+                const schoolYearHidden = document.getElementById('school_year');
+                if (schoolYearHidden) {
+                    schoolYearHidden.value = '';
+                }
+                
+                const batchField = document.getElementById('batch');
+                if (batchField) {
+                    batchField.value = 'Will be generated (1, 2, 3...)';
+                    batchField.classList.remove('batch-preview');
+                }
+                
+                const prerequisitesField = document.getElementById('prerequisites');
+                if (prerequisitesField) {
+                    prerequisitesField.value = '';
                 }
             });
-            
-            if (!allTimesValid) {
-                showMessage('Please provide both start and end times for all selected days', 'error');
-                return;
-            }
-            
-            const instructorId = document.getElementById('instructor_id').value;
-            if (!instructorId) {
-                showMessage('Please select an instructor', 'error');
-                return;
-            }
+        }
 
-            // Date validation
-            if (!validateDates()) {
-                return;
-            }
-            
-            // Submit form
-            submitFormData();
-        });
+        // Form submission
+        const form = document.getElementById('classCreationForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate at least one day is selected
+                if (daySlots.size === 0) {
+                    showMessage('Please select at least one day', 'error');
+                    return;
+                }
+                
+                // Validate all day slots have times
+                let allTimesValid = true;
+                const dayInputs = document.querySelectorAll('.day-time-input');
+                
+                dayInputs.forEach(input => {
+                    if (!input.value) {
+                        allTimesValid = false;
+                        input.classList.add('error');
+                    } else {
+                        input.classList.remove('error');
+                    }
+                });
+                
+                if (!allTimesValid) {
+                    showMessage('Please provide both start and end times for all selected days', 'error');
+                    return;
+                }
+                
+                const instructorId = document.getElementById('instructor_id')?.value;
+                if (!instructorId) {
+                    showMessage('Please select an instructor', 'error');
+                    return;
+                }
+
+                // Date validation
+                if (!validateDates()) {
+                    return;
+                }
+                
+                // Submit form
+                submitFormData();
+            });
+        }
         
         // Function to handle actual form submission
         function submitFormData() {
@@ -599,31 +664,40 @@ $(document).ready(function() {
             let scheduleText = '';
             
             Array.from(daySlots).forEach(day => {
-                const startTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`).value;
-                const endTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`).value;
+                const startTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="start"]`)?.value;
+                const endTime = document.querySelector(`.day-time-input[data-day="${day}"][data-type="end"]`)?.value;
                 
-                daysData[day] = {
-                    start: startTime,
-                    end: endTime
-                };
-                
-                // Format time for display (convert 24h to 12h)
-                const startHour = parseInt(startTime.split(':')[0]);
-                const endHour = parseInt(endTime.split(':')[0]);
-                
-                const startAmPm = startHour >= 12 ? 'PM' : 'AM';
-                const endAmPm = endHour >= 12 ? 'PM' : 'AM';
-                
-                const startHour12 = startHour % 12 || 12;
-                const endHour12 = endHour % 12 || 12;
-                
-                if (scheduleText) scheduleText += ", ";
-                scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
+                if (startTime && endTime) {
+                    daysData[day] = {
+                        start: startTime,
+                        end: endTime
+                    };
+                    
+                    // Format time for display (convert 24h to 12h)
+                    const startHour = parseInt(startTime.split(':')[0]);
+                    const endHour = parseInt(endTime.split(':')[0]);
+                    
+                    const startAmPm = startHour >= 12 ? 'PM' : 'AM';
+                    const endAmPm = endHour >= 12 ? 'PM' : 'AM';
+                    
+                    const startHour12 = startHour % 12 || 12;
+                    const endHour12 = endHour % 12 || 12;
+                    
+                    if (scheduleText) scheduleText += ", ";
+                    scheduleText += `${day} ${startHour12}:00 ${startAmPm}-${endHour12}:00 ${endAmPm}`;
+                }
             });
             
             // Set the hidden field values
-            document.getElementById('days_of_week').value = JSON.stringify(daysData);
-            document.getElementById('schedule').value = scheduleText;
+            const daysOfWeekField = document.getElementById('days_of_week');
+            const scheduleField = document.getElementById('schedule');
+            
+            if (daysOfWeekField) {
+                daysOfWeekField.value = JSON.stringify(daysData);
+            }
+            if (scheduleField) {
+                scheduleField.value = scheduleText;
+            }
             
             // Create form data
             const formData = new FormData(document.getElementById('classCreationForm'));
@@ -644,27 +718,48 @@ $(document).ready(function() {
                     const totalMonths = calculateMonthsBetween(startDate, endDate);
                     const durationText = formatDuration(totalMonths);
                     
+                    console.log('Class created successfully. Batch:', data.batch);
+                    
                     Swal.fire({
                         title: 'Success!',
                         html: `<p>${data.message}</p>
                                <div class="batch-info">
-                                   <p><strong>School Year:</strong> ${data.school_year}</p>
+                                   <p><strong>Course:</strong> ${document.getElementById('class_title').value}</p>
                                    <p><strong>Batch:</strong> ${data.batch}</p>
+                                   <p><strong>School Year:</strong> ${data.school_year}</p>
                                    <p><strong>Schedule Period:</strong> ${formatShortMonthYear(startDate)} to ${formatShortMonthYear(endDate)}</p>
                                    <p><strong>Duration:</strong> ${durationText}</p>
+                               </div>
+                               <div class="admin-note-alert">
+                                   <p><i class="fas fa-shield-alt"></i> This class is now <strong>OPEN</strong> and ready for enrollment.</p>
                                </div>`,
                         icon: 'success',
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#003366'
                     }).then(() => {
                         // Reset form
-                        document.getElementById('classCreationForm').reset();
+                        const form = document.getElementById('classCreationForm');
+                        if (form) {
+                            form.reset();
+                        }
                         daySlots.clear();
                         updateDaySlotsDisplay();
-                        document.getElementById('prerequisites').value = '';
-                        document.getElementById('dateInfoDisplay').classList.remove('show');
-                        document.getElementById('batch').value = 'Select course and set dates';
-                        document.getElementById('batch').classList.remove('batch-preview');
+                        
+                        const prerequisitesField = document.getElementById('prerequisites');
+                        if (prerequisitesField) {
+                            prerequisitesField.value = '';
+                        }
+                        
+                        const dateInfoDisplay = document.getElementById('dateInfoDisplay');
+                        if (dateInfoDisplay) {
+                            dateInfoDisplay.classList.remove('show');
+                        }
+                        
+                        const batchField = document.getElementById('batch');
+                        if (batchField) {
+                            batchField.value = 'Will be generated (1, 2, 3...)';
+                            batchField.classList.remove('batch-preview');
+                        }
                     });
                 } else {
                     showMessage(data.message, 'error');
@@ -689,7 +784,10 @@ $(document).ready(function() {
                 });
             })
             .finally(() => {
-                document.getElementById('classCreationForm').classList.remove('loading');
+                const form = document.getElementById('classCreationForm');
+                if (form) {
+                    form.classList.remove('loading');
+                }
             });
         }
         

@@ -706,6 +706,15 @@ select {
     background-size: 1rem;
 }
 
+/* Readonly input styling */
+.readonly-input,
+input[readonly],
+textarea[readonly] {
+    background-color: #f8f9fa !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
 /* Day selection styles */
 .day-checkboxes {
     display: flex;
@@ -1071,6 +1080,101 @@ select {
     }
 }
 
+/* Additional styles for improved date experience */
+.date-info-display {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background-color: #f0f8ff;
+    border-radius: 6px;
+    border-left: 4px solid #003366;
+    display: none;
+}
+
+.date-info-display.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.date-info-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #003366;
+    font-weight: 600;
+}
+
+.date-info-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #003366;
+}
+
+.duration-display {
+    color: #800000;
+    font-weight: 600;
+}
+
+.batch-preview {
+    font-weight: 600;
+    color: #003366;
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.date-warning {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
+.date-warning i {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.date-error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+/* SweetAlert2 custom styles */
+.swal2-popup .batch-info {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f0f8ff;
+    border-radius: 5px;
+    border-left: 4px solid #003366;
+    font-size: 0.9em;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
     .top-nav a {
@@ -1213,6 +1317,11 @@ select {
     .btn {
         min-width: 100%;
     }
+    
+    .date-info-content {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1317,168 +1426,3 @@ select {
         padding: 12px 20px;
     }
 }
-
-/* Add this to your admin_class_creation.css file */
-.batch-preview {
-    font-weight: 600;
-    color: #003366;
-}
-
-.swal2-popup .batch-info {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f0f8ff;
-    border-radius: 5px;
-    border-left: 4px solid #003366;
-    font-size: 0.9em;
-}
-
-/* Additional styles for improved date experience */
-        .date-info-display {
-            margin-top: 15px;
-            padding: 12px 15px;
-            background-color: #f0f8ff;
-            border-radius: 6px;
-            border-left: 4px solid #003366;
-            display: none;
-        }
-        
-        .date-info-display.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .date-info-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            color: #003366;
-            font-weight: 600;
-        }
-        
-        .date-info-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .info-label {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 3px;
-        }
-        
-        .info-value {
-            font-weight: 600;
-            color: #003366;
-        }
-        
-        .duration-display {
-            color: #800000;
-            font-weight: 600;
-        }
-        
-        .date-inputs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .date-inputs .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        
-        /* Batch info styling */
-        .batch-preview {
-            font-weight: 600;
-            color: #003366;
-            background-color: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-        
-        /* Input validation states */
-        input:valid, select:valid {
-            border-color: #28a745;
-        }
-        
-        input:invalid, select:invalid {
-            border-color: #dc3545;
-        }
-        
-        .date-success {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #d1e7dd;
-            border: 1px solid #badbcc;
-            border-radius: 4px;
-            color: #0f5132;
-            font-size: 0.9rem;
-            display: none;
-        }
-        
-        .date-success.show {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .date-success i {
-            color: #198754;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .date-info-content {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            
-            .date-inputs {
-                flex-direction: column;
-                gap: 10px;
-            }
-        }
-        
-        .date-warning {
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            color: #856404;
-            font-size: 0.9rem;
-        }
-        
-        .date-warning i {
-            color: #ffc107;
-            margin-right: 5px;
-        }
-        
-        .date-error {
-            border-color: #dc3545;
-            background-color: #fff5f5;
-        }
-        
-        .school-year-display {
-            font-weight: 600;
-            color: #003366;
-            background-color: #e6f0fa;
-            padding: 6px 10px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-left: 5px;
-        }

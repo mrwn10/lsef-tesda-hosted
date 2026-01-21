@@ -32,26 +32,31 @@ def calculate_school_year_from_dates(start_date, end_date):
     except Exception:
         return None
 
-def generate_batch_number(school_year, course_id):
-    """Generate batch number like 2025-2026-BOOK-101-001"""
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    
-    # Get course code
-    cursor.execute("SELECT course_code FROM courses WHERE course_id = %s", (course_id,))
-    course = cursor.fetchone()
-    course_code = course['course_code'] if course else "UNK"
-    
-    # Count existing batches for this course and school year
-    cursor.execute("""
-        SELECT COUNT(*) as count 
-        FROM classes 
-        WHERE course_id = %s AND school_year = %s
-    """, (course_id, school_year))
-    result = cursor.fetchone()
-    batch_num = result['count'] + 1 if result else 1
-    
-    return f"{school_year}-{course_code}-{batch_num:03d}"
+def generate_batch_number(course_id, cursor):
+    """Generate simple sequential batch number for each course (1, 2, 3...)."""
+    try:
+        # Count existing classes for THIS SPECIFIC COURSE
+        cursor.execute("""
+            SELECT COUNT(*) as count 
+            FROM classes 
+            WHERE course_id = %s
+        """, (course_id,))
+        result = cursor.fetchone()
+        
+        existing_count = result['count'] if result and result['count'] is not None else 0
+        
+        # Next batch number
+        batch_num = existing_count + 1
+        
+        print(f"DEBUG - Course ID: {course_id}, Existing classes: {existing_count}, Next batch: {batch_num}")
+        
+        return str(batch_num)
+        
+    except Exception as e:
+        print(f"Error generating batch number: {e}")
+        import traceback
+        traceback.print_exc()
+        return "1"  # Fallback to batch 1
 
 @admin_class_creation_bp.route('/admin/class/create', methods=['GET', 'POST'])
 def create_class():
@@ -193,8 +198,9 @@ def create_class():
         course = cursor.fetchone()
         prerequisites = course['prerequisites'] if course else None
 
-        # Generate batch number
-        batch = generate_batch_number(school_year, data['course_id'])
+        # Generate SIMPLE batch number (1, 2, 3...) - CHANGED TO SIMPLE
+        batch = generate_batch_number(data['course_id'], cursor)
+        print(f"DEBUG - Final batch number generated: {batch}")
 
         # Insert class with status 'open'
         cursor.execute("""
@@ -209,7 +215,7 @@ def create_class():
             data['course_id'],
             data['class_title'],
             school_year,  # Calculated from dates
-            batch,
+            batch,        # Simple number: "1", "2", "3"...
             data['schedule'],
             data['days_of_week'],
             data['venue'],
@@ -228,13 +234,16 @@ def create_class():
             'status': 'success', 
             'message': f'Class created successfully.',
             'school_year': school_year,
-            'batch': batch,
+            'batch': batch,  # Simple number like "1", "2", "3"
             'start_date': data['start_date'],
             'end_date': data['end_date']
         })
 
     except Exception as e:
         db.rollback()
+        print(f"Error creating class: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @admin_class_creation_bp.route('/course/prerequisites/<int:course_id>')

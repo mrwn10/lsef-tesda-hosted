@@ -221,11 +221,12 @@
                                 <label for="batch">Batch</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-layer-group"></i>
-                                    <input type="text" id="batch" name="batch" placeholder="Select course and set dates" readonly 
+                                    <input type="text" id="batch" name="batch" placeholder="Will be auto-generated (1, 2, 3...)" readonly 
                                            style="background-color: #f8f9fa; color: #666;">
                                 </div>
                                 <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                                    Batch number will be auto-generated (e.g., 2025-2026-BOOK-101-001)
+                                    Batch number will be auto-generated sequentially for each course (e.g., 1, 2, 3...)
+                                    <br>Bookkeeping classes: 1, 2, 3... | Cooking classes: 1, 2, 3...
                                 </small>
                             </div>
                         </div>
@@ -372,7 +373,7 @@
                                 <label for="prerequisites">Prerequisites</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-clipboard-list"></i>
-                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Prerequisites will be loaded from selected course" readonly></textarea>
+                                    <textarea id="prerequisites" name="prerequisites" rows="3" placeholder="Prerequisites will be loaded from selected course" readonly style="background-color: #f8f9fa; color: #666;"></textarea>
                                 </div>
                             </div>
                         </div>

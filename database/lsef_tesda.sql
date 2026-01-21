@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 21, 2026 at 02:28 AM
+-- Generation Time: Jan 21, 2026 at 11:36 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -39,13 +39,6 @@ CREATE TABLE `certificates` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `certificates`
---
-
-INSERT INTO `certificates` (`id`, `enrollment_id`, `name`, `course`, `date`, `cert_hash`, `tx_hash`, `file_path`, `created_at`) VALUES
-(1, 1, 'Marwin Dalin', 'BOOK 101', '2026-01-11', '283ed142c45fe33223773a4c9d3bc3d22d6494014658aac27a6c3a1b8bec8937', NULL, 'certs/Private_Completion_Marwin_Dalin_BOOK_101.pdf', '2026-01-11 07:08:14');
-
 -- --------------------------------------------------------
 
 --
@@ -79,7 +72,7 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `batch`, `schedule`, `days_of_week`, `venue`, `max_students`, `instructor_id`, `instructor_name`, `start_date`, `end_date`, `prerequisites`, `status`, `date_created`, `date_updated`, `edit_reason`) VALUES
-(1, 1, 'BOOK 101', '2025', '2026 - 2027', 'Saturday 07:00-15:00', '{\"Monday\": {\"start\": \"06:00\", \"end\": \"10:00\"}, \"Wednesday\": {\"start\": \"08:00\", \"end\": \"16:00\"}, \"Saturday\": {\"start\": \"07:00\", \"end\": \"15:00\"}}', 'LSEF TESDA', 25, 2, 'Vincent Octavio', '2026-01-11', '2027-01-12', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'pending', '2026-01-11 15:04:53', '2026-01-21 09:26:44', NULL);
+(11, 1, 'BOOKING', '2026-2027', '1', 'Monday 6:00 AM-6:00 PM', '{\"Monday\":{\"start\":\"06:00\",\"end\":\"18:00\"}}', 'sda', 25, 2, 'Vincent Octavio', '2026-01-21', '2027-02-03', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'pending', '2026-01-21 18:00:52', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -130,13 +123,6 @@ CREATE TABLE `enrollment` (
   `enrollment_date` datetime NOT NULL DEFAULT current_timestamp(),
   `status` enum('enrolled','pending','cancelled','completed','rejected','dropped') NOT NULL DEFAULT 'enrolled'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `enrollment`
---
-
-INSERT INTO `enrollment` (`enrollment_id`, `user_id`, `class_id`, `enrollment_date`, `status`) VALUES
-(1, 3, 1, '2026-01-11 15:07:33', 'completed');
 
 -- --------------------------------------------------------
 
@@ -417,7 +403,7 @@ ALTER TABLE `certificates`
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `courses`
