@@ -3,8 +3,7 @@ from database import get_db
 import os
 
 student_view_certificates_bp = Blueprint('student_view_certificates', __name__)
-
-# Folder where generated certificates are stored
+ 
 CERT_DIR = os.path.join('static', 'certs')
 
 @student_view_certificates_bp.route('/student/certificates')
@@ -13,12 +12,11 @@ def student_view_certificates():
         return redirect('/login')
 
     user_id = session['user_id']
-    profile_picture = 'default.png'  # fallback
+    profile_picture = 'default.png'   
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # Fetch student's profile picture
+ 
     cursor.execute("""
         SELECT profile_picture
         FROM personal_information
@@ -27,8 +25,7 @@ def student_view_certificates():
     user = cursor.fetchone()
     if user and user.get('profile_picture'):
         profile_picture = user['profile_picture']
-
-    # Fetch certificates for this student where remarks is 'Competent'
+ 
     query = """
         SELECT c.course AS class_title, c.date, c.file_path
         FROM certificates c

@@ -4,11 +4,7 @@ from database import get_db
 import logging
 
 student_enrollment_bp = Blueprint('student_enrollment', __name__, url_prefix='/student')
-
-
-# -----------------------------
-# ENROLLMENT PAGE
-# -----------------------------
+ 
 @student_enrollment_bp.route('/enrollment', methods=['GET'])
 def enrollment_page():
     if 'user_id' not in session or session.get('role') != 'student':
@@ -20,8 +16,7 @@ def enrollment_page():
     user_id = session['user_id']
     profile_picture = 'default.png'
 
-    try:
-        # 🔹 Verify student status
+    try: 
         cursor.execute("SELECT account_status, verified FROM login WHERE user_id = %s", (user_id,))
         student = cursor.fetchone()
 
@@ -32,17 +27,14 @@ def enrollment_page():
         if student['account_status'] != 'active' or student['verified'] != 'verified':
             flash("You must upload the required documents to be verified before enrolling.", "warning")
             return redirect(url_for('student_requirements.upload_requirements'))
-
-        # 🔹 Fetch profile picture
+ 
         cursor.execute("SELECT profile_picture FROM personal_information WHERE user_id = %s", (user_id,))
         row = cursor.fetchone()
         if row and row.get('profile_picture'):
             profile_picture = row['profile_picture']
-
-        # ✅ Fix timezone issue
+ 
         today = date.today().strftime("%Y-%m-%d")
-
-        # ✅ Updated query to show ongoing and upcoming classes
+ 
         query = """
             SELECT 
                 cl.class_id, 
@@ -70,7 +62,7 @@ def enrollment_page():
                 ), 0)) AS available_slots
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
-            WHERE cl.status = 'active'
+            WHERE cl.status = 'open'  -- CHANGED FROM 'active' TO 'open'
               AND co.course_status = 'active'
               AND cl.end_date >= %s
             HAVING available_slots > 0
@@ -78,8 +70,7 @@ def enrollment_page():
         """
         cursor.execute(query, (today,))
         classes = cursor.fetchall()
-
-        # 🔹 Fetch enrolled classes
+ 
         cursor.execute("""
             SELECT class_id, status 
             FROM enrollment 
@@ -87,8 +78,7 @@ def enrollment_page():
         """, (user_id,))
         enrolled = cursor.fetchall()
         enrolled_classes = [e['class_id'] for e in enrolled]
-
-        # 🔹 NEW: Check for ANY active enrollment (enrolled OR pending)
+ 
         cursor.execute("""
             SELECT COUNT(*) AS total 
             FROM enrollment 
@@ -96,8 +86,7 @@ def enrollment_page():
         """, (user_id,))
         result = cursor.fetchone()
         has_active_enrollment = result['total'] > 0 if result else False
-
-        # 🔹 NEW: Get pending enrollment details
+ 
         pending_enrollment = None
         if has_active_enrollment:
             cursor.execute("""
@@ -117,8 +106,7 @@ def enrollment_page():
                 LIMIT 1
             """, (user_id,))
             pending_enrollment = cursor.fetchone()
-
-        # 🔹 NEW: Check specifically for enrolled (not pending)
+ 
         cursor.execute("SELECT COUNT(*) AS total FROM enrollment WHERE user_id = %s AND status = 'enrolled'", (user_id,))
         result_enrolled = cursor.fetchone()
         has_current_enrollment = result_enrolled['total'] > 0 if result_enrolled else False
@@ -130,8 +118,8 @@ def enrollment_page():
             classes=classes,
             enrolled_classes=enrolled_classes,
             has_current_enrollment=has_current_enrollment,
-            has_active_enrollment=has_active_enrollment,  # NEW: Pass this flag
-            pending_enrollment=pending_enrollment,  # NEW: Pass pending details
+            has_active_enrollment=has_active_enrollment,   
+            pending_enrollment=pending_enrollment,  
             profile_picture=profile_picture,
             verified=student['verified']
         )
@@ -151,11 +139,7 @@ def enrollment_page():
         )
     finally:
         cursor.close()
-
-
-# -----------------------------
-# ENROLLMENT ACTION
-# -----------------------------
+ 
 @student_enrollment_bp.route('/enroll', methods=['POST'])
 def enroll():
     if 'user_id' not in session or session.get('role') != 'student':
@@ -170,8 +154,7 @@ def enroll():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # Verify status
+    try: 
         cursor.execute("SELECT account_status, verified FROM login WHERE user_id = %s", (user_id,))
         student = cursor.fetchone()
         if not student or student['account_status'] != 'active' or student['verified'] != 'verified':
@@ -179,25 +162,23 @@ def enroll():
                 'success': False,
                 'message': 'You must upload the requirements and wait for verification before enrolling.'
             }), 403
-
-        # Check class availability
+ 
         cursor.execute("""
             SELECT cl.class_id, cl.max_students, cl.class_title,
                 (SELECT COUNT(*) FROM enrollment 
                  WHERE class_id = cl.class_id AND status IN ('enrolled', 'pending')) AS current_enrollments
             FROM classes cl
-            WHERE cl.class_id = %s AND cl.status = 'active'
+            WHERE cl.class_id = %s AND cl.status = 'open'  -- CHANGED FROM 'active' TO 'open'
         """, (class_id,))
         class_info = cursor.fetchone()
 
         if not class_info:
-            return jsonify({'success': False, 'message': 'Selected class not found or inactive.'}), 404
+            return jsonify({'success': False, 'message': 'Selected class not found or not open for enrollment.'}), 404
 
         available_slots = class_info['max_students'] - class_info['current_enrollments']
         if available_slots <= 0:
             return jsonify({'success': False, 'message': 'Class is already full.'}), 400
-
-        # Prevent duplicate enrollment
+ 
         cursor.execute("""
             SELECT COUNT(*) AS active_enrollments 
             FROM enrollment 
@@ -206,8 +187,7 @@ def enroll():
         active = cursor.fetchone()
         if active and active['active_enrollments'] > 0:
             return jsonify({'success': False, 'message': 'You already have an active or pending enrollment.'}), 400
-
-        # Create enrollment
+ 
         cursor.execute("""
             INSERT INTO enrollment (user_id, class_id, enrollment_date, status)
             VALUES (%s, %s, %s, %s)
@@ -225,11 +205,7 @@ def enroll():
         return jsonify({'success': False, 'message': 'An error occurred. Please try again.'}), 500
     finally:
         cursor.close()
-
-
-# -----------------------------
-# CLASS DETAILS (AJAX FETCH)
-# -----------------------------
+ 
 @student_enrollment_bp.route('/class/<int:class_id>/details', methods=['GET'])
 def get_class_details(class_id):
     if 'user_id' not in session or session.get('role') != 'student':
@@ -265,14 +241,13 @@ def get_class_details(class_id):
                 ), 0)) AS available_slots
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
-            WHERE cl.class_id = %s AND cl.status = 'active'
+            WHERE cl.class_id = %s AND cl.status = 'open'  -- CHANGED FROM 'active' TO 'open'
         """, (class_id,))
         class_details = cursor.fetchone()
 
         if not class_details:
-            return jsonify({'error': 'Class not found'}), 404
-
-        # ✅ Fix: convert any bytes (BLOB) data to string
+            return jsonify({'error': 'Class not found or not open for enrollment'}), 404
+ 
         for key, value in class_details.items():
             if isinstance(value, bytes):
                 try:

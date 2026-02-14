@@ -29,9 +29,7 @@ def get_all_students():
                 'success': False,
                 'error': 'No student accounts found',
                 'data': []
-            })
-        
-        # Get additional data for each student
+            }) 
         for student in students:
             user_id = student['user_id']
             
@@ -47,8 +45,7 @@ def get_all_students():
             """, (user_id,))
             enrollments = cursor.fetchall()
             student['enrollments'] = enrollments
-            
-            # Get grades for each enrollment
+             
             for enrollment in enrollments:
                 if enrollment['enrollment_id']:
                     cursor.execute("""
@@ -58,8 +55,7 @@ def get_all_students():
                     """, (enrollment['enrollment_id'],))
                     grades = cursor.fetchone()
                     enrollment['grades'] = grades if grades else None
-            
-            # Get certificates
+             
             cursor.execute("""
                 SELECT cert.id, cert.course, cert.date, 
                        cert.cert_hash, cert.tx_hash, cert.file_path,

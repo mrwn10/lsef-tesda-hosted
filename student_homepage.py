@@ -13,7 +13,6 @@ def student_home():
     profile_picture = 'default.png' 
 
     if not user_id:
-       
         return redirect(url_for('login.login'))  
 
     db = get_db()
@@ -33,7 +32,6 @@ def student_home():
             profile_picture = user['profile_picture']
         
         is_verified = user.get('verified') == 'verified'
-        
         is_enrolled = user.get('is_enrolled', False)
     else:
         is_verified = False
@@ -73,8 +71,7 @@ def get_user_schedule(user_id):
 
     try:
         cursor = connection.cursor(dictionary=True)
-        
-        # Verify user exists and is a student
+         
         cursor.execute("""
             SELECT role FROM login 
             WHERE user_id = %s AND role = 'student' AND account_status = 'active'
@@ -83,8 +80,7 @@ def get_user_schedule(user_id):
         
         if not user:
             return jsonify({'error': 'User not found or not an active student'}), 404
-
-        # Get all active classes the user is enrolled in
+ 
         cursor.execute("""
             SELECT c.class_id, c.class_title, c.course_id, c.schedule, 
                    c.days_of_week, c.venue, c.start_date, c.end_date,
@@ -93,13 +89,12 @@ def get_user_schedule(user_id):
             JOIN classes c ON e.class_id = c.class_id
             JOIN courses co ON c.course_id = co.course_id
             WHERE e.user_id = %s 
-            AND c.status = 'active'
+            AND c.status IN ('open', 'ongoing', 'pending')  -- Updated: include appropriate statuses
             AND e.status = 'enrolled'
         """, (user_id,))
         
         enrolled_classes = cursor.fetchall()
-
-        # Process the schedule data
+ 
         schedule = []
         today = datetime.now().date()
         
@@ -158,8 +153,7 @@ def get_user_statistics(user_id):
 
     try:
         cursor = connection.cursor(dictionary=True)
-        
-        # Verify user exists and is a student
+         
         cursor.execute("""
             SELECT role FROM login 
             WHERE user_id = %s AND role = 'student' AND account_status = 'active'
@@ -168,8 +162,7 @@ def get_user_statistics(user_id):
         
         if not user:
             return jsonify({'error': 'User not found or not an active student'}), 404
-
-        # Get enrolled courses count
+ 
         cursor.execute("""
             SELECT COUNT(*) as count 
             FROM enrollment 
@@ -177,8 +170,7 @@ def get_user_statistics(user_id):
         """, (user_id,))
         enrolled_result = cursor.fetchone()
         enrolled_courses = enrolled_result['count'] if enrolled_result else 0
-
-        # Get pending courses count
+ 
         cursor.execute("""
             SELECT COUNT(*) as count 
             FROM enrollment 
@@ -186,13 +178,12 @@ def get_user_statistics(user_id):
         """, (user_id,))
         pending_result = cursor.fetchone()
         pending_courses = pending_result['count'] if pending_result else 0
-
-        # Get completed courses count
+ 
         cursor.execute("""
             SELECT COUNT(*) as count 
             FROM enrollment e
-            JOIN student_grades sg ON e.enrollment_id = sg.enrollment_id
-            WHERE e.user_id = %s AND sg.remarks = 'Completed'
+            JOIN classes c ON e.class_id = c.class_id
+            WHERE e.user_id = %s AND c.status = 'completed'
         """, (user_id,))
         completed_result = cursor.fetchone()
         completed_courses = completed_result['count'] if completed_result else 0

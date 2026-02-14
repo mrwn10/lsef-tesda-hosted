@@ -1,4 +1,4 @@
-# verify_cert.py
+ 
 from flask import Blueprint, render_template, request
 from database import get_db
 
@@ -7,17 +7,11 @@ verify_cert_bp = Blueprint(
     __name__,
     url_prefix=""
 )
-
-# ---------------------------
-# Manual Verification Page
-# ---------------------------
+ 
 @verify_cert_bp.route("/verify_cert", methods=["GET"])
 def verify_cert_form():
     return render_template("all/verify_cert.html")
-
-# ---------------------------
-# Manual Verification POST
-# ---------------------------
+ 
 @verify_cert_bp.route("/verify_cert/check", methods=["POST"])
 def verify_cert_check():
     cert_hash = request.form.get("cert_hash", "").strip()
@@ -29,19 +23,11 @@ def verify_cert_check():
         )
 
     return _verify_and_render(cert_hash)
-
-
-# ---------------------------
-# QR CODE VERIFICATION (GET)
-# ---------------------------
+ 
 @verify_cert_bp.route("/verify-certificate/<cert_hash>", methods=["GET"])
 def verify_from_qr(cert_hash):
     return _verify_and_render(cert_hash)
-
-
-# ---------------------------
-# SHARED VERIFICATION LOGIC
-# ---------------------------
+ 
 def _verify_and_render(cert_hash):
     db = get_db()
     cursor = db.cursor(dictionary=True)

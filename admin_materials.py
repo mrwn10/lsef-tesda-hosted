@@ -214,8 +214,7 @@ def check_submissions(material_id):
     if not material or material["type"] != "classwork":
         flash("Invalid classwork or unauthorized access.")
         return redirect(url_for("admin_materials.materials"))
-
-    # For global classwork, get all enrolled students
+ 
     if material["class_id"] is None:
         cursor.execute(
             """

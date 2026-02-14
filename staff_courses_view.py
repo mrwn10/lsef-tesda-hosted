@@ -3,20 +3,18 @@ from datetime import datetime
 from database import get_db
 
 staff_courses_view_bp = Blueprint('staff_courses_view', __name__)
-
-# Fetch active courses for the logged-in staff
+ 
 @staff_courses_view_bp.route('/courses/view', methods=['GET'])
 def view_staff_active_courses():
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        staff_user_id = session.get('user_id')  # Get user_id from session
+        staff_user_id = session.get('user_id')   
 
         if not staff_user_id:
             return jsonify({'status': 'error', 'message': 'Staff not logged in.'}), 401
-
-        # Fetch profile picture
+ 
         profile_picture = 'default.png'
         cursor.execute("""
             SELECT profile_picture
@@ -26,8 +24,7 @@ def view_staff_active_courses():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-
-        # Query to fetch active / edited courses created by this staff
+ 
         query = """
             SELECT 
                 c.course_id, c.course_code, c.course_title, c.course_status,

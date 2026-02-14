@@ -16,8 +16,7 @@ def allowed_file(filename):
 
 def allowed_signature(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_SIGNATURE_EXTENSIONS
-
-# ===== HTML PAGE ENDPOINT =====
+ 
 @admin_profile_bp.route('/profile', methods=['GET'])
 def admin_profile_page():
     """Render the HTML profile page"""
@@ -25,8 +24,7 @@ def admin_profile_page():
         return render_template('login.html', error='Unauthorized access')
     
     return render_template('admin/admin_profile.html')
-
-# ===== JSON API ENDPOINT =====
+ 
 @admin_profile_bp.route('/profile/data', methods=['GET'])
 def admin_profile_data():
     """Return JSON data for the profile (used by AJAX)"""
@@ -56,8 +54,7 @@ def admin_profile_data():
 
         admin['date_of_birth'] = admin['date_of_birth'].strftime('%Y-%m-%d') if admin['date_of_birth'] else None
         admin['date_registered'] = admin['date_registered'].strftime('%Y-%m-%d %H:%M:%S') if admin['date_registered'] else None
-
-        # FIXED: Remove _external=True for local URLs
+ 
         admin['profile_picture_url'] = url_for(
             'static',
             filename=f"uploads/profile_pictures/{admin['profile_picture']}"
@@ -94,8 +91,7 @@ def update_profile():
         user = cursor.fetchone()
         if not user:
             return jsonify({'error': 'User not found'}), 404
-
-        # ---------------- PROFILE PICTURE ----------------
+ 
         profile_picture = None
         if 'profile_picture' in files:
             file = files['profile_picture']
@@ -113,8 +109,7 @@ def update_profile():
                     old_path = os.path.join(upload_dir, old['profile_picture'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
-
-        # ---------------- SIGNATURE ----------------
+ 
         signature_file = None
         if 'signature' in files:
             file = files['signature']
@@ -132,8 +127,7 @@ def update_profile():
                     old_path = os.path.join(upload_dir, old['signature'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
-
-        # ---------------- PASSWORD ----------------
+ 
         password_update = ""
         password_params = ()
         if data.get('current_password') and data.get('new_password'):
@@ -183,8 +177,7 @@ def update_profile():
         """, fields)
 
         db.commit()
-        
-        # Fetch updated profile to return
+         
         query = """
             SELECT l.username, l.email, l.role, l.account_status,
                    pi.first_name, pi.middle_name, pi.last_name,
@@ -200,8 +193,7 @@ def update_profile():
         
         if updated_profile and updated_profile['date_of_birth']:
             updated_profile['date_of_birth'] = updated_profile['date_of_birth'].strftime('%Y-%m-%d')
-        
-        # FIXED: Remove _external=True for local URLs
+         
         updated_profile['profile_picture_url'] = url_for(
             'static',
             filename=f"uploads/profile_pictures/{updated_profile['profile_picture']}"

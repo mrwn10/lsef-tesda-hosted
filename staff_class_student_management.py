@@ -22,8 +22,7 @@ from io import BytesIO
 staff_class_student_management_bp = Blueprint('staff_class_student_management', __name__)
 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
-
-# ---------------- FONT REGISTRATION ----------------
+ 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
 OFL_FONT_PATH = os.path.join("static", "fonts", "UnifrakturCook-Bold.ttf")
 if os.path.exists(OFL_FONT_PATH):
@@ -33,8 +32,7 @@ if os.path.exists(OFL_FONT_PATH):
         print("Failed to register UnifrakturCook:", e)
 else:
     print("Font file not found:", OFL_FONT_PATH)
-
-# ===================== CALCULATE STATUS AND REMARKS AUTOMATICALLY =====================
+ 
 def calculate_status_and_remarks(prelim, midterm, final):
     """
     Automatically calculate status and remarks based on grades
@@ -54,8 +52,7 @@ def calculate_status_and_remarks(prelim, midterm, final):
         prelim = float(prelim)
         midterm = float(midterm)
         final = float(final)
-        
-        # Calculate status based on final grade
+         
         if final >= 96:
             status = "Excellent (Competent)"
         elif final >= 91:
@@ -68,8 +65,7 @@ def calculate_status_and_remarks(prelim, midterm, final):
             status = "Passed (Competent)"
         else:
             status = "Failed (Not Yet Competent)"
-        
-        # Calculate remarks based on average
+         
         average = (prelim + midterm + final) / 3
         
         if average >= 75:
@@ -80,8 +76,7 @@ def calculate_status_and_remarks(prelim, midterm, final):
         return status, remarks
     except (ValueError, TypeError):
         return "Incomplete", "Incomplete"
-
-# ===================== VIEW CLASS STUDENTS =====================
+ 
 @staff_class_student_management_bp.route('/staff_class/<int:class_id>/students', methods=['GET'])
 def view_class_students(class_id):
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -90,8 +85,7 @@ def view_class_students(class_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     staff_user_id = session.get('user_id')
-
-    # Fetch staff profile picture
+ 
     profile_picture = 'default.png'
     if staff_user_id:
         cursor.execute("""
@@ -100,8 +94,7 @@ def view_class_students(class_id):
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-
-    # FETCH CLASS DETAILS TO VERIFY STAFF OWNS THE CLASS
+ 
     cursor.execute("""
         SELECT class_title, instructor_id FROM classes 
         WHERE class_id = %s
@@ -111,13 +104,11 @@ def view_class_students(class_id):
     if not class_info:
         flash('Class not found.', 'error')
         return redirect(url_for('staff_class_management'))
-    
-    # Verify staff is the instructor of this class
+     
     if class_info['instructor_id'] != staff_user_id:
         flash('You are not authorized to manage this class.', 'error')
         return redirect(url_for('staff_class_management'))
-
-    # FIXED: Fetch enrolled students, EXCLUDING those with status = 'pending' from enrollment table
+ 
     cursor.execute("""
         SELECT 
             pi.first_name, 
@@ -140,8 +131,7 @@ def view_class_students(class_id):
         ORDER BY pi.last_name, pi.first_name
     """, (class_id,))
     students = cursor.fetchall()
-    
-    # Calculate automatic status and remarks for display if not already in DB
+     
     for student in students:
         if not student.get('status') or student['status'] == 'Not Evaluated':
             auto_status, auto_remarks = calculate_status_and_remarks(
@@ -153,16 +143,14 @@ def view_class_students(class_id):
             student['auto_remarks'] = auto_remarks
         else:
             student['auto_status'] = student.get('status', 'Not Evaluated')
-            
-            # Calculate auto remarks
+             
             auto_status, auto_remarks = calculate_status_and_remarks(
                 student.get('prelim_grade'),
                 student.get('midterm_grade'),
                 student.get('final_grade')
             )
             student['auto_remarks'] = auto_remarks
-        
-        # For display purposes, if enrollment is completed, show as Competent
+         
         if student['enrollment_status'] == 'completed':
             student['remarks'] = 'Competent'
             student['auto_remarks'] = 'Competent'
@@ -174,8 +162,7 @@ def view_class_students(class_id):
         class_title=class_info['class_title'],
         profile_picture=profile_picture
     )
-
-# ===================== EDIT STUDENT GRADE =====================
+ 
 @staff_class_student_management_bp.route('/staff_student/edit_grade', methods=['POST'])
 def edit_student_grade():
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -188,18 +175,15 @@ def edit_student_grade():
     final = data.get('final_grade')
     remarks = data.get('remarks')
     use_auto_remarks = data.get('use_auto_remarks', False)
-
-    # Calculate automatic status and remarks if requested
+ 
     if use_auto_remarks:
         status, remarks = calculate_status_and_remarks(prelim, midterm, final)
-    else:
-        # Still calculate status for display
+    else: 
         status, _ = calculate_status_and_remarks(prelim, midterm, final)
 
     db = get_db()
     cursor = db.cursor()
-
-    # First verify staff owns this enrollment
+ 
     cursor.execute("""
         SELECT c.instructor_id 
         FROM enrollment e
@@ -225,8 +209,7 @@ def edit_student_grade():
             INSERT INTO student_grades (enrollment_id, prelim_grade, midterm_grade, final_grade, remarks)
             VALUES (%s, %s, %s, %s, %s)
         """, (enrollment_id, prelim, midterm, final, remarks))
-
-    # Update enrollment status if remarks is Competent
+ 
     if remarks == 'Competent':
         cursor.execute("""
             UPDATE enrollment 
@@ -246,8 +229,7 @@ def edit_student_grade():
         'message': 'Grade and remarks updated successfully',
         'auto_status': status,
         'auto_remarks': remarks if use_auto_remarks else None
-    })
-# ===================== GET AUTO STATUS AND REMARKS =====================
+    }) 
 @staff_class_student_management_bp.route('/staff_student/get_auto_status_remarks', methods=['POST'])
 def get_auto_status_remarks():
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -265,8 +247,7 @@ def get_auto_status_remarks():
         'remarks': remarks,
         'success': True
     })
-
-# ===================== STUDENT PROFILE =====================
+ 
 @staff_class_student_management_bp.route('/staff_student_profile/<int:user_id>', methods=['GET'])
 def get_student_profile(user_id):
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -275,8 +256,7 @@ def get_student_profile(user_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # Personal Info
+    try: 
         cursor.execute("""
             SELECT 
                 pi.first_name, pi.middle_name, pi.last_name,
@@ -291,8 +271,7 @@ def get_student_profile(user_id):
 
         if not profile:
             return jsonify({'error': 'Student profile not found'}), 404
-
-        # Enrolled Classes with status
+ 
         cursor.execute("""
             SELECT 
                 c.class_id, c.class_title, c.schedule, c.days_of_week, c.venue,
@@ -315,8 +294,7 @@ def get_student_profile(user_id):
                     cls['days_of_week'] = json.loads(cls['days_of_week'])
                 except:
                     cls['days_of_week'] = None
-
-        # Certificates
+ 
         cursor.execute("""
             SELECT 
                 cert.id, cert.name, cert.course, cert.date, cert.cert_hash, cert.file_path,
@@ -348,8 +326,7 @@ def get_student_profile(user_id):
             'error': 'Server Error',
             'message': f'Failed to fetch student profile: {str(e)}'
         }), 500
-
-# ===================== DOWNLOAD GRADE SHEET =====================
+ 
 @staff_class_student_management_bp.route('/staff_class/<int:class_id>/download_grades', methods=['GET'])
 def download_grade_sheet(class_id):
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -357,8 +334,7 @@ def download_grade_sheet(class_id):
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # Verify staff owns this class
+ 
     cursor.execute("SELECT instructor_id FROM classes WHERE class_id = %s", (class_id,))
     class_info = cursor.fetchone()
     
@@ -398,8 +374,7 @@ def download_grade_sheet(class_id):
     output.seek(0)
 
     return send_file(output, download_name=f'class_{class_id}_grades.xlsx', as_attachment=True)
-
-# ===================== UPLOAD GRADE SHEET =====================
+ 
 @staff_class_student_management_bp.route('/staff_class/<int:class_id>/upload_grades', methods=['POST'])
 def upload_grade_sheet(class_id):
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -413,8 +388,7 @@ def upload_grade_sheet(class_id):
 
     try:
         df = pd.read_excel(file)
-
-        # Replace NaN with None
+ 
         df = df.replace({np.nan: None})
 
         db = get_db()
@@ -428,9 +402,8 @@ def upload_grade_sheet(class_id):
             remarks = row.get('Remarks')
 
             if not email:
-                continue  # skip invalid rows
-
-            # Calculate automatic status and remarks if not provided
+                continue   
+ 
             if not remarks and prelim is not None and midterm is not None and final is not None:
                 status, remarks = calculate_status_and_remarks(prelim, midterm, final)
 
@@ -459,8 +432,7 @@ def upload_grade_sheet(class_id):
                         INSERT INTO student_grades (enrollment_id, prelim_grade, midterm_grade, final_grade, remarks)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (enrollment_id, prelim, midterm, final, remarks))
-
-                # Update enrollment status if remarks is Competent
+ 
                 if remarks == 'Competent':
                     cursor.execute("""
                         UPDATE enrollment 
@@ -475,12 +447,10 @@ def upload_grade_sheet(class_id):
         flash(f'Error processing file: {str(e)}', 'error')
 
     return redirect(url_for('staff_class_student_management.view_class_students', class_id=class_id))
-
-# ===================== CERTIFICATE FUNCTIONS =====================
+ 
 def generate_private_certificate_hash(content):
     return hashlib.sha256(content.encode()).hexdigest()
-
-# ---------------- SAVE CERT ----------------
+ 
 def save_private_certificate(enrollment_id, name, course, date, cert_hash, file_path):
     file_path = file_path.replace("\\", "/").lstrip("/") 
 
@@ -509,8 +479,7 @@ def save_private_certificate(enrollment_id, name, course, date, cert_hash, file_
 
     db.commit()
     cursor.close()
-
-# ---------------- CURVED TEXT ----------------
+ 
 def draw_curved_text(
     c, text, fontname, fontsize,
     center_x, center_y,
@@ -539,8 +508,7 @@ def draw_curved_text(
         c.drawCentredString(0, 0, ch)
         c.restoreState()
         angle += angle_per_char
-
-# ---------------- CREATE CERTIFICATE ----------------
+ 
 def create_private_completion_certificate(
     recipient_name,
     course_title,
@@ -560,8 +528,7 @@ def create_private_completion_certificate(
         c.setFillColor(color)
         c.drawCentredString(x, y, text)
         c.setFillColor(colors.black)
-
-    # ========================= PAGE 1 =========================
+ 
     c.setStrokeColor(colors.red)
     c.setLineWidth(25)
     c.rect(margin, margin, page_width - 2*margin, page_height - 2*margin)
@@ -623,8 +590,7 @@ def create_private_completion_certificate(
     draw_centered_text("In recognition of your dedication, passion and hard work",
                        "Helvetica", 18,
                        center_x, page_height - margin - 410)
-
-    # ========================= SIGNATURES =========================
+ 
     sign_y = page_height - margin - 500
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -669,8 +635,7 @@ def create_private_completion_certificate(
                    f"{admin['first_name']} {admin['last_name']}" if admin else "Chairman",
                    "Chairman, BOT",
                    admin['signature'] if admin else None)
-
-    # ========================= PAGE 2 (QR VERIFICATION) =========================
+ 
     c.showPage()
 
     draw_centered_text("Certificate Verification",
@@ -703,8 +668,7 @@ def create_private_completion_certificate(
                        "Helvetica", 12, center_x, 80, colors.gray)
 
     c.save()
-
-# ---------------- ROUTE ----------------
+ 
 @staff_class_student_management_bp.route('/generate_private_completion', methods=['POST'])
 def generate_private_completion():
     if 'user_id' not in session or session.get('role') != 'staff':
@@ -756,8 +720,7 @@ def generate_private_completion():
             cert_path,
             cert_hash
         )
-
-        # Store relative path
+ 
         relative_path = f"certs/{cert_filename}"
 
         save_private_certificate(

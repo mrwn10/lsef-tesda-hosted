@@ -13,7 +13,6 @@ def view_available_courses():
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        # --- Fetch available courses ---
         query = """
             SELECT 
                 c.course_id, c.course_code, c.course_title, c.course_status,
@@ -32,7 +31,6 @@ def view_available_courses():
         cursor.execute(query)
         courses = cursor.fetchall()
 
-        # --- Fetch admin profile picture ---
         profile_picture = 'default.png'
         try:
             cursor.execute("""

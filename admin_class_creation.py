@@ -22,9 +22,6 @@ def calculate_school_year_from_dates(start_date, end_date):
         start_year = start_date.year
         end_year = end_date.year
         
-        # If end date is in same year as start, it's still the same school year
-        # (e.g., Jan 2025 - Dec 2025 = 2025-2025)
-        # If spans across years (e.g., Aug 2025 - May 2026 = 2025-2026)
         if end_date.year > start_date.year:
             return f"{start_year}-{end_year}"
         else:
@@ -35,7 +32,6 @@ def calculate_school_year_from_dates(start_date, end_date):
 def generate_batch_number(course_id, cursor):
     """Generate simple sequential batch number for each course (1, 2, 3...)."""
     try:
-        # Count existing classes for THIS SPECIFIC COURSE
         cursor.execute("""
             SELECT COUNT(*) as count 
             FROM classes 
@@ -45,7 +41,6 @@ def generate_batch_number(course_id, cursor):
         
         existing_count = result['count'] if result and result['count'] is not None else 0
         
-        # Next batch number
         batch_num = existing_count + 1
         
         print(f"DEBUG - Course ID: {course_id}, Existing classes: {existing_count}, Next batch: {batch_num}")
@@ -56,7 +51,7 @@ def generate_batch_number(course_id, cursor):
         print(f"Error generating batch number: {e}")
         import traceback
         traceback.print_exc()
-        return "1"  # Fallback to batch 1
+        return "1"  
 
 @admin_class_creation_bp.route('/admin/class/create', methods=['GET', 'POST'])
 def create_class():
@@ -69,7 +64,6 @@ def create_class():
 
     if request.method == 'GET':
         try:
-            # Get active courses
             cursor.execute("""
                 SELECT course_id, course_title, course_code
                 FROM courses 
@@ -77,7 +71,6 @@ def create_class():
             """)
             courses = cursor.fetchall()
 
-            # Get verified staff instructors
             cursor.execute("""
                 SELECT 
                     u.user_id,
@@ -90,7 +83,6 @@ def create_class():
             """)
             instructors = cursor.fetchall()
 
-            # Get admin profile picture
             profile_picture = 'default.png'
             cursor.execute("""
                 SELECT profile_picture 
@@ -133,18 +125,15 @@ def create_class():
                 'message': f"Missing required fields: {', '.join(required_fields[f] for f in missing)}"
             }), 400
 
-        # Validate dates
         start_date = datetime.strptime(data['start_date'], '%Y-%m-%d')
         end_date = datetime.strptime(data['end_date'], '%Y-%m-%d')
 
-        # Validate that end date is after start date
         if end_date <= start_date:
             return jsonify({
                 'status': 'error',
                 'message': 'End date must be after start date'
             }), 400
 
-        # NEW: Check if end date is in the past
         current_date = datetime.now().date()
         end_date_obj = end_date.date()
         if end_date_obj < current_date:
@@ -153,7 +142,6 @@ def create_class():
                 'message': f'End date ({data["end_date"]}) is in the past. Cannot create a class that has already ended.'
             }), 400
 
-        # Calculate school year from dates
         school_year = calculate_school_year_from_dates(start_date, end_date)
         if not school_year:
             return jsonify({
@@ -161,14 +149,12 @@ def create_class():
                 'message': 'Could not determine school year from dates'
             }), 400
 
-        # Validate school year format
         if not re.match(r'^\d{4}-\d{4}$', school_year):
             return jsonify({
                 'status': 'error',
                 'message': f'Invalid school year calculated: {school_year}'
             }), 400
 
-        # Validate time slots
         days_json = json.loads(data['days_of_week'])
         for _, times in days_json.items():
             if not validate_time_format(times.get('start')) or not validate_time_format(times.get('end')):
@@ -177,7 +163,6 @@ def create_class():
                     'message': 'Invalid time format. Times must be on the hour (6:00 AM to 6:00 PM).'
                 }), 400
 
-        # Get instructor name
         cursor.execute("""
             SELECT CONCAT(p.first_name, ' ', p.last_name) AS full_name
             FROM personal_information p
@@ -190,7 +175,6 @@ def create_class():
 
         instructor_name = instructor['full_name']
 
-        # Get course prerequisites
         cursor.execute(
             "SELECT prerequisites FROM courses WHERE course_id = %s",
             (data['course_id'],)
@@ -198,11 +182,9 @@ def create_class():
         course = cursor.fetchone()
         prerequisites = course['prerequisites'] if course else None
 
-        # Generate SIMPLE batch number (1, 2, 3...) - CHANGED TO SIMPLE
         batch = generate_batch_number(data['course_id'], cursor)
         print(f"DEBUG - Final batch number generated: {batch}")
 
-        # Insert class with status 'open'
         cursor.execute("""
             INSERT INTO classes (
                 course_id, class_title, school_year, batch, schedule,
@@ -214,8 +196,8 @@ def create_class():
         """, (
             data['course_id'],
             data['class_title'],
-            school_year,  # Calculated from dates
-            batch,        # Simple number: "1", "2", "3"...
+            school_year,  
+            batch,        
             data['schedule'],
             data['days_of_week'],
             data['venue'],
@@ -234,7 +216,7 @@ def create_class():
             'status': 'success', 
             'message': f'Class created successfully.',
             'school_year': school_year,
-            'batch': batch,  # Simple number like "1", "2", "3"
+            'batch': batch,  
             'start_date': data['start_date'],
             'end_date': data['end_date']
         })

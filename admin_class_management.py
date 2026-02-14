@@ -13,7 +13,6 @@ def view_active_classes():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    # --- Fetch active classes ---
     query = """
         SELECT 
             cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students,
@@ -24,13 +23,12 @@ def view_active_classes():
         JOIN courses co ON cl.course_id = co.course_id
         JOIN login l ON cl.instructor_id = l.user_id
         JOIN personal_information pi ON l.user_id = pi.user_id
-        WHERE cl.status = 'active'
+        WHERE cl.status IN ('open', 'ongoing', 'pending')
         ORDER BY cl.date_created DESC
     """
     cursor.execute(query)
     active_classes = cursor.fetchall()
 
-    # --- Fetch admin profile picture ---
     profile_picture = 'default.png'
     try:
         cursor.execute("""

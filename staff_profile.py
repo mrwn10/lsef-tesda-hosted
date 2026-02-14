@@ -16,19 +16,15 @@ def allowed_file(filename):
 
 def allowed_signature(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_SIGNATURE_EXTENSIONS
-
-# ===== HTML PAGE ENDPOINT =====
+ 
 @staff_profile_bp.route('/profile', methods=['GET'])
 def staff_profile_page():
     """Render the HTML profile page"""
-    if 'user_id' not in session or session.get('role') != 'staff':
-        # Redirect to login if not authorized
+    if 'user_id' not in session or session.get('role') != 'staff': 
         return render_template('login.html', error='Unauthorized access')
-    
-    # Just render the template - JavaScript will load data via AJAX
+     
     return render_template('staffs/staff_profile.html')
-
-# ===== JSON API ENDPOINT =====
+ 
 @staff_profile_bp.route('/profile/data', methods=['GET'])
 def staff_profile_data():
     """Return JSON data for the profile (used by AJAX)"""
@@ -97,8 +93,7 @@ def update_staff_profile():
         user = cursor.fetchone()
         if not user:
             return jsonify({'error': 'User not found'}), 404
-
-        # ---------------- PROFILE PICTURE ----------------
+ 
         profile_picture = None
         if 'profile_picture' in files:
             file = files['profile_picture']
@@ -116,8 +111,7 @@ def update_staff_profile():
                     old_path = os.path.join(upload_dir, old['profile_picture'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
-
-        # ---------------- SIGNATURE ----------------
+ 
         signature_file = None
         if 'signature' in files:
             file = files['signature']
@@ -135,8 +129,7 @@ def update_staff_profile():
                     old_path = os.path.join(upload_dir, old['signature'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
-
-        # ---------------- PASSWORD ----------------
+ 
         password_update = ""
         password_params = ()
         if data.get('current_password') and data.get('new_password'):
@@ -186,8 +179,7 @@ def update_staff_profile():
         """, fields)
 
         db.commit()
-        
-        # Fetch updated profile to return
+         
         query = """
             SELECT l.username, l.email, l.role, l.account_status,
                    pi.first_name, pi.middle_name, pi.last_name,

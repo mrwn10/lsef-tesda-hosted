@@ -19,10 +19,7 @@ def allowed_file(filename):
 @register.route('/register', methods=['GET', 'POST'])
 def register_user():
     if request.method == 'POST':
-
-        # =======================
-        # PROFILE PICTURE (REQUIRED)
-        # =======================
+ 
         if 'profile_picture' not in request.files:
             flash("Profile picture is required", 'danger')
             return render_template(
@@ -51,20 +48,14 @@ def register_user():
                 date=date,
                 form_data={}
             )
-
-        # Secure filename
+ 
         filename = secure_filename(profile_picture.filename)
-
-        # Ensure upload directory exists
+ 
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-        # Prevent filename collision
+ 
         unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-
-        # =======================
-        # FORM DATA
-        # =======================
+ 
         form_data = {
             'username': request.form['username'],
             'email': request.form['email'],
@@ -85,10 +76,7 @@ def register_user():
         confirm_password = request.form['confirm_password']
 
         errors = []
-
-        # =======================
-        # PASSWORD VALIDATION
-        # =======================
+ 
         password_validation = {
             'min_length': len(password) >= 8,
             'has_upper': any(c.isupper() for c in password),
@@ -132,10 +120,7 @@ def register_user():
         db = get_db()
         cursor = db.cursor()
 
-        try:
-            # =======================
-            # CHECK DUPLICATE USER
-            # =======================
+        try: 
             cursor.execute(
                 "SELECT * FROM login WHERE username = %s OR email = %s",
                 (form_data['username'], form_data['email'])
@@ -148,15 +133,9 @@ def register_user():
                     date=date,
                     form_data=form_data
                 )
-
-            # =======================
-            # SAVE IMAGE
-            # =======================
+ 
             profile_picture.save(file_path)
-
-            # =======================
-            # INSERT LOGIN
-            # =======================
+ 
             cursor.execute(
                 """
                 INSERT INTO login (username, password, email, role, account_status)
@@ -171,10 +150,7 @@ def register_user():
                 )
             )
             user_id = cursor.lastrowid
-
-            # =======================
-            # INSERT PERSONAL INFO
-            # =======================
+ 
             cursor.execute(
                 """
                 INSERT INTO personal_information
@@ -200,8 +176,7 @@ def register_user():
             )
 
             db.commit()
-
-            # Return JSON response for modal display
+ 
             return jsonify({
                 'success': True,
                 'message': 'Registration successful! Your account is pending approval.',
@@ -271,45 +246,39 @@ def suggest_username():
     
     if not first_name or not last_name:
         return jsonify({'suggestions': []})
-    
-    # Generate username variations
+     
     suggestions = generate_username_variations(first_name, middle_name, last_name)
-    
-    # Check availability and filter out taken usernames
+     
     available_suggestions = check_username_availability(suggestions)
     
     return jsonify({
-        'suggestions': available_suggestions[:5]  # Return top 5 available suggestions
+        'suggestions': available_suggestions[:5]  
     })
 
 def generate_username_variations(first_name, middle_name, last_name):
     """Generate various username combinations based on name parts"""
     variations = []
-    
-    # Clean names: remove spaces and special characters, keep only letters and numbers
+     
     first_clean = re.sub(r'[^a-z0-9]', '', first_name)
     middle_clean = re.sub(r'[^a-z0-9]', '', middle_name) if middle_name else ''
     last_clean = re.sub(r'[^a-z0-9]', '', last_name)
-    
-    # Basic combinations
+     
     if first_clean and last_clean:
         variations.extend([
-            f"{first_clean}{last_clean}",           # johnporcopio
-            f"{first_clean}.{last_clean}",          # john.porcopio
-            f"{first_clean[0]}{last_clean}",        # jporcopio
-            f"{first_clean}{last_clean[0]}",        # johnp
-            f"{first_clean}_{last_clean}",          # john_porcopio
+            f"{first_clean}{last_clean}",         
+            f"{first_clean}.{last_clean}",        
+            f"{first_clean[0]}{last_clean}",     
+            f"{first_clean}{last_clean[0]}",      
+            f"{first_clean}_{last_clean}",          
         ])
-    
-    # Include middle name variations
+     
     if middle_clean:
         variations.extend([
-            f"{first_clean}{middle_clean[0]}{last_clean}",  # johncporcopio
-            f"{first_clean}.{middle_clean[0]}.{last_clean}", # j.c.porcopio
-            f"{first_clean[0]}{middle_clean[0]}{last_clean}", # jcporcopio
+            f"{first_clean}{middle_clean[0]}{last_clean}",  
+            f"{first_clean}.{middle_clean[0]}.{last_clean}", 
+            f"{first_clean[0]}{middle_clean[0]}{last_clean}", 
         ])
-    
-    # Add number variations for common names
+     
     variations_with_numbers = []
     for variation in variations:
         variations_with_numbers.extend([
@@ -318,8 +287,7 @@ def generate_username_variations(first_name, middle_name, last_name):
             f"{variation}2024",
             f"{variation}1"
         ])
-    
-    # Remove duplicates and ensure reasonable length
+     
     unique_variations = []
     for variation in variations_with_numbers:
         if 3 <= len(variation) <= 20 and variation not in unique_variations:
@@ -334,16 +302,14 @@ def check_username_availability(usernames):
     
     db = get_db()
     cursor = db.cursor()
-    
-    # Create placeholders for SQL query
+     
     placeholders = ', '.join(['%s'] * len(usernames))
     query = f"SELECT username FROM login WHERE username IN ({placeholders})"
     
     cursor.execute(query, usernames)
     taken_usernames = {row[0] for row in cursor.fetchall()}
     cursor.close()
-    
-    # Return only available usernames
+     
     available = [username for username in usernames if username not in taken_usernames]
     
     return available

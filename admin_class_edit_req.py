@@ -15,13 +15,13 @@ def view_class_edit_requests():
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        # --- Fetch class edit requests ---
         query = """
             SELECT 
                 cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students,
                 cl.start_date, cl.end_date, cl.status, cl.date_created, cl.date_updated,
                 cl.edit_reason, cl.school_year, cl.batch, cl.instructor_name,
-                co.course_title,
+                cl.available_slots, cl.days_of_week, cl.prerequisites,
+                co.course_title, co.course_code,
                 pi.first_name, pi.last_name
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
@@ -38,8 +38,13 @@ def view_class_edit_requests():
             request['end_date'] = request['end_date'].strftime('%Y-%m-%d') if request['end_date'] else None
             request['date_created'] = request['date_created'].strftime('%Y-%m-%d %H:%M') if request['date_created'] else None
             request['date_updated'] = request['date_updated'].strftime('%Y-%m-%d %H:%M') if request['date_updated'] else None
+            
+            if request.get('days_of_week'):
+                try:
+                    request['days_of_week'] = json.loads(request['days_of_week'])
+                except:
+                    request['days_of_week'] = {}
 
-        # --- Fetch admin profile picture ---
         profile_picture = 'default.png'
         try:
             cursor.execute("""
@@ -70,7 +75,7 @@ def view_class_edit_requests():
 def approve_or_reject_class_edit():
     try:
         db = get_db()
-        cursor = db.cursor()
+        cursor = db.cursor(dictionary=True)
 
         data = request.get_json()
         class_id = data.get('class_id')
@@ -79,9 +84,27 @@ def approve_or_reject_class_edit():
         if not class_id or action not in ['approve', 'reject']:
             return jsonify({'status': 'error', 'message': 'Invalid data provided.'}), 400
 
-        new_status = 'active' if action == 'approve' else 'pending'
-        now = datetime.now()
+        cursor.execute("""
+            SELECT * FROM classes WHERE class_id = %s
+        """, (class_id,))
+        class_data = cursor.fetchone()
 
+        if not class_data:
+            return jsonify({'status': 'error', 'message': 'Class not found.'}), 404
+
+        if action == 'approve':
+            now = datetime.now().date()
+            start_date = class_data['start_date']
+            
+            if start_date and start_date <= now:
+                new_status = 'ongoing'
+            else:
+                new_status = 'open'
+        else:  
+            new_status = 'pending'
+        
+        now = datetime.now()
+        
         update_query = """
             UPDATE classes
             SET status = %s, date_updated = %s
@@ -90,8 +113,14 @@ def approve_or_reject_class_edit():
         cursor.execute(update_query, (new_status, now, class_id))
         db.commit()
 
-        return jsonify({'status': 'success', 'message': f'Class edit request has been {action}d.'})
+        return jsonify({
+            'status': 'success', 
+            'message': f'Class edit request has been {action}d.',
+            'new_status': new_status
+        })
 
     except Exception as e:
         db.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        cursor.close()

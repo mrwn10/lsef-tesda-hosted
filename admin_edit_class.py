@@ -25,29 +25,53 @@ def view_editable_classes():
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        # --- Fetch editable classes ---
         query = """
             SELECT 
                 cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students,
                 cl.start_date, cl.end_date, cl.status, cl.date_created,
                 cl.school_year, cl.batch, cl.days_of_week, cl.instructor_name,
-                co.course_title
+                cl.instructor_id, cl.course_id, cl.prerequisites,  -- Added these fields
+                co.course_title, co.course_code, co.course_description
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
-            WHERE cl.status IN ('active', 'edited')
-            ORDER BY cl.date_created DESC
+            WHERE cl.status IN ('pending', 'open', 'ongoing', 'edited')
+            ORDER BY 
+                CASE cl.status
+                    WHEN 'pending' THEN 1
+                    WHEN 'open' THEN 2
+                    WHEN 'ongoing' THEN 3
+                    WHEN 'edited' THEN 4
+                    ELSE 5
+                END,
+                cl.date_created DESC
         """
         cursor.execute(query)
         classes = cursor.fetchall()
 
-        # Format dates + parse JSON for days_of_week
         for cls in classes:
             cls['start_date'] = cls['start_date'].isoformat() if cls['start_date'] else None
             cls['end_date'] = cls['end_date'].isoformat() if cls['end_date'] else None
             if cls['days_of_week']:
                 cls['days_of_week'] = json.loads(cls['days_of_week'])
+            else:
+                cls['days_of_week'] = {}
 
-        # --- Fetch admin profile picture ---
+        cursor.execute("""
+            SELECT u.user_id, pi.first_name, pi.last_name, pi.profile_picture
+            FROM login u
+            JOIN personal_information pi ON u.user_id = pi.user_id
+            WHERE u.role = 'staff' AND u.account_status = 'active'
+        """)
+        instructors = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT course_id, course_code, course_title
+            FROM courses 
+            WHERE course_status = 'active' AND published = 1
+            ORDER BY course_title
+        """)
+        courses = cursor.fetchall()
+
         profile_picture = 'default.png'
         try:
             cursor.execute("""
@@ -66,6 +90,8 @@ def view_editable_classes():
         return render_template(
             'admin/admin_edit_class.html',
             classes=classes,
+            instructors=instructors,
+            courses=courses,
             profile_picture=profile_picture
         )
 
@@ -80,7 +106,6 @@ def update_class():
         cursor = db.cursor(dictionary=True)
         data = request.get_json()
 
-        # Required fields
         required_fields = {
             'class_id': 'Class ID',
             'class_title': 'Class Title',
@@ -93,7 +118,6 @@ def update_class():
             'days_of_week': 'Days of Week'
         }
 
-        # Check for missing required fields
         missing_fields = [field for field in required_fields if not data.get(field)]
         if missing_fields:
             return jsonify({
@@ -101,7 +125,6 @@ def update_class():
                 'message': f"Missing required fields: {', '.join([required_fields[field] for field in missing_fields])}"
             }), 400
 
-        # Validate time formats in days_of_week
         if data['days_of_week']:
             for day, times in data['days_of_week'].items():
                 if not validate_time_format(times.get('start')) or not validate_time_format(times.get('end')):
@@ -110,7 +133,6 @@ def update_class():
                         'message': 'Invalid time format. Times must be on the hour (e.g., 7:00, 8:00)'
                     }), 400
 
-        # Generate schedule summary text
         schedule = []
         for day, times in data['days_of_week'].items():
             start_hour = int(times['start'].split(':')[0])
@@ -121,6 +143,15 @@ def update_class():
             end_hour12 = end_hour % 12 or 12
             schedule.append(f"{day} {start_hour12}:00 {start_ampm}-{end_hour12}:00 {end_ampm}")
         schedule_text = ", ".join(schedule)
+
+        cursor.execute("SELECT status FROM classes WHERE class_id = %s", (data['class_id'],))
+        class_data = cursor.fetchone()
+        
+        if not class_data:
+            return jsonify({'status': 'error', 'message': 'Class not found'}), 404
+
+        current_status = class_data['status']
+        new_status = 'edited' if current_status != 'pending' else 'pending'
 
         update_query = """
             UPDATE classes
@@ -135,7 +166,7 @@ def update_class():
                 end_date = %s,
                 days_of_week = %s,
                 instructor_name = %s,
-                status = 'active',
+                status = %s,
                 date_updated = %s
             WHERE class_id = %s
         """
@@ -152,6 +183,7 @@ def update_class():
             data['end_date'],
             json.dumps(data['days_of_week']),
             data['instructor_name'],
+            new_status,  
             now,
             data['class_id']
         ))
@@ -159,7 +191,8 @@ def update_class():
 
         return jsonify({
             'status': 'success',
-            'message': 'Class updated successfully'
+            'message': 'Class updated successfully',
+            'new_status': new_status
         })
 
     except Exception as e:

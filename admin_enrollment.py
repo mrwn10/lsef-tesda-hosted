@@ -14,9 +14,8 @@ def view_enrollments():
     cursor = db.cursor(dictionary=True)
 
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # Default fallback image
-
-    # Fetch admin's profile picture
+    profile_picture = 'default.png'  
+ 
     if user_id:
         cursor.execute("""
             SELECT profile_picture
@@ -26,13 +25,11 @@ def view_enrollments():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-
-    # Get filter parameters
+ 
     status_filter = request.args.get('status', 'all')
     course_filter = request.args.get('course', 'all')
     search_query = request.args.get('search', '')
-
-    # Base query
+ 
     query = """
         SELECT e.enrollment_id, e.user_id, e.class_id, e.status, e.enrollment_date,
                pi.first_name, pi.middle_name, pi.last_name,
@@ -45,8 +42,7 @@ def view_enrollments():
         JOIN classes cl ON e.class_id = cl.class_id
         JOIN courses co ON cl.course_id = co.course_id
     """
-
-    # Add filters
+ 
     conditions = []
     params = []
 
@@ -76,8 +72,7 @@ def view_enrollments():
 
     cursor.execute(query, tuple(params))
     enrollments = cursor.fetchall()
-
-    # Get distinct courses for filter dropdown
+ 
     cursor.execute("SELECT course_id, course_title FROM courses ORDER BY course_title")
     courses = cursor.fetchall()
 
@@ -116,8 +111,7 @@ def update_enrollment_status():
             WHERE enrollment_id = %s
         """, (new_status, enrollment_id))
         db.commit()
-        
-        # Get updated enrollment info for response
+         
         cursor.execute("""
             SELECT e.status, 
                    CONCAT(pi.first_name, ' ', pi.last_name) AS student_name,
@@ -148,13 +142,11 @@ def enrollment_details(enrollment_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # First verify the enrollment exists
+    try: 
         cursor.execute("SELECT 1 FROM enrollment WHERE enrollment_id = %s", (enrollment_id,))
         if not cursor.fetchone():
             return jsonify({'success': False, 'message': 'Enrollment not found'}), 404
-
-        # Get detailed enrollment information
+ 
         cursor.execute("""
             SELECT 
                 e.enrollment_id, 
@@ -183,12 +175,9 @@ def enrollment_details(enrollment_id):
         
         if not enrollment_info:
             return jsonify({'success': False, 'message': 'Enrollment details not found'}), 404
-
-        # Convert dates to strings for JSON serialization
+ 
         if enrollment_info['enrollment_date']:
-            enrollment_info['enrollment_date'] = enrollment_info['enrollment_date'].isoformat()
-        # if enrollment_info['last_updated']:
-        #     enrollment_info['last_updated'] = enrollment_info['last_updated'].isoformat()
+            enrollment_info['enrollment_date'] = enrollment_info['enrollment_date'].isoformat() 
         if enrollment_info['start_date']:
             enrollment_info['start_date'] = enrollment_info['start_date'].isoformat()
         if enrollment_info['end_date']:
@@ -202,7 +191,7 @@ def enrollment_details(enrollment_id):
 
     except Exception as e:
         import traceback
-        traceback.print_exc()  # Print the full traceback to console for debugging
+        traceback.print_exc() 
         return jsonify({
             'success': False,
             'message': f'Error fetching enrollment details: {str(e)}'
@@ -224,7 +213,7 @@ def enroll_student():
     cursor = db.cursor(dictionary=True)
 
     try:
-        # Check if enrollment already exists
+        
         cursor.execute("""
             SELECT enrollment_id, status 
             FROM enrollment 
@@ -239,14 +228,14 @@ def enroll_student():
                     'message': 'Student is already enrolled in this class'
                 }), 400
             else:
-                # Update existing enrollment
+                
                 cursor.execute("""
                     UPDATE enrollment 
                     SET status = 'enrolled', enrollment_date = NOW() 
                     WHERE enrollment_id = %s
                 """, (existing_enrollment['enrollment_id'],))
         else:
-            # Create new enrollment
+            
             cursor.execute("""
                 INSERT INTO enrollment (user_id, class_id, status, enrollment_date)
                 VALUES (%s, %s, 'enrolled', NOW())
@@ -254,7 +243,6 @@ def enroll_student():
 
         db.commit()
 
-        # Get enrollment details for response
         cursor.execute("""
             SELECT e.enrollment_id, e.status, e.enrollment_date,
                    CONCAT(pi.first_name, ' ', pi.last_name) AS student_name,

@@ -14,7 +14,6 @@ def view_pending_courses():
     cursor = db.cursor(dictionary=True)
 
     try:
-        # --- Fetch pending courses ---
         query = """
             SELECT 
                 c.course_id, c.course_code, c.course_title, c.course_status,
@@ -33,7 +32,6 @@ def view_pending_courses():
         cursor.execute(query)
         courses = cursor.fetchall()
 
-        # --- Fetch admin profile picture ---
         profile_picture = 'default.png'
         try:
             cursor.execute("""
@@ -116,7 +114,6 @@ def approve_course(course_id):
         db = get_db()
         cursor = db.cursor()
 
-        # Assuming admin user_id is stored in session as 'user_id'
         admin_user_id = session.get('user_id')
 
         if not admin_user_id:

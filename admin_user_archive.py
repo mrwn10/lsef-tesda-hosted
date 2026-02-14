@@ -32,8 +32,7 @@ def get_archived_users_hierarchy():
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
-
-        # Get all archived users with their registration year/month
+ 
         query = """
             SELECT 
                 l.user_id,
@@ -60,12 +59,10 @@ def get_archived_users_hierarchy():
 
         cursor.execute(query)
         users = cursor.fetchall()
-
-        # Organize users into hierarchical structure
+ 
         hierarchy = {}
         
-        for user in users:
-            # Format dates for display
+        for user in users: 
             if user['date_registered']:
                 if isinstance(user['date_registered'], datetime):
                     user['date_registered_display'] = user['date_registered'].strftime('%Y-%m-%d %H:%M:%S')
@@ -81,8 +78,7 @@ def get_archived_users_hierarchy():
             
             year = user['reg_year']
             month = user['reg_month']
-            
-            # Initialize year if not exists
+             
             if year not in hierarchy:
                 hierarchy[year] = {
                     'year': year,
@@ -90,8 +86,7 @@ def get_archived_users_hierarchy():
                     'user_count': 0,
                     'months': {}
                 }
-            
-            # Initialize month if not exists
+             
             if month not in hierarchy[year]['months']:
                 month_names = {
                     1: 'January', 2: 'February', 3: 'March', 4: 'April',
@@ -105,19 +100,16 @@ def get_archived_users_hierarchy():
                     'users': []
                 }
                 hierarchy[year]['month_count'] += 1
-            
-            # Add user to month
+             
             hierarchy[year]['months'][month]['users'].append(user)
             hierarchy[year]['months'][month]['user_count'] += 1
             hierarchy[year]['user_count'] += 1
-        
-        # Convert hierarchy to list for JSON serialization
+         
         years_list = []
-        for year in sorted(hierarchy.keys(), reverse=True):  # Latest year first
+        for year in sorted(hierarchy.keys(), reverse=True):  
             year_data = hierarchy[year]
             months_list = []
-            
-            # Sort months in descending order (latest month first)
+             
             for month_num in sorted(year_data['months'].keys(), reverse=True):
                 months_list.append(year_data['months'][month_num])
             
@@ -160,8 +152,7 @@ def restore_user():
         cursor = db.cursor()
 
         cursor.execute("START TRANSACTION")
-
-        # Update account_status to active
+ 
         cursor.execute("""
             UPDATE login 
             SET account_status = 'active'

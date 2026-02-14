@@ -1,4 +1,4 @@
-# admin_student_grades.py - FIXED VERSION
+
 from flask import Blueprint, render_template, request, jsonify, session, url_for, send_file, flash, redirect
 from datetime import datetime
 from database import get_db
@@ -22,8 +22,7 @@ import qrcode
 from io import BytesIO
 
 admin_student_grades_bp = Blueprint('admin_student_grades', __name__)
-
-# Register fonts
+ 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
 OFL_FONT_PATH = os.path.join("static", "fonts", "UnifrakturCook-Bold.ttf")
 if os.path.exists(OFL_FONT_PATH):
@@ -31,8 +30,7 @@ if os.path.exists(OFL_FONT_PATH):
         pdfmetrics.registerFont(TTFont("UnifrakturCook", OFL_FONT_PATH))
     except Exception as e:
         print("Failed to register UnifrakturCook:", e)
-
-# ===================== HELPER FUNCTIONS =====================
+ 
 def calculate_remarks(prelim, midterm, final, enrollment_status=None):
     """
     Automatically calculate remarks based on grades
@@ -42,8 +40,7 @@ def calculate_remarks(prelim, midterm, final, enrollment_status=None):
     - Average >= 75: Competent
     - Average < 75: Not yet competent
     - Any missing grade: Incomplete
-    """
-    # Check if student is dropped
+    """ 
     if enrollment_status and enrollment_status.lower() == 'dropped':
         return "Dropped"
     
@@ -66,8 +63,7 @@ def calculate_remarks(prelim, midterm, final, enrollment_status=None):
 
 def generate_certificate_hash(content):
     return hashlib.sha256(content.encode()).hexdigest()
-
-# ===================== MAIN VIEW - ALL STUDENT GRADES =====================
+ 
 @admin_student_grades_bp.route('/student_grades', methods=['GET'])
 def view_grades():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -77,8 +73,7 @@ def view_grades():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     admin_user_id = session.get('user_id')
-    
-    # Fetch admin profile picture
+     
     profile_picture = 'default.png'
     if admin_user_id:
         cursor.execute("""
@@ -87,13 +82,11 @@ def view_grades():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-    
-    # Get filter parameters
+     
     class_id = request.args.get('class_id')
     status = request.args.get('status')
     search = request.args.get('search', '')
-    
-    # MODIFIED QUERY: Exclude enrollments with status = 'pending'
+     
     query = """
         SELECT 
             e.enrollment_id,
@@ -119,20 +112,17 @@ def view_grades():
     """
     
     params = []
-    
-    # Apply filters
+     
     if class_id:
         query += " AND c.class_id = %s"
         params.append(class_id)
     
     if status:
-        if status == 'Competent':
-            # FIXED: Check both enrollment status and grade remarks
+        if status == 'Competent': 
             query += " AND (e.status = 'completed' OR sg.remarks = 'Competent')"
         elif status == 'Dropped':
             query += " AND (e.status = 'dropped' OR sg.remarks = 'Dropped')"
-        elif status == 'enrolled':
-            # Show only active enrollments (excluding pending)
+        elif status == 'enrolled': 
             query += " AND e.status = 'enrolled'"
         else:
             query += " AND e.status = %s"
@@ -146,8 +136,7 @@ def view_grades():
     
     cursor.execute(query, params)
     students = cursor.fetchall()
-    
-    # Calculate automatic remarks for display
+     
     for student in students:
         auto_remarks = calculate_remarks(
             student.get('prelim_grade'),
@@ -156,14 +145,12 @@ def view_grades():
             student.get('enrollment_status')
         )
         student['auto_remarks'] = auto_remarks
-        
-        # Also update enrollment_status for display consistency
+         
         if student.get('remarks') == 'Competent':
             student['enrollment_status'] = 'Competent'
         elif student.get('remarks') == 'Dropped':
             student['enrollment_status'] = 'dropped'
-    
-    # Get all classes for filter dropdown
+     
     cursor.execute("""
         SELECT class_id, class_title, school_year 
         FROM classes 
@@ -180,8 +167,7 @@ def view_grades():
         classes=classes,
         profile_picture=profile_picture
     )
-
-# ===================== EDIT STUDENT GRADE =====================
+ 
 @admin_student_grades_bp.route('/student_grades/edit', methods=['POST'])
 def edit_student_grade():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -198,17 +184,14 @@ def edit_student_grade():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    try:
-        # Get current enrollment status for remarks calculation
+    try: 
         cursor.execute("SELECT status FROM enrollment WHERE enrollment_id = %s", (enrollment_id,))
         enrollment = cursor.fetchone()
         enrollment_status = enrollment['status'] if enrollment else None
-        
-        # Calculate automatic remarks if requested
+         
         if use_auto_remarks:
             remarks = calculate_remarks(prelim, midterm, final, enrollment_status)
-        
-        # Check if grade record exists
+         
         cursor.execute("SELECT 1 FROM student_grades WHERE enrollment_id = %s", (enrollment_id,))
         grade_exists = cursor.fetchone()
         
@@ -223,8 +206,7 @@ def edit_student_grade():
                 INSERT INTO student_grades (enrollment_id, prelim_grade, midterm_grade, final_grade, remarks)
                 VALUES (%s, %s, %s, %s, %s)
             """, (enrollment_id, prelim, midterm, final, remarks))
-        
-        # Update enrollment status based on remarks
+         
         if remarks == 'Dropped':
             cursor.execute("""
                 UPDATE enrollment 
@@ -237,8 +219,7 @@ def edit_student_grade():
                 SET status = 'completed' 
                 WHERE enrollment_id = %s
             """, (enrollment_id,))
-        elif remarks in ['Not yet competent', 'Incomplete']:
-            # Only update if not already dropped
+        elif remarks in ['Not yet competent', 'Incomplete']: 
             if enrollment_status != 'dropped':
                 cursor.execute("""
                     UPDATE enrollment 
@@ -263,8 +244,7 @@ def edit_student_grade():
         
     finally:
         cursor.close()
-
-# ===================== GET AUTO REMARKS =====================
+ 
 @admin_student_grades_bp.route('/student_grades/get_auto_remarks', methods=['POST'])
 def get_auto_remarks():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -282,8 +262,7 @@ def get_auto_remarks():
         'auto_remarks': auto_remarks,
         'success': True
     })
-
-# ===================== STUDENT PROFILE =====================
+ 
 @admin_student_grades_bp.route('/student_grades/profile/<int:user_id>', methods=['GET'])
 def get_student_profile(user_id):
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -292,8 +271,7 @@ def get_student_profile(user_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    try:
-        # Personal Info
+    try: 
         cursor.execute("""
             SELECT 
                 pi.first_name, pi.middle_name, pi.last_name,
@@ -308,8 +286,7 @@ def get_student_profile(user_id):
         
         if not profile:
             return jsonify({'error': 'Student profile not found'}), 404
-        
-        # Enrolled Classes - Include all statuses
+         
         cursor.execute("""
             SELECT 
                 c.class_id, c.class_title, c.schedule, c.days_of_week, c.venue,
@@ -330,8 +307,7 @@ def get_student_profile(user_id):
                     cls['days_of_week'] = json.loads(cls['days_of_week'])
                 except:
                     cls['days_of_week'] = None
-        
-        # Certificates
+         
         cursor.execute("""
             SELECT 
                 cert.id, cert.name, cert.course, cert.date, cert.cert_hash, cert.file_path,
@@ -366,8 +342,7 @@ def get_student_profile(user_id):
         
     finally:
         cursor.close()
-
-# ===================== DOWNLOAD ALL GRADES =====================
+ 
 @admin_student_grades_bp.route('/student_grades/download_all', methods=['GET'])
 def download_all_grades():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -375,12 +350,10 @@ def download_all_grades():
     
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    
-    # Get filter parameters
+     
     class_id = request.args.get('class_id')
     status = request.args.get('status')
-    
-    # Base query - Get ALL students
+     
     query = """
         SELECT 
             pi.first_name AS First_Name,
@@ -407,8 +380,7 @@ def download_all_grades():
     """
     
     params = []
-    
-    # Apply filters
+     
     if class_id:
         query += " AND c.class_id = %s"
         params.append(class_id)
@@ -428,39 +400,32 @@ def download_all_grades():
     
     cursor.execute(query, params)
     students = cursor.fetchall()
-    
-    # Create DataFrame
+     
     df = pd.DataFrame(students)
-    
-    # Create Excel file in memory
+     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='All_Grades')
-        
-        # Get workbook and worksheet
+         
         workbook = writer.book
         worksheet = writer.sheets['All_Grades']
-        
-        # Add formats
+         
         header_format = workbook.add_format({
             'bold': True,
             'bg_color': '#4F81BD',
             'font_color': 'white',
             'border': 1
         })
-        
-        # Format headers
+         
         for col_num, value in enumerate(df.columns.values):
             worksheet.write(0, col_num, value, header_format)
-        
-        # Auto-adjust column widths
+         
         for i, col in enumerate(df.columns):
             column_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
             worksheet.set_column(i, i, column_len)
     
     output.seek(0)
-    
-    # Generate filename
+     
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f'all_student_grades_{timestamp}.xlsx'
     
@@ -472,8 +437,7 @@ def download_all_grades():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-
-# ===================== UPLOAD BULK GRADES =====================
+ 
 @admin_student_grades_bp.route('/student_grades/upload_bulk', methods=['POST'])
 def upload_bulk_grades():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -483,11 +447,9 @@ def upload_bulk_grades():
     if not file or file.filename == '':
         return jsonify({'error': 'No file provided'}), 400
     
-    try:
-        # Read Excel file
+    try: 
         df = pd.read_excel(file)
-        
-        # Validate required columns
+         
         required_columns = ['Email', 'Class', 'Prelim_Grade', 'Midterm_Grade', 'Final_Grade']
         missing_columns = [col for col in required_columns if col not in df.columns]
         
@@ -495,8 +457,7 @@ def upload_bulk_grades():
             return jsonify({
                 'error': f'Missing required columns: {", ".join(missing_columns)}'
             }), 400
-        
-        # Replace NaN with None
+         
         df = df.replace({np.nan: None})
         
         db = get_db()
@@ -517,8 +478,7 @@ def upload_bulk_grades():
                 if not email or not class_title:
                     errors.append(f"Row {index + 2}: Missing email or class")
                     continue
-                
-                # Get enrollment ID and status
+                 
                 cursor.execute("""
                     SELECT e.enrollment_id, e.status
                     FROM enrollment e
@@ -534,14 +494,12 @@ def upload_bulk_grades():
                 
                 enrollment_id = result['enrollment_id']
                 enrollment_status = result['status']
-                
-                # Calculate automatic remarks if not provided
+                 
                 if not remarks and prelim is not None and midterm is not None and final is not None:
                     remarks = calculate_remarks(prelim, midterm, final, enrollment_status)
                 elif not remarks:
                     remarks = 'Incomplete'
-                
-                # Check if grade record exists
+                 
                 cursor.execute("SELECT 1 FROM student_grades WHERE enrollment_id = %s", (enrollment_id,))
                 exists = cursor.fetchone()
                 
@@ -556,8 +514,7 @@ def upload_bulk_grades():
                         INSERT INTO student_grades (enrollment_id, prelim_grade, midterm_grade, final_grade, remarks)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (enrollment_id, prelim, midterm, final, remarks))
-                
-                # Update enrollment status based on remarks
+                 
                 if remarks == 'Dropped':
                     cursor.execute("""
                         UPDATE enrollment 
@@ -570,8 +527,7 @@ def upload_bulk_grades():
                         SET status = 'completed' 
                         WHERE enrollment_id = %s
                     """, (enrollment_id,))
-                elif remarks in ['Not yet competent', 'Incomplete']:
-                    # Only update if not already dropped
+                elif remarks in ['Not yet competent', 'Incomplete']: 
                     if enrollment_status != 'dropped':
                         cursor.execute("""
                             UPDATE enrollment 
@@ -594,7 +550,7 @@ def upload_bulk_grades():
         }
         
         if errors:
-            response['warnings'] = errors[:10]  # Limit to first 10 errors
+            response['warnings'] = errors[:10]  
             if len(errors) > 10:
                 response['warnings'].append(f'... and {len(errors) - 10} more errors')
         
@@ -605,8 +561,7 @@ def upload_bulk_grades():
             'error': 'File processing error',
             'message': str(e)
         }), 500
-
-# ===================== CERTIFICATE FUNCTIONS =====================
+ 
 def save_certificate(enrollment_id, name, course, date, cert_hash, file_path):
     file_path = file_path.replace("\\", "/").lstrip("/")
     
@@ -684,8 +639,7 @@ def create_certificate(
         c.setFillColor(color)
         c.drawCentredString(x, y, text)
         c.setFillColor(colors.black)
-    
-    # ========================= PAGE 1 =========================
+     
     c.setStrokeColor(colors.red)
     c.setLineWidth(25)
     c.rect(margin, margin, page_width - 2*margin, page_height - 2*margin)
@@ -747,8 +701,7 @@ def create_certificate(
     draw_centered_text("In recognition of your dedication, passion and hard work",
                        "Helvetica", 18,
                        center_x, page_height - margin - 410)
-    
-    # ========================= SIGNATURES =========================
+     
     sign_y = page_height - margin - 500
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -793,8 +746,7 @@ def create_certificate(
                    f"{admin['first_name']} {admin['last_name']}" if admin else "Chairman",
                    "Chairman, BOT",
                    admin['signature'] if admin else None)
-    
-    # ========================= PAGE 2 (QR VERIFICATION) =========================
+     
     c.showPage()
     
     draw_centered_text("Certificate Verification",
@@ -827,8 +779,7 @@ def create_certificate(
                        "Helvetica", 12, center_x, 80, colors.gray)
     
     c.save()
-
-# ===================== GENERATE CERTIFICATE =====================
+ 
 @admin_student_grades_bp.route('/student_grades/generate_certificate', methods=['POST'])
 def generate_certificate():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -880,8 +831,7 @@ def generate_certificate():
             cert_path,
             cert_hash
         )
-        
-        # Store relative path
+         
         relative_path = f"certs/{cert_filename}"
         
         save_certificate(

@@ -12,8 +12,7 @@ def view_enrollment_requests():
     staff_id = session['user_id']
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # Fetch staff profile picture
+ 
     profile_picture = 'default.png'
     cursor.execute("""
         SELECT profile_picture
@@ -23,8 +22,7 @@ def view_enrollment_requests():
     user = cursor.fetchone()
     if user and user.get('profile_picture'):
         profile_picture = user['profile_picture']
-
-    # Get the classes assigned to this staff member as instructor
+ 
     cursor.execute("""
         SELECT class_id FROM classes WHERE instructor_id = %s
     """, (staff_id,))
@@ -36,8 +34,7 @@ def view_enrollment_requests():
             enrollments=[],
             profile_picture=profile_picture
         )
-
-    # Fetch all pending enrollments for classes where this staff is the instructor
+ 
     format_strings = ','.join(['%s'] * len(class_ids))
     cursor.execute(f"""
         SELECT 
@@ -117,8 +114,7 @@ def handle_enrollment_action():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    try:
-        # Verify that the staff member is authorized to manage this enrollment
+    try: 
         cursor.execute("""
             SELECT cl.class_id 
             FROM enrollment e
@@ -129,8 +125,7 @@ def handle_enrollment_action():
         authorized = cursor.fetchone()
         if not authorized:
             return jsonify({'success': False, 'error': 'You are not authorized to manage this enrollment.'}), 403
-        
-        # Update enrollment status
+         
         cursor.execute("""
             UPDATE enrollment SET status = %s WHERE enrollment_id = %s
         """, (new_status, enrollment_id))

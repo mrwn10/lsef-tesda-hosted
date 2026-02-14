@@ -196,8 +196,7 @@ def check_submissions(material_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     staff_user_id = session.get("user_id")
-
-    # Fetch staff profile picture
+ 
     profile_picture = None
     try:
         cursor.execute(
@@ -212,8 +211,7 @@ def check_submissions(material_id):
         profile_picture = result["profile_picture"] if result else None
     except Exception as e:
         profile_picture = None
-
-    # Fetch material info
+ 
     cursor.execute(
         """
         SELECT m.*, c.class_title,
@@ -230,8 +228,7 @@ def check_submissions(material_id):
     if not material or material["type"] != "classwork":
         flash("Invalid classwork or unauthorized access.")
         return redirect(url_for("staff_materials.materials"))
-
-    # Fetch enrolled students
+ 
     cursor.execute(
         """
         SELECT pi.user_id, pi.first_name, pi.last_name
@@ -242,8 +239,7 @@ def check_submissions(material_id):
         (material["class_id"],)
     )
     enrolled_students = cursor.fetchall()
-
-    # Fetch submissions
+ 
     cursor.execute(
         """
         SELECT s.*, pi.first_name, pi.last_name
@@ -267,7 +263,7 @@ def check_submissions(material_id):
         "staffs/staff_check.html",
         material=material,
         students=enrolled_students,
-        profile_picture=profile_picture  # pass it to template
+        profile_picture=profile_picture   
     )
 
 @staff_materials_bp.route("/materials/delete/<int:material_id>", methods=["POST"])

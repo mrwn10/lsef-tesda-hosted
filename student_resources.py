@@ -5,8 +5,7 @@ import os
 from werkzeug.utils import secure_filename
 
 student_resources_bp = Blueprint('student_resources', __name__)
-
-# Folder for student submissions
+ 
 UPLOAD_FOLDER = os.path.join("static", "uploads", "student_submissions")
 ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "jpg", "png", "jpeg"}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -23,8 +22,7 @@ def resources():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # Get student profile picture
+ 
     cursor.execute(
         """
         SELECT pi.profile_picture 
@@ -35,15 +33,13 @@ def resources():
     )
     profile_data = cursor.fetchone()
     profile_picture = profile_data["profile_picture"] if profile_data else None
-
-    # ✅ Get all class_ids where student is enrolled
+ 
     cursor.execute(
         "SELECT class_id FROM enrollment WHERE user_id = %s AND status = 'enrolled'",
         (session["user_id"],)
     )
     enrolled_classes = [row["class_id"] for row in cursor.fetchall()]
-
-    # ✅ Announcements: enrolled classes + global announcements (class_id IS NULL)
+ 
     if enrolled_classes:
         placeholders = ",".join(["%s"] * len(enrolled_classes))
         cursor.execute(
@@ -57,8 +53,7 @@ def resources():
             """,
             enrolled_classes
         )
-    else:
-        # If not enrolled in any classes, only show global announcements
+    else: 
         cursor.execute(
             """
             SELECT m.*, c.class_title, c.instructor_name
@@ -69,8 +64,7 @@ def resources():
             """
         )
     announcements = cursor.fetchall()
-
-    # ✅ Classwork: only for enrolled classes
+ 
     if enrolled_classes:
         placeholders = ",".join(["%s"] * len(enrolled_classes))
         cursor.execute(
@@ -107,8 +101,7 @@ def view_classwork(material_id):
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # Get student profile picture
+ 
     cursor.execute(
         """
         SELECT pi.profile_picture 
@@ -119,8 +112,7 @@ def view_classwork(material_id):
     )
     profile_data = cursor.fetchone()
     profile_picture = profile_data["profile_picture"] if profile_data else None
-
-    # ✅ Fetch classwork details with formatted dates
+ 
     cursor.execute(
         """
         SELECT m.*, c.class_title, c.instructor_name,
@@ -137,8 +129,7 @@ def view_classwork(material_id):
     if not classwork:
         flash("Classwork not found.")
         return redirect(url_for("student_resources.resources"))
-
-    # ✅ Ensure student is enrolled in this class
+ 
     cursor.execute(
         "SELECT 1 FROM enrollment WHERE user_id = %s AND class_id = %s AND status = 'enrolled'",
         (session["user_id"], classwork["class_id"])
@@ -146,8 +137,7 @@ def view_classwork(material_id):
     if not cursor.fetchone():
         flash("You are not enrolled in this class.")
         return redirect(url_for("student_resources.resources"))
-
-    # ✅ Check if submission is currently allowed based on time
+ 
     current_time = datetime.now()
     submission_allowed = False
     submission_status = "not_started"
@@ -163,8 +153,7 @@ def view_classwork(material_id):
             submission_allowed = True
         else:
             submission_status = "closed"
-
-    # ✅ Handle submission (only if allowed)
+ 
     if request.method == "POST" and submission_allowed:
         file = request.files.get("submission")
         if file and allowed_file(file.filename):
@@ -185,8 +174,7 @@ def view_classwork(material_id):
             return redirect(url_for("student_resources.view_classwork", material_id=material_id))
         else:
             flash("Invalid file type. Allowed: pdf, doc, docx, jpg, png, jpeg")
-
-    # ✅ Fetch student's submissions
+ 
     cursor.execute(
         """
         SELECT *,
@@ -198,8 +186,7 @@ def view_classwork(material_id):
         (material_id, session["user_id"])
     )
     submissions = cursor.fetchall()
-
-    # Check if student has submitted
+ 
     has_submitted = len(submissions) > 0
 
     cursor.close()

@@ -1,17 +1,13 @@
 from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for
-import os
-#import hashlib  
-#from datetime import datetime, timedelta
+import os 
 
-from flask import Flask, render_template
-#from flask_cors import CORS
+from flask import Flask, render_template 
 from flask_mail import Mail
 from database import close_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this-in-production'
-
-# Flask-Mail configuration
+ 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -19,23 +15,19 @@ app.config['MAIL_USERNAME'] = 'marwindalin01@gmail.com'
 app.config['MAIL_PASSWORD'] = 'xctm qtyg trwc cjxq'
 
 mail = Mail(app)
-
-#Blockchain BP
+ 
 from database import get_db
-
-#General BP
+ 
 from register import register
 from login import login_bp
 from forgot_password import forgot_password_bp
 from verify_cert import verify_cert_bp
-
-#General BP
+ 
 app.register_blueprint(register)
 app.register_blueprint(login_bp)
 app.register_blueprint(forgot_password_bp)
 app.register_blueprint(verify_cert_bp)
-
-#Admin BP
+ 
 from admin_homepage import admin_homepage_bp
 from admin_user_management import admin_user_management_bp
 from admin_user_update import admin_user_update_bp
@@ -57,8 +49,7 @@ from admin_verified_req import admin_verified_req_bp
 from admin_create_staff import admin_create_staff_bp
 from admin_materials import admin_materials_bp
 from admin_student_grade import admin_student_grades_bp
-
-#Admin BP
+ 
 app.register_blueprint(admin_homepage_bp)
 app.register_blueprint(admin_user_management_bp, url_prefix='/admin/user-management')
 app.register_blueprint(admin_user_update_bp)
@@ -80,8 +71,7 @@ app.register_blueprint(admin_verified_req_bp)
 app.register_blueprint(admin_create_staff_bp)
 app.register_blueprint(admin_materials_bp)
 app.register_blueprint(admin_student_grades_bp, url_prefix='/admin/student_grades')
-
-#Staff BP
+ 
 from staff_profile import staff_profile_bp
 from staff_courses_creation import staff_courses_creation_bp
 from staff_courses_edit_req import staff_courses_edit_req_bp
@@ -94,8 +84,7 @@ from staff_enrollment_acceptance import staff_enrollment_acceptance_bp
 from staff_class_certificates import staff_class_certificates_bp
 from staff_homepage import staff_homepage_bp
 from staff_materials import staff_materials_bp
-
-#Staff BP
+ 
 app.register_blueprint(staff_profile_bp, url_prefix='/staff')
 app.register_blueprint(staff_courses_creation_bp)
 app.register_blueprint(staff_courses_edit_req_bp)
@@ -108,8 +97,7 @@ app.register_blueprint(staff_enrollment_acceptance_bp)
 app.register_blueprint(staff_class_certificates_bp)
 app.register_blueprint(staff_homepage_bp)
 app.register_blueprint(staff_materials_bp)
-
-#Student BP
+ 
 from student_profile import student_profile_bp
 from student_enrollment import student_enrollment_bp
 from student_view_class import student_view_class_bp
@@ -118,8 +106,7 @@ from student_view_grades import student_view_grades_bp
 from student_homepage import student_homepage_bp
 from student_resources import student_resources_bp
 from student_requirements import student_requirements_bp
-
-#Student BP
+ 
 app.register_blueprint(student_profile_bp, url_prefix='/student')
 app.register_blueprint(student_enrollment_bp)
 app.register_blueprint(student_view_class_bp)
@@ -128,8 +115,7 @@ app.register_blueprint(student_view_grades_bp)
 app.register_blueprint(student_homepage_bp)
 app.register_blueprint(student_resources_bp)
 app.register_blueprint(student_requirements_bp)
-
-# General Routes
+ 
 @app.route("/")
 def landing():
     return render_template("all/landing_page.html")
@@ -153,8 +139,7 @@ def program():
 @app.route("/verify_cert")
 def verify_cert():
     return render_template("all/verify_cert.html")
-
-#Admin
+ 
 @app.route("/admin_homepage")
 def admin_homepage():
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -162,7 +147,7 @@ def admin_homepage():
         return redirect(url_for('login.login_page'))
 
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback default
+    profile_picture = 'default.png'   
 
     if user_id:
         db = get_db()
@@ -181,7 +166,7 @@ def admin_homepage():
 @app.route("/admin_user_management")
 def admin_user_management():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback if user has no profile picture
+    profile_picture = 'default.png'   
 
     if user_id:
         db = get_db()
@@ -260,8 +245,7 @@ def admin_class_management():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # --- Fetch admin profile picture ---
+ 
     profile_picture = 'default.png'
     try:
         cursor.execute("""
@@ -287,13 +271,11 @@ def admin_class_approval():
 def admin_class_edit_req():
     return render_template("admin/admin_class_edit_req.html")
 
-
-
-#Students
+ 
 @app.route("/student_homepage")
 def student_homepage():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback
+    profile_picture = 'default.png'  
 
     if user_id:
         db = get_db()
@@ -315,7 +297,7 @@ def student_homepage():
 @app.route("/student_profile")
 def student_profile():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback
+    profile_picture = 'default.png'   
 
     if user_id:
         db = get_db()
@@ -351,7 +333,7 @@ def student_view_certificates():
 @app.route("/student_view_grades")
 def student_view_grades():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback
+    profile_picture = 'default.png'  
 
     if user_id:
         db = get_db()
@@ -386,12 +368,11 @@ def student_resources():
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
     return render_template("students/student_resources.html", profile_picture=profile_picture)
-
-    # Staffs
+ 
 @app.route("/staff_homepage")
 def staff_homepage():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback if user has no profile picture
+    profile_picture = 'default.png'  
 
     if user_id:
         db = get_db()
@@ -410,7 +391,7 @@ def staff_homepage():
 @app.route("/staff_profile")
 def staff_profile():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback if user has no profile picture
+    profile_picture = 'default.png'  
 
     if user_id:
         db = get_db()
@@ -430,7 +411,7 @@ def staff_profile():
 @app.route("/staff_courses_creation")
 def staff_courses_creation():
     user_id = session.get('user_id')
-    profile_picture = 'default.png'  # fallback if user has no profile picture
+    profile_picture = 'default.png'   
 
     if user_id:
         db = get_db()

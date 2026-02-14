@@ -15,7 +15,6 @@ def view_edit_requests():
     cursor = db.cursor(dictionary=True)
 
     try:
-        # --- Fetch courses with edit requests ---
         query = """
             SELECT 
                 c.course_id, c.course_code, c.course_title, c.course_status,
@@ -34,7 +33,6 @@ def view_edit_requests():
         cursor.execute(query)
         courses = cursor.fetchall()
 
-        # --- Fetch admin profile picture ---
         profile_picture = 'default.png'
         try:
             cursor.execute("""
@@ -64,7 +62,7 @@ def view_edit_requests():
 def get_edit_details(course_id):
     try:
         db = get_db()
-        cursor = db.cursor(dictionary=True)  # This is valid for mysql.connector
+        cursor = db.cursor(dictionary=True) 
 
         query = """
             SELECT 
@@ -92,7 +90,7 @@ def get_edit_details(course_id):
             'edited_course': edited_course
         })
     except Exception as e:
-        traceback.print_exc()  # Will print detailed error in server logs
+        traceback.print_exc() 
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @admin_courses_edit_req_bp.route('/approve-edit/<int:course_id>', methods=['POST'])
@@ -107,7 +105,6 @@ def approve_edit(course_id):
 
         now = datetime.now()
 
-        # Approve the edit and set the course status to 'active'
         query = """
             UPDATE courses 
             SET course_status = 'active',
@@ -134,7 +131,6 @@ def reject_edit(course_id):
         if not admin_user_id:
             return jsonify({'status': 'error', 'message': 'Admin not logged in.'}), 401
 
-        # Fetch the latest original course version from course_history
         history_query = """
             SELECT * FROM course_history 
             WHERE course_id = %s 
@@ -149,7 +145,6 @@ def reject_edit(course_id):
 
         now = datetime.now()
 
-        # Restore original values to courses table
         restore_query = """
             UPDATE courses 
             SET 

@@ -22,8 +22,7 @@ def upload_requirements():
     db = get_db()
     cursor = db.cursor(dictionary=True, buffered=True)
     user_id = session["user_id"]
-
-    # Get user profile info
+ 
     profile_picture = "default.png"
     gender = None
     verified_status = None
@@ -38,8 +37,7 @@ def upload_requirements():
     if user:
         profile_picture = user.get("profile_picture") or profile_picture
         gender = (user.get("gender") or "").lower()
-
-    # Get verification status from login table
+ 
     cursor.execute("""
         SELECT verified FROM login
         WHERE user_id = %s
@@ -47,8 +45,7 @@ def upload_requirements():
     login_info = cursor.fetchone()
     if login_info:
         verified_status = login_info.get("verified")
-
-    # GET request - show form
+ 
     cursor.execute(
         "SELECT * FROM student_requirements WHERE user_id = %s",
         (user_id,)
@@ -74,8 +71,7 @@ def submit_requirements():
         db = get_db()
         cursor = db.cursor(dictionary=True, buffered=True)
         user_id = session["user_id"]
-        
-        # CHECK: If student is already verified, reject submission
+         
         cursor.execute("""
             SELECT verified FROM login
             WHERE user_id = %s AND role = 'student'
@@ -83,24 +79,21 @@ def submit_requirements():
         login_info = cursor.fetchone()
         
         current_status = login_info.get("verified") if login_info else None
-        
-        # If already verified, reject the submission
+         
         if current_status == 'verified':
             return jsonify({
                 "status": "error",
                 "message": "Your requirements have already been verified and approved. No further submissions are allowed.",
                 "verified_status": "verified"
             }), 403
-        
-        # Get user gender
+         
         cursor.execute("""
             SELECT gender FROM personal_information
             WHERE user_id = %s
         """, (user_id,))
         user = cursor.fetchone()
         gender = (user.get("gender") or "").lower() if user else ""
-        
-        # Get current verification status
+         
         previous_status = current_status
         
         uploaded_files = {}
@@ -114,28 +107,24 @@ def submit_requirements():
 
         optional_fields = [
             "barangay_clearance",
-        ]
-
-        # Get marital status from form
+        ] 
         marital_status = request.form.get("marital_status", "")
         if not marital_status:
             return jsonify({
                 "status": "error", 
                 "message": "Please select your marital status"
             }), 400
-
-        # Check required files
+ 
         for field in required_fields:
             file = request.files.get(field)
             if not file or not file.filename:
                 errors.append(field.replace("_", " ").title())
-            elif allowed_file(file.filename):
-                # Check file size (max 10MB)
+            elif allowed_file(file.filename): 
                 file.seek(0, os.SEEK_END)
                 file_length = file.tell()
                 file.seek(0)
                 
-                if file_length > 10 * 1024 * 1024:  # 10MB
+                if file_length > 10 * 1024 * 1024:  
                     return jsonify({
                         "status": "error",
                         "message": f"File too large for {field.replace('_', ' ')}. Maximum size is 10MB."
@@ -156,13 +145,11 @@ def submit_requirements():
                 "status": "error",
                 "message": f"Please upload all required documents: {', '.join(errors)}"
             }), 400
-
-        # Handle optional files
+ 
         for field in optional_fields:
             file = request.files.get(field)
             if file and file.filename:
-                if allowed_file(file.filename):
-                    # Check file size
+                if allowed_file(file.filename): 
                     file.seek(0, os.SEEK_END)
                     file_length = file.tell()
                     file.seek(0)
@@ -183,8 +170,7 @@ def submit_requirements():
                     }), 400
             else:
                 uploaded_files[field] = None
-
-        # Handle marriage certificate for married females
+ 
         marriage_file = request.files.get("marriage_certificate")
         if gender == "female" and marital_status == "married":
             if marriage_file and marriage_file.filename:
@@ -193,8 +179,7 @@ def submit_requirements():
                         "status": "error",
                         "message": "Invalid file type for marriage certificate."
                     }), 400
-                
-                # Check file size
+                 
                 marriage_file.seek(0, os.SEEK_END)
                 file_length = marriage_file.tell()
                 marriage_file.seek(0)
@@ -219,13 +204,11 @@ def submit_requirements():
             uploaded_files["marriage_certificate"] = None
 
         additional_notes = request.form.get("additional_notes", "")
-
-        # Check if this is a resubmission after rejection
+ 
         cursor.execute("SELECT requirement_id FROM student_requirements WHERE user_id = %s", (user_id,))
         existing_record = cursor.fetchone()
         
-        if existing_record:
-            # Update existing record
+        if existing_record: 
             cursor.execute("""
                 UPDATE student_requirements
                 SET barangay_clearance = %s,
@@ -247,8 +230,7 @@ def submit_requirements():
             ))
             action_message = "updated"
             is_resubmission = previous_status == 'rejected'
-        else:
-            # First-time submission
+        else: 
             cursor.execute("""
                 INSERT INTO student_requirements
                 (user_id, barangay_clearance, valid_id, medical_certificate,
@@ -265,8 +247,7 @@ def submit_requirements():
             ))
             action_message = "uploaded"
             is_resubmission = False
-
-        # Always set to pending when submitting/resubmitting
+ 
         cursor.execute("""
             UPDATE login
             SET verified = 'pending'

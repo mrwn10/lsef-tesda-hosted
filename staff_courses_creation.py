@@ -7,29 +7,25 @@ staff_courses_creation_bp = Blueprint('staff_courses_creation', __name__)
 @staff_courses_creation_bp.route('/staff/create_course', methods=['POST'])
 def create_course():
     data = request.get_json()
-
-    # Required fields
+ 
     required_fields = [
         'course_code', 'course_title', 'course_description', 'course_category',
         'target_audience', 'duration_hours', 'created_by'
     ]
-
-    # Check for missing required fields
+ 
     for field in required_fields:
         if field not in data or data[field] is None or str(data[field]).strip() == '':
             return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
-
-    # Optional fields
+ 
     prerequisites = data.get('prerequisites', None)
     learning_outcomes = data.get('learning_outcomes', None)
     max_students = data.get('max_students', None)
     course_fee = data.get('course_fee', 0.00)
-    published = data.get('published', 0)  # Default to draft (0)
-
-    # Status and timestamps
-    course_status = 'pending'  # Always pending until admin approves
+    published = data.get('published', 0)  
+ 
+    course_status = 'pending'  
     date_created = datetime.now()
-    date_published = None  # Explicitly set to None (NULL in DB) for pending
+    date_published = None   
 
     try:
         db = get_db()
@@ -60,7 +56,7 @@ def create_course():
             published,
             data['created_by'],
             date_created,
-            date_published  # This will remain NULL until admin approval
+            date_published  
         )
 
         cursor.execute(query, values)

@@ -3,20 +3,18 @@ from datetime import datetime
 from database import get_db
 
 staff_courses_edit_req_bp = Blueprint('staff_courses_edit_req', __name__)
-
-# Fetch active courses for the logged-in staff
+ 
 @staff_courses_edit_req_bp.route('/courses/active', methods=['GET'])
 def view_active_courses():
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        staff_user_id = session.get('user_id')  # Must be set at login
+        staff_user_id = session.get('user_id')  
 
         if not staff_user_id:
             return jsonify({'status': 'error', 'message': 'Staff not logged in.'}), 401
-
-        # Fetch profile picture
+ 
         profile_picture = 'default.png'
         cursor.execute("""
             SELECT profile_picture
@@ -26,8 +24,7 @@ def view_active_courses():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-
-        # Fetch active / edited courses
+ 
         query = """
             SELECT 
                 c.course_id, c.course_code, c.course_title, c.course_status,
@@ -49,9 +46,7 @@ def view_active_courses():
         )
     except Exception as e:
         return str(e), 500
-
-
-# Fetch single course details for editing
+ 
 @staff_courses_edit_req_bp.route('/course/edit/<int:course_id>', methods=['GET'])
 def get_course_for_edit(course_id):
     try:
@@ -93,8 +88,7 @@ def update_course(course_id):
             return jsonify({'status': 'error', 'message': 'Staff not logged in.'}), 401
 
         data = request.get_json()
-
-        # Extract updated fields
+ 
         course_code = data.get('course_code')
         course_title = data.get('course_title')
         course_description = data.get('course_description')
@@ -109,8 +103,7 @@ def update_course(course_id):
 
         if not edit_reason or edit_reason.strip() == '':
             return jsonify({'status': 'error', 'message': 'Edit reason is required.'}), 400
-            
-        # Force max_students to 25
+             
         max_students = 25
             
         now = datetime.now()

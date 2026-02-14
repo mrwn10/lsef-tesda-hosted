@@ -11,8 +11,7 @@ def create_staff():
     if 'user_id' not in session or session.get('role') != 'admin':
         flash('Unauthorized access', 'danger')
         return redirect(url_for('auth.login'))
-
-    # Get admin profile picture for the template
+ 
     db = get_db()
     cursor = db.cursor()
     profile_picture = None
@@ -30,15 +29,14 @@ def create_staff():
         cursor.close()
 
     if request.method == 'POST':
-        # Get form data
+        
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
 
         errors = []
-
-        # Validation
+ 
         if not username:
             errors.append("Username is required")
         elif len(username) < 3:
@@ -48,8 +46,7 @@ def create_staff():
             errors.append("Email is required")
         elif not EMAIL_REGEX.match(email):
             errors.append("Invalid email format")
-
-        # Password validation
+ 
         password_validation = {
             'min_length': len(password) >= 8,
             'has_upper': any(c.isupper() for c in password),
@@ -75,8 +72,7 @@ def create_staff():
             )
 
         cursor = db.cursor()
-        try:
-            # Check if username or email already exists
+        try: 
             cursor.execute(
                 "SELECT user_id FROM login WHERE username = %s OR email = %s",
                 (username, email)

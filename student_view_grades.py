@@ -4,8 +4,7 @@ from database import get_db
 student_view_grades_bp = Blueprint('student_view_grades', __name__)
 
 @student_view_grades_bp.route('/student/view_grades', methods=['GET'])
-def view_grades():
-    # Ensure student is logged in
+def view_grades(): 
     if 'user_id' not in session or session.get('role') != 'student':
         return jsonify({'error': 'Unauthorized access'}), 403
 
@@ -14,7 +13,7 @@ def view_grades():
     cursor = db.cursor(dictionary=True)
 
     # Fetch profile picture
-    profile_picture = 'default.png'  # fallback if no picture
+    profile_picture = 'default.png'   
     cursor.execute("""
         SELECT profile_picture
         FROM personal_information
@@ -23,8 +22,7 @@ def view_grades():
     user = cursor.fetchone()
     if user and user.get('profile_picture'):
         profile_picture = user['profile_picture']
-
-    # Fetch all grades including class information
+ 
     query = """
         SELECT 
             co.course_code,
@@ -60,22 +58,18 @@ def view_grades():
         if grade['remarks'] == 'Competent':
             completed_courses += 1
             completed_courses_list.append(grade)
-            
-            # Calculate final average for completed courses
+             
             if grade['final_grade']:
                 total_final_grade += float(grade['final_grade'])
                 completed_with_grades += 1
         else:
             ongoing_courses += 1
             ongoing_courses_list.append(grade)
-    
-    # Calculate average grade
+     
     average_grade = round(total_final_grade / completed_with_grades, 2) if completed_with_grades > 0 else 'N/A'
-    
-    # Prepare grades for template (show all grades)
+     
     grades_for_display = all_grades
-    
-    # Separate completed courses for the completed section
+     
     completed_courses_data = completed_courses_list
 
     if not all_grades:

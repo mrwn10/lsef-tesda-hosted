@@ -1,4 +1,4 @@
-# admin_user_deletion_bp.py - SIMPLIFIED SOFT DELETE VERSION
+
 from flask import Blueprint, render_template, request, jsonify, current_app, session
 from datetime import datetime
 from database import get_db
@@ -45,8 +45,7 @@ def fetch_active_users(search_query=None, role_filter='all'):
             WHERE l.account_status = 'active' AND l.role IN ('staff', 'student')
         """
         params = []
-
-        # Add search conditions if provided
+ 
         if search_query and search_query.strip():
             query += """
                 AND (
@@ -59,8 +58,7 @@ def fetch_active_users(search_query=None, role_filter='all'):
             """
             search_pattern = f'%{search_query}%'
             params.extend([search_pattern] * 5)
-
-        # Add role filter if specified
+ 
         if role_filter and role_filter.lower() in ['staff', 'student']:
             query += " AND l.role = %s"
             params.append(role_filter)
@@ -102,7 +100,7 @@ def get_active_users():
     return jsonify(result), status_code
 
 
-@admin_user_deletion_bp.route('/deactivate_user', methods=['POST'])  # Changed from delete_user to deactivate_user
+@admin_user_deletion_bp.route('/deactivate_user', methods=['POST'])  
 def deactivate_user():
     """
     Endpoint to deactivate a user account (soft delete).
@@ -113,8 +111,7 @@ def deactivate_user():
     cursor = None
     user_id = None
     
-    try:
-        # Check if request has JSON data
+    try: 
         if not request.is_json:
             return jsonify({
                 'success': False,
@@ -135,8 +132,7 @@ def deactivate_user():
                 'success': False,
                 'message': 'Missing required parameter: user_id is required'
             }), 400
-
-        # Validate user_id format
+ 
         try:
             user_id = int(user_id)
             if user_id <= 0:
@@ -151,8 +147,7 @@ def deactivate_user():
         cursor = db.cursor(dictionary=True)
 
         cursor.execute("START TRANSACTION")
-
-        # Check if user exists and get current status
+ 
         cursor.execute("""
             SELECT user_id, account_status, role, username, email
             FROM login 
@@ -182,8 +177,7 @@ def deactivate_user():
                 'success': False,
                 'message': 'Only staff or student accounts can be deactivated through this endpoint'
             }), 400
-
-        # SOFT DELETE: Update status to inactive
+ 
         cursor.execute("""
             UPDATE login 
             SET account_status = 'inactive'

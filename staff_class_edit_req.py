@@ -20,13 +20,11 @@ def view_active_classes():
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
-
-        # Get the instructor_id from session
+ 
         instructor_id = session.get('user_id')
         if not instructor_id:
             return render_template('error.html', message="You must be logged in to view classes"), 401
-
-        # Fetch profile picture (default fallback)
+ 
         profile_picture = 'default.png'
         cursor.execute("""
             SELECT profile_picture
@@ -36,8 +34,7 @@ def view_active_classes():
         user = cursor.fetchone()
         if user and user.get('profile_picture'):
             profile_picture = user['profile_picture']
-
-        # Fetch active / edited classes for this instructor
+ 
         query = """
             SELECT 
                 cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students,
@@ -46,20 +43,32 @@ def view_active_classes():
                 co.course_title
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
-            WHERE cl.status IN ('active', 'edited') AND cl.instructor_id = %s
-            ORDER BY cl.date_created DESC
+            WHERE cl.instructor_id = %s
+            AND cl.status IN ('active', 'edited', 'pending', 'open', 'ongoing')
+            ORDER BY 
+                CASE cl.status
+                    WHEN 'pending' THEN 1
+                    WHEN 'open' THEN 2
+                    WHEN 'ongoing' THEN 3
+                    WHEN 'active' THEN 4
+                    WHEN 'edited' THEN 5
+                    WHEN 'completed' THEN 6
+                    ELSE 7
+                END,
+                cl.date_created DESC
         """
         cursor.execute(query, (instructor_id,))
         active_classes = cursor.fetchall()
-
-        # Convert date objects to ISO strings and parse days_of_week JSON
+ 
         for cls in active_classes:
             cls['start_date'] = cls['start_date'].isoformat() if cls['start_date'] else None
             cls['end_date'] = cls['end_date'].isoformat() if cls['end_date'] else None
             if cls['days_of_week']:
-                cls['days_of_week'] = json.loads(cls['days_of_week'])
-
-        # Pass both classes and profile_picture to template
+                try:
+                    cls['days_of_week'] = json.loads(cls['days_of_week'])
+                except json.JSONDecodeError:
+                    cls['days_of_week'] = {}
+ 
         return render_template(
             'staffs/staff_class_edit_req.html',
             classes=active_classes,
@@ -92,16 +101,17 @@ def update_class_details():
         days_of_week = data.get('days_of_week')
         instructor_name = data.get('instructor_name')
         reason = data.get('reason')
-
-        # Verify the instructor owns this class
-        verify_query = "SELECT instructor_id FROM classes WHERE class_id = %s"
+ 
+        verify_query = "SELECT instructor_id, status FROM classes WHERE class_id = %s"
         cursor.execute(verify_query, (class_id,))
         result = cursor.fetchone()
 
-        if not result or result['instructor_id'] != instructor_id:
+        if not result:
+            return jsonify({'status': 'error', 'message': 'Class not found'}), 404
+            
+        if result['instructor_id'] != instructor_id:
             return jsonify({'status': 'error', 'message': 'You can only edit your own classes'}), 403
-
-        # Validate time formats in days_of_week
+ 
         if days_of_week:
             for day, times in days_of_week.items():
                 if not validate_time_format(times.get('start')) or not validate_time_format(times.get('end')):
@@ -109,6 +119,18 @@ def update_class_details():
                         'status': 'error',
                         'message': 'Invalid time format. Times must be on the hour (e.g., 7:00, 8:00)'
                     }), 400
+ 
+        current_status = result['status']
+        new_status = 'edited'
+         
+        if current_status == 'pending':
+            new_status = 'pending' 
+        elif current_status in ['open', 'ongoing', 'active']:
+            new_status = 'edited' 
+        elif current_status == 'edited':
+            new_status = 'edited' 
+        elif current_status == 'completed':
+            return jsonify({'status': 'error', 'message': 'Cannot edit completed classes'}), 400
 
         update_query = """
             UPDATE classes
@@ -116,20 +138,24 @@ def update_class_details():
                 schedule = %s, venue = %s, max_students = %s,
                 start_date = %s, end_date = %s, days_of_week = %s,
                 instructor_name = %s, edit_reason = %s, 
-                status = 'edited', date_updated = %s
+                status = %s, date_updated = %s
             WHERE class_id = %s
         """
         now = datetime.now()
         cursor.execute(update_query, (
             class_title, school_year, batch, schedule, venue, 
             max_students, start_date, end_date, json.dumps(days_of_week),
-            instructor_name, reason, now, class_id
+            instructor_name, reason, new_status, now, class_id
         ))
         db.commit()
 
+        status_message = 'Class update request submitted with reason. Waiting for admin approval.'
+        if new_status == 'pending':
+            status_message = 'Class details updated. The class is still pending admin approval.'
+
         return jsonify({
             'status': 'success',
-            'message': 'Class update request submitted with reason. Waiting for admin approval.'
+            'message': status_message
         })
 
     except Exception as e:

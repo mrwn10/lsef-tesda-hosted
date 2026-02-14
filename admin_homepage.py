@@ -9,8 +9,7 @@ def admin_dashboard():
     if 'user_id' not in session or session.get('role') != 'admin':
         flash('You need to login as admin first', 'error')
         return redirect(url_for('login.login_page'))
-    
-    # Get admin profile picture for the template
+     
     db = get_db()
     cursor = db.cursor()
     try:
@@ -36,37 +35,29 @@ def dashboard_data():
     db = get_db()
     cursor = db.cursor()
     
-    try:
-        # Total Courses Count
+    try: 
         cursor.execute("SELECT COUNT(*) FROM courses WHERE course_status = 'active'")
         total_courses = cursor.fetchone()[0]
-        
-        # Total Active Classes Count
+         
         cursor.execute("SELECT COUNT(*) FROM classes WHERE status = 'active'")
         total_classes = cursor.fetchone()[0]
-        
-        # Total Students Count
+         
         cursor.execute("SELECT COUNT(*) FROM login WHERE role = 'student' AND account_status = 'active'")
         total_students = cursor.fetchone()[0]
-        
-        # Total Staff Count
+         
         cursor.execute("SELECT COUNT(*) FROM login WHERE role = 'staff' AND account_status = 'active'")
         total_staff = cursor.fetchone()[0]
-        
-        # Total Enrollments Count
+         
         cursor.execute("SELECT COUNT(*) FROM enrollment WHERE status = 'enrolled'")
         total_enrollments = cursor.fetchone()[0]
-        
-        # Pending Course Approvals
+         
         cursor.execute("SELECT COUNT(*) FROM courses WHERE course_status = 'pending'")
         pending_courses = cursor.fetchone()[0]
-        
-        # Recent Certificates (last 7 days)
+         
         week_ago = datetime.now() - timedelta(days=7)
         cursor.execute("SELECT COUNT(*) FROM certificates WHERE created_at >= %s", (week_ago,))
         recent_certificates = cursor.fetchone()[0]
-        
-        # Class Completion Rate
+         
         cursor.execute("""
             SELECT 
                 COUNT(*) as total_classes,
@@ -78,8 +69,7 @@ def dashboard_data():
         total_active_classes = class_stats[0]
         completed_classes = class_stats[1]
         completion_rate = round((completed_classes / total_active_classes * 100), 2) if total_active_classes > 0 else 0
-        
-        # Recent Activity - Latest 5 enrollments
+         
         cursor.execute("""
             SELECT 
                 CONCAT(pi.first_name, ' ', pi.last_name) as student_name,
@@ -96,8 +86,7 @@ def dashboard_data():
             LIMIT 5
         """)
         recent_enrollments = cursor.fetchall()
-        
-        # Course Popularity (top 5 courses by enrollment)
+         
         cursor.execute("""
             SELECT 
                 c.course_title,

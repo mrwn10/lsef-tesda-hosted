@@ -13,8 +13,7 @@ def show_create_course_form():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-
-    # --- Fetch admin profile picture ---
+ 
     profile_picture = 'default.png'
     try:
         cursor.execute("""
@@ -42,26 +41,22 @@ def create_course():
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
 
     data = request.get_json()
-
-    # Required fields
+ 
     required_fields = [
         'course_code', 'course_title', 'course_description', 'course_category',
         'target_audience', 'duration_hours', 'created_by'
     ]
-
-    # Check for missing required fields
+ 
     for field in required_fields:
         if field not in data or data[field] is None or str(data[field]).strip() == '':
             return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
-
-    # Optional fields
+ 
     prerequisites = data.get('prerequisites', None)
     learning_outcomes = data.get('learning_outcomes', None)
     max_students = data.get('max_students', None)
     course_fee = data.get('course_fee', 0.00)
-    published = data.get('published', 0)  # Default to draft (0)
-
-    # Admin can directly approve the course
+    published = data.get('published', 0)  
+ 
     course_status = 'active'
     date_created = datetime.now()
     date_published = datetime.now() if published else None

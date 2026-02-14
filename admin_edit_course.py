@@ -14,8 +14,7 @@ def view_editable_courses():
     try:
         db = get_db()
         cursor = db.cursor(dictionary=True)
-
-        # --- Get all active courses that admins can edit ---
+ 
         query = """
             SELECT 
                 course_id, course_code, course_title, course_description,
@@ -28,8 +27,7 @@ def view_editable_courses():
         """
         cursor.execute(query)
         courses = cursor.fetchall()
-
-        # --- Fetch admin profile picture ---
+ 
         profile_picture = 'default.png'
         try:
             cursor.execute("""
@@ -86,24 +84,21 @@ def update_course(course_id):
         db = get_db()
         cursor = db.cursor(dictionary=True)
         data = request.get_json()
-
-        # Required fields
+ 
         required_fields = [
             'course_code', 'course_title', 'course_description', 'course_category',
             'target_audience', 'duration_hours'
         ]
-
-        # Check for missing required fields
+ 
         for field in required_fields:
             if field not in data or data[field] is None or str(data[field]).strip() == '':
                 return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
-
-        # Optional fields
+ 
         prerequisites = data.get('prerequisites', None)
         learning_outcomes = data.get('learning_outcomes', None)
         max_students = data.get('max_students', None)
         course_fee = data.get('course_fee', 0.00)
-        published = data.get('published', 0)  # Default to draft (0)
+        published = data.get('published', 0)   
 
         update_query = """
             UPDATE courses

@@ -106,8 +106,7 @@ def user_management():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     admin_user_id = session.get('user_id')
-    
-    # Fetch admin profile picture
+     
     profile_picture = 'default.png'
     if admin_user_id:
         cursor.execute("""
@@ -333,7 +332,7 @@ def get_user_details(user_id):
         
         user['full_address'] = f"{user['baranggay']}, {user['municipality']}, {user['province']}"
         user['full_name'] = f"{user['first_name']} {user['middle_name'] + ' ' if user['middle_name'] else ''}{user['last_name']}".strip()
-        user['profile_picture'] = user['profile_picture'] or 'default.png'  # Add fallback
+        user['profile_picture'] = user['profile_picture'] or 'default.png'   
         
         return jsonify({
             'success': True,
@@ -398,7 +397,7 @@ def search_users():
             user['date_of_birth'] = user['date_of_birth'].strftime('%Y-%m-%d') if user['date_of_birth'] else 'Not specified'
             user['full_address'] = f"{user['baranggay']}, {user['municipality']}, {user['province']}"
             user['full_name'] = f"{user['first_name']} {user['middle_name']} {user['last_name']}".strip()
-            user['profile_picture'] = user['profile_picture'] or 'default.png'  # Add fallback
+            user['profile_picture'] = user['profile_picture'] or 'default.png'  
 
         return jsonify({'success': True, 'users': results})
 

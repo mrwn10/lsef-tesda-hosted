@@ -8,19 +8,14 @@ admin_verified_req_bp = Blueprint("admin_verified_req", __name__, url_prefix="/a
 
 UPLOAD_FOLDER = os.path.join("static", "uploads", "requirements")
 PROFILE_PICTURE_FOLDER = os.path.join("static", "uploads", "profile_pictures")
-
-# Only include fields that students actually upload
+ 
 DOCUMENT_TYPES = {
     'barangay_clearance': 'Barangay Clearance',
     'medical_certificate': 'Medical Certificate',
     'valid_id': 'Valid ID',
     'transcript_form': 'Transcript Form',
     'marriage_certificate': 'Marriage Certificate'
-}
-
-# -----------------------------
-# EMAIL FUNCTIONS (ADDED)
-# -----------------------------
+} 
 def send_verification_email(email, username, student_name):
     """Send email notification when verification is approved"""
     try:
@@ -131,13 +126,9 @@ def send_rejection_email(email, username, student_name, rejection_reason):
     except Exception as e:
         current_app.logger.error(f"Error sending verification rejection email to {email}: {str(e)}")
         return False
-
-# Import Message from flask_mail
+ 
 from flask_mail import Message
-
-# -----------------------------
-# MAIN PAGE
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/", methods=["GET"])
 def view_requirements():
     if "user_id" not in session or session.get("role") != "admin":
@@ -159,11 +150,7 @@ def view_requirements():
         cursor.close()
 
     return render_template("admin/admin_verified_req.html", profile_picture=profile_picture)
-
-
-# -----------------------------
-# STATISTICS (UPDATED WITH REJECTED)
-# -----------------------------
+ 
 def get_statistics():
     db = get_db()
     cursor = db.cursor(dictionary=True, buffered=True)
@@ -210,10 +197,7 @@ def get_statistics():
     finally:
         cursor.close()
 
-
-# -----------------------------
-# GET STATISTICS ENDPOINT
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/stats", methods=["GET"])
 def get_stats():
     if session.get("role") != "admin":
@@ -221,10 +205,7 @@ def get_stats():
     
     return jsonify(get_statistics())
 
-
-# -----------------------------
-# FETCH DATA (UPDATED WITH REJECTED STATUS)
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/data", methods=["GET"])
 def fetch_data():
     if session.get("role") != "admin":
@@ -239,8 +220,7 @@ def fetch_data():
         page = int(request.args.get("page", 1))
         per_page = 10
         offset = (page - 1) * per_page
-
-        # Build address field by concatenating individual address components
+ 
         query = """
             SELECT 
                 sr.user_id,
@@ -284,8 +264,7 @@ def fetch_data():
         if search:
             query += " AND (pi.first_name LIKE %s OR pi.last_name LIKE %s OR l.email LIKE %s OR l.username LIKE %s)"
             params += [search_pattern, search_pattern, search_pattern, search_pattern]
-
-        # Updated status filtering with 'rejected' option
+ 
         if status == "verified":
             query += " AND l.verified='verified'"
         elif status == "pending":
@@ -298,21 +277,17 @@ def fetch_data():
 
         cursor.execute(query, params)
         students = cursor.fetchall()
-        
-        # Ensure all students have user_id field
+         
         for student in students:
-            if student['user_id'] is None:
-                # Handle case where student hasn't uploaded requirements yet
+            if student['user_id'] is None: 
                 student['document_count'] = 0
-            else:
-                # Count uploaded documents
+            else: 
                 count = 0
                 for field in DOCUMENT_TYPES.keys():
                     if student.get(field):
                         count += 1
                 student['document_count'] = count
-
-        # Get total count for pagination with the same filters
+ 
         count_query = """
             SELECT COUNT(*) total
             FROM login l
@@ -348,25 +323,19 @@ def fetch_data():
     finally:
         cursor.close()
 
-
-# -----------------------------
-# FILE PREVIEW ENDPOINT
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/file/<filename>", methods=["GET"])
 def get_file(filename):
     """Serve uploaded requirement files"""
     if session.get("role") != "admin":
         return jsonify({"error": "Unauthorized"}), 401
     
-    try:
-        # Get the file path
+    try: 
         file_path = os.path.join(UPLOAD_FOLDER, filename)
-        
-        # Check if file exists
+         
         if not os.path.exists(file_path):
             return jsonify({"error": "File not found"}), 404
-        
-        # Return file URL
+         
         file_url = url_for('static', filename=f'uploads/requirements/{filename}')
         return jsonify({
             "success": True,
@@ -377,11 +346,7 @@ def get_file(filename):
         print(f"Error in get_file: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-
-# -----------------------------
-# GET DOCUMENT INFORMATION
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/document_info/<int:user_id>/<field_name>", methods=["GET"])
 def get_document_info(user_id, field_name):
     """Get information about a specific document field"""
@@ -396,10 +361,7 @@ def get_document_info(user_id, field_name):
         "user_id": user_id
     })
 
-
-# -----------------------------
-# STUDENT DETAILS
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/student_details/<int:user_id>", methods=["GET"])
 def get_student_details(user_id):
     if session.get("role") != "admin":
@@ -408,8 +370,7 @@ def get_student_details(user_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # Get student basic info with concatenated address
+    try: 
         cursor.execute("""
             SELECT 
                 l.user_id,
@@ -451,8 +412,7 @@ def get_student_details(user_id):
         student = cursor.fetchone()
         if not student:
             return jsonify({"error": "Student not found"}), 404
-
-        # Calculate document count based on ACTUAL uploaded documents
+ 
         document_count = 0
         for field in DOCUMENT_TYPES.keys():
             if student.get(field):
@@ -468,11 +428,7 @@ def get_student_details(user_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
-
-
-# -----------------------------
-# ACCEPT VERIFICATION (WITH EMAIL)
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/accept/<int:user_id>", methods=["POST"])
 def accept_verification(user_id):
     if session.get("role") != "admin":
@@ -481,11 +437,9 @@ def accept_verification(user_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # Start transaction
+    try: 
         db.start_transaction()
-        
-        # Get student info for email
+         
         cursor.execute("""
             SELECT l.username, l.email, l.verified, pi.first_name, pi.last_name
             FROM login l
@@ -497,8 +451,7 @@ def accept_verification(user_id):
         if not student_info:
             db.rollback()
             return jsonify({"success": False, "message": "Student not found"}), 404
-        
-        # Send approval email
+         
         student_name = f"{student_info['first_name']} {student_info['last_name']}"
         email_sent = send_verification_email(
             student_info['email'], 
@@ -513,9 +466,7 @@ def accept_verification(user_id):
                 "success": False, 
                 "message": "Failed to send approval email. Verification not completed.",
                 "email_sent": False
-            }), 500
-
-        # Update verification status
+            }), 500 
         cursor.execute("""
             UPDATE login SET verified='verified'
             WHERE user_id=%s AND role='student'
@@ -535,10 +486,7 @@ def accept_verification(user_id):
     finally:
         cursor.close()
 
-
-# -----------------------------
-# REJECT VERIFICATION (UPDATED WITH REASON AND EMAIL)
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/reject/<int:user_id>", methods=["POST"])
 def reject_verification(user_id):
     if session.get("role") != "admin":
@@ -556,11 +504,9 @@ def reject_verification(user_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    try:
-        # Start transaction
+    try: 
         db.start_transaction()
-        
-        # Get student info for email
+         
         cursor.execute("""
             SELECT l.username, l.email, l.verified, pi.first_name, pi.last_name
             FROM login l
@@ -572,8 +518,7 @@ def reject_verification(user_id):
         if not student_info:
             db.rollback()
             return jsonify({"success": False, "message": "Student not found"}), 404
-        
-        # Send rejection email with reason
+         
         student_name = f"{student_info['first_name']} {student_info['last_name']}"
         email_sent = send_rejection_email(
             student_info['email'], 
@@ -590,8 +535,7 @@ def reject_verification(user_id):
                 "message": "Failed to send rejection email. Verification status not updated.",
                 "email_sent": False
             }), 500
-
-        # Update verification status to 'rejected'
+ 
         cursor.execute("""
             UPDATE login SET verified='rejected'
             WHERE user_id=%s AND role='student'
@@ -611,10 +555,7 @@ def reject_verification(user_id):
     finally:
         cursor.close()
 
-
-# -----------------------------
-# REOPEN/REMOVE REJECTION (ALLOW RESUBMISSION)
-# -----------------------------
+ 
 @admin_verified_req_bp.route("/reopen/<int:user_id>", methods=["POST"])
 def reopen_verification(user_id):
     """Change status from 'rejected' back to 'pending' to allow resubmission"""
@@ -624,8 +565,7 @@ def reopen_verification(user_id):
     db = get_db()
     cursor = db.cursor()
 
-    try:
-        # First check if student exists and is rejected
+    try: 
         cursor.execute("""
             SELECT user_id, verified FROM login 
             WHERE user_id=%s AND role='student' AND account_status='active'
@@ -637,8 +577,7 @@ def reopen_verification(user_id):
         
         if student[1] != 'rejected':
             return jsonify({"success": False, "message": "Student is not in rejected status"}), 400
-        
-        # Update verification status back to 'pending'
+         
         cursor.execute("""
             UPDATE login SET verified='pending'
             WHERE user_id=%s AND role='student'
