@@ -1,11 +1,10 @@
-// admin_class_approval.js - Enhanced Version with Improved UI/UX
+// admin_class_approval.js - Updated with SweetAlert2 and fixed data display
 $(document).ready(function() {
     const approvalUrl = "/approval_action";
     let classes = [];
     let filteredClasses = [];
     let currentClassId = null;
     let currentClassData = null;
-    let pendingAction = null;
     
     // Pagination variables
     let currentPage = 1;
@@ -25,33 +24,21 @@ $(document).ready(function() {
     // Load classes from existing DOM elements
     function loadClasses() {
         // Get classes from existing table rows
-        const tableRows = document.querySelectorAll('#classes-container tr[data-course-title]');
-        const mobileCards = document.querySelectorAll('#mobile-classes-container .mobile-user-card');
+        const tableRows = document.querySelectorAll('#classes-container tr[data-class]');
         
         classes = [];
         
         // Extract data from desktop table rows
-        tableRows.forEach((row, index) => {
-            const classData = {
-                class_id: row.id.replace('class-', ''),
-                class_title: row.cells[0].textContent,
-                course_title: row.cells[1].textContent,
-                instructor_name: row.cells[2].textContent,
-                status: 'Pending'
-            };
-            
-            // Get edit data
+        tableRows.forEach((row) => {
             const viewBtn = row.querySelector('.view-class-btn');
             if (viewBtn && viewBtn.dataset.class) {
                 try {
-                    const viewData = JSON.parse(viewBtn.dataset.class);
-                    Object.assign(classData, viewData);
+                    const classData = JSON.parse(viewBtn.dataset.class);
+                    classes.push(classData);
                 } catch (e) {
-                    console.error('Error parsing view class data:', e);
+                    console.error('Error parsing class data:', e);
                 }
             }
-            
-            classes.push(classData);
         });
         
         filteredClasses = [...classes];
@@ -61,14 +48,12 @@ $(document).ready(function() {
     
     // Initialize pagination
     function initPagination() {
-        // Page size change
         $('#page-size').on('change', function() {
             pageSize = parseInt($(this).val());
             currentPage = 1;
             renderClasses();
         });
         
-        // Pagination button handlers
         $('#first-page').on('click', function() {
             if (!$(this).prop('disabled')) {
                 currentPage = 1;
@@ -103,47 +88,40 @@ $(document).ready(function() {
         const totalClasses = filteredClasses.length;
         totalPages = Math.ceil(totalClasses / pageSize);
         
-        // Update pagination info
-        const start = ((currentPage - 1) * pageSize) + 1;
+        const start = totalClasses === 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
         const end = Math.min(currentPage * pageSize, totalClasses);
+        
         $('#pagination-start').text(start);
         $('#pagination-end').text(end);
         $('#pagination-total').text(totalClasses);
         
-        // Update button states
-        $('#first-page').prop('disabled', currentPage === 1);
-        $('#prev-page').prop('disabled', currentPage === 1);
-        $('#next-page').prop('disabled', currentPage === totalPages);
-        $('#last-page').prop('disabled', currentPage === totalPages);
+        $('#first-page').prop('disabled', currentPage === 1 || totalClasses === 0);
+        $('#prev-page').prop('disabled', currentPage === 1 || totalClasses === 0);
+        $('#next-page').prop('disabled', currentPage === totalPages || totalClasses === 0);
+        $('#last-page').prop('disabled', currentPage === totalPages || totalClasses === 0);
         
-        // Update page numbers
         const $pagesContainer = $('#pagination-pages');
         $pagesContainer.empty();
         
-        // Show up to 5 page numbers
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-        
-        // Adjust if we're near the end
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
-            pageBtn.on('click', function() {
-                currentPage = i;
-                renderClasses();
-            });
-            $pagesContainer.append(pageBtn);
-        }
-        
-        // Show/hide pagination
         if (totalClasses > 0) {
-            $('#pagination-container').show();
-        } else {
-            $('#pagination-container').hide();
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
+                pageBtn.on('click', function() {
+                    currentPage = i;
+                    renderClasses();
+                });
+                $pagesContainer.append(pageBtn);
+            }
         }
+        
+        $('#pagination-container').toggle(totalClasses > 0);
     }
     
     // Render classes based on current pagination
@@ -153,18 +131,12 @@ $(document).ready(function() {
             return;
         }
         
-        // Calculate pagination
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = Math.min(startIndex + pageSize, filteredClasses.length);
         const currentClasses = filteredClasses.slice(startIndex, endIndex);
         
-        // Render desktop table
         renderDesktopTable(currentClasses);
-        
-        // Render mobile cards
         renderMobileCards(currentClasses);
-        
-        // Update pagination
         updatePagination();
     }
     
@@ -173,19 +145,28 @@ $(document).ready(function() {
         let tableHtml = '';
         
         currentClasses.forEach(cls => {
+            const enrolledCount = cls.enrolled_count || 0;
+            const instructorName = cls.instructor_name || `${cls.first_name || ''} ${cls.last_name || ''}`.trim();
+            
             tableHtml += `
-                <tr id="class-${cls.class_id}" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}' data-course-title="${cls.course_title}">
-                    <td>${cls.class_title}</td>
-                    <td>${cls.course_title}</td>
-                    <td>${cls.first_name} ${cls.last_name}</td>
+                <tr id="class-${cls.class_id}" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}' data-course-title="${cls.course_title || ''}">
+                    <td><strong>${cls.class_title || 'N/A'}</strong><br><small class="text-muted">Batch ${cls.batch || 'N/A'}</small></td>
+                    <td>${cls.course_title || 'N/A'}<br><small class="text-muted">${cls.course_code || ''}</small></td>
+                    <td>${instructorName || 'N/A'}</td>
                     <td>
-                        <span class="status-badge status-pending">
-                            Pending
-                        </span>
+                        <div class="schedule-info">
+                            <i class="fas fa-calendar-alt"></i> ${cls.start_date ? cls.start_date.substring(0, 10) : 'N/A'}<br>
+                            <i class="fas fa-clock"></i> ${cls.schedule ? cls.schedule.substring(0, 20) : 'N/A'}
+                        </div>
+                    </td>
+                    <td>${cls.venue || 'N/A'}</td>
+                    <td class="text-center">${enrolledCount}/${cls.max_students || 0}</td>
+                    <td>
+                        <span class="status-badge status-pending">Pending</span>
                     </td>
                     <td>
                         <button class="action-btn view-btn view-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}'>
-                            <i class="fas fa-eye"></i> View Details
+                            <i class="fas fa-eye"></i>
                         </button>
                     </td>
                 </tr>
@@ -200,24 +181,38 @@ $(document).ready(function() {
         let cardsHtml = '';
         
         currentClasses.forEach(cls => {
+            const enrolledCount = cls.enrolled_count || 0;
+            const instructorName = cls.instructor_name || `${cls.first_name || ''} ${cls.last_name || ''}`.trim();
+            
             cardsHtml += `
-                <div class="mobile-user-card" data-course-title="${cls.course_title}">
+                <div class="mobile-user-card" data-course-title="${cls.course_title || ''}">
                     <div class="mobile-user-header">
                         <div class="mobile-user-info">
-                            <div class="mobile-user-name">${cls.class_title}</div>
-                            <div class="mobile-user-email">${cls.course_title}</div>
+                            <div class="mobile-user-name">${cls.class_title || 'N/A'}</div>
+                            <div class="mobile-user-email">${cls.course_title || 'N/A'} (Batch ${cls.batch || 'N/A'})</div>
                         </div>
+                        <span class="status-badge status-pending">Pending</span>
                     </div>
                     <div class="mobile-user-details">
                         <div class="mobile-user-detail">
                             <div class="mobile-detail-label">Instructor</div>
-                            <div class="mobile-detail-value">${cls.first_name} ${cls.last_name}</div>
+                            <div class="mobile-detail-value">${instructorName || 'N/A'}</div>
                         </div>
                         <div class="mobile-user-detail">
-                            <div class="mobile-detail-label">Status</div>
-                            <div class="mobile-detail-value">
-                                <span class="status-badge status-pending">Pending</span>
-                            </div>
+                            <div class="mobile-detail-label">Schedule</div>
+                            <div class="mobile-detail-value">${cls.schedule || 'N/A'}</div>
+                        </div>
+                        <div class="mobile-user-detail">
+                            <div class="mobile-detail-label">Venue</div>
+                            <div class="mobile-detail-value">${cls.venue || 'N/A'}</div>
+                        </div>
+                        <div class="mobile-user-detail">
+                            <div class="mobile-detail-label">Students</div>
+                            <div class="mobile-detail-value">${enrolledCount}/${cls.max_students || 0}</div>
+                        </div>
+                        <div class="mobile-user-detail">
+                            <div class="mobile-detail-label">Dates</div>
+                            <div class="mobile-detail-value">${cls.start_date ? cls.start_date.substring(0, 10) : 'N/A'} to ${cls.end_date ? cls.end_date.substring(0, 10) : 'N/A'}</div>
                         </div>
                     </div>
                     <div class="mobile-user-actions">
@@ -236,7 +231,7 @@ $(document).ready(function() {
     function renderEmptyState() {
         $('#classes-container').html(`
             <tr>
-                <td colspan="5" class="no-data">
+                <td colspan="8" class="no-data">
                     <div class="empty-state">
                         <i class="fas fa-check-circle"></i>
                         <h3>No Pending Classes</h3>
@@ -270,7 +265,7 @@ $(document).ready(function() {
             filteredClasses = [...classes];
         } else {
             filteredClasses = classes.filter(cls => 
-                cls.course_title.toLowerCase().includes(filterValue) || filterValue === ''
+                cls.course_title && cls.course_title.toLowerCase().includes(filterValue)
             );
         }
         
@@ -297,7 +292,6 @@ $(document).ready(function() {
                 });
             }
             
-            // Close mobile nav when clicking on links
             const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
             mobileNavLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -306,7 +300,6 @@ $(document).ready(function() {
                 });
             });
             
-            // Expandable mobile menu sections
             const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
             mobileNavHeaders.forEach(header => {
                 header.addEventListener('click', function() {
@@ -314,22 +307,18 @@ $(document).ready(function() {
                     const submenu = document.getElementById(`${section}-submenu`);
                     const chevron = this.querySelector('.chevron-icon');
                     
-                    // Toggle active class
                     this.classList.toggle('active');
                     
-                    // Toggle submenu
                     if (submenu) {
                         submenu.classList.toggle('active');
                     }
                     
-                    // Rotate only the chevron icon
                     if (chevron) {
                         chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
                 });
             });
             
-            // Close mobile nav when clicking outside
             document.addEventListener('click', function(e) {
                 if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
@@ -337,7 +326,6 @@ $(document).ready(function() {
                 }
             });
             
-            // Close mobile nav with Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
@@ -347,16 +335,14 @@ $(document).ready(function() {
         }
     }
     
-    // Initialize all modal functionality
+    // Initialize modal functionality
     function initModals() {
-        // Close modal function - works for ALL modals
         function closeAllModals() {
             $('.modal').fadeOut(300);
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
         }
 
-        // Open modal function
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -366,50 +352,34 @@ $(document).ready(function() {
             }
         }
 
-        // Close modal when clicking outside - works for ALL modals
         $(document).on('click', function(e) {
             if ($(e.target).hasClass('modal')) {
                 closeAllModals();
             }
         });
 
-        // Escape key to close modals - works for ALL modals
         $(document).keyup(function(e) {
             if (e.keyCode === 27) {
                 closeAllModals();
             }
         });
 
-        // ===== SPECIFIC MODAL FUNCTIONALITY =====
-
         // Logout Modal
-        $('#logout-trigger').click(function(e) {
+        $('#logout-trigger, #mobile-logout-trigger').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
-            openModal('logout-modal');
-        });
-        
-        $('#mobile-logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // First close mobile nav properly
-            const mobileNav = document.getElementById('mobileNav');
-            if (mobileNav) {
-                mobileNav.classList.remove('active');
+            if ($(this).attr('id') === 'mobile-logout-trigger') {
+                const mobileNav = document.getElementById('mobileNav');
+                if (mobileNav) {
+                    mobileNav.classList.remove('active');
+                }
             }
-            // Then open logout modal
             setTimeout(() => {
                 openModal('logout-modal');
             }, 10);
         });
         
-        $('#cancel-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#close-logout-modal').click(function(e) {
+        $('#cancel-logout, #close-logout-modal').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
             closeAllModals();
@@ -422,56 +392,43 @@ $(document).ready(function() {
             if (logoutUrl) {
                 window.location.href = logoutUrl;
             } else {
-                console.error('Logout URL not found');
                 window.location.href = "/logout";
             }
         });
 
-        // View Details Modal
-        $('#close-view-modal').click(function() {
-            closeAllModals();
-        });
-
-        $('#modal-cancel-btn').click(function() {
-            closeAllModals();
-        });
-
-        // Confirmation Modal
-        $('#close-confirmation-modal').click(function() {
-            closeAllModals();
-        });
-
-        $('#cancel-action').click(function() {
+        // View Details Modal close buttons
+        $('#close-view-modal, #modal-cancel-btn').click(function() {
             closeAllModals();
         });
     }
     
     // Initialize class approval functionality
     function initClassApproval() {
-        // View details button event listeners
         $(document).on('click', '.view-class-btn, .mobile-view-class-btn', function() {
             try {
                 const classData = $(this).data('class');
                 openViewModal(classData);
             } catch (error) {
                 console.error('Error parsing class data:', error);
-                showMessage('Error loading class data', 'error');
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Error loading class data',
+                    icon: 'error',
+                    confirmButtonColor: '#003366',
+                    confirmButtonText: 'OK'
+                });
             }
         });
 
-        // Modal button event listeners
         $('#modal-approve-btn').click(function() {
-            showConfirmationModal('approve', 'Are you sure you want to approve this class?');
+            if (currentClassData) {
+                showConfirmationDialog('approve');
+            }
         });
 
         $('#modal-reject-btn').click(function() {
-            showConfirmationModal('reject', 'Are you sure you want to reject this class?');
-        });
-
-        // Confirmation modal action
-        $('#confirm-action').click(function() {
-            if (pendingAction && currentClassId) {
-                processApproval(pendingAction);
+            if (currentClassData) {
+                showConfirmationDialog('reject');
             }
         });
     }
@@ -481,86 +438,77 @@ $(document).ready(function() {
         currentClassData = classData;
         
         // Populate modal with class data
-        document.getElementById('detail-class-title').textContent = classData.class_title || 'N/A';
-        document.getElementById('detail-course').textContent = classData.course_title || 'N/A';
-        document.getElementById('detail-school-year').textContent = classData.school_year || 'N/A';
-        document.getElementById('detail-batch').textContent = classData.batch || 'N/A';
-        document.getElementById('detail-instructor').textContent = `${classData.first_name || ''} ${classData.last_name || ''}`.trim() || 'N/A';
-        document.getElementById('detail-venue').textContent = classData.venue || 'N/A';
-        document.getElementById('detail-max-students').textContent = classData.max_students || 'N/A';
-        document.getElementById('detail-schedule').textContent = classData.schedule || 'N/A';
-        document.getElementById('detail-start-date').textContent = classData.start_date ? new Date(classData.start_date).toLocaleDateString() : 'N/A';
-        document.getElementById('detail-end-date').textContent = classData.end_date ? new Date(classData.end_date).toLocaleDateString() : 'N/A';
-        document.getElementById('detail-prerequisites').textContent = classData.prerequisites || 'None specified';
+        $('#detail-class-title').text(classData.class_title || 'N/A');
+        $('#detail-course').text(classData.course_title || 'N/A');
+        $('#detail-course-code').text(classData.course_code || 'N/A');
+        $('#detail-school-year').text(classData.school_year || 'N/A');
+        $('#detail-batch').text(classData.batch || 'N/A');
+        
+        const instructorName = classData.instructor_name || `${classData.first_name || ''} ${classData.last_name || ''}`.trim();
+        $('#detail-instructor').text(instructorName || 'N/A');
+        
+        $('#detail-venue').text(classData.venue || 'N/A');
+        $('#detail-max-students').text(classData.max_students || 'N/A');
+        $('#detail-enrolled').text(classData.enrolled_count || '0');
+        $('#detail-schedule').text(classData.schedule || 'N/A');
+        
+        // Format dates
+        if (classData.start_date) {
+            const startDate = new Date(classData.start_date);
+            $('#detail-start-date').text(startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+        } else {
+            $('#detail-start-date').text('N/A');
+        }
+        
+        if (classData.end_date) {
+            const endDate = new Date(classData.end_date);
+            $('#detail-end-date').text(endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+        } else {
+            $('#detail-end-date').text('N/A');
+        }
+        
+        $('#detail-prerequisites').text(classData.prerequisites || 'None specified');
 
         // Handle days_of_week
-        const daysTimesContainer = document.getElementById('detail-days-times');
-        daysTimesContainer.innerHTML = '';
+        const daysTimesContainer = $('#detail-days-times');
+        daysTimesContainer.empty();
         
         if (classData.days_of_week) {
-            let daysData;
+            let daysData = classData.days_of_week;
             
-            // Parse days_of_week if it's a string
-            if (typeof classData.days_of_week === 'string') {
+            if (typeof daysData === 'string') {
                 try {
-                    daysData = JSON.parse(classData.days_of_week);
+                    daysData = JSON.parse(daysData);
                 } catch (e) {
                     console.error('Error parsing days_of_week:', e);
                     daysData = {};
                 }
-            } else {
-                daysData = classData.days_of_week;
             }
             
-            if (daysData && typeof daysData === 'object') {
+            if (daysData && typeof daysData === 'object' && Object.keys(daysData).length > 0) {
                 for (const day in daysData) {
                     if (daysData.hasOwnProperty(day)) {
                         const times = daysData[day];
-                        const dayTimeItem = document.createElement('div');
-                        dayTimeItem.className = 'day-time-item';
-                        
                         const startTime = times.start ? formatTime(times.start) : 'N/A';
                         const endTime = times.end ? formatTime(times.end) : 'N/A';
                         
-                        dayTimeItem.innerHTML = `
-                            <span class="day">${day}</span>
-                            <span class="time">${startTime} - ${endTime}</span>
-                        `;
-                        daysTimesContainer.appendChild(dayTimeItem);
+                        daysTimesContainer.append(`
+                            <div class="day-time-item">
+                                <span class="day">${day}</span>
+                                <span class="time">${startTime} - ${endTime}</span>
+                            </div>
+                        `);
                     }
                 }
+            } else {
+                daysTimesContainer.html('<div class="no-data">No schedule details available</div>');
             }
         } else {
-            daysTimesContainer.innerHTML = '<div class="no-data">No schedule details available</div>';
+            daysTimesContainer.html('<div class="no-data">No schedule details available</div>');
         }
         
-        // Show modal
-        document.getElementById('viewDetailsModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        document.body.classList.add('modal-open');
-    }
-
-    function showConfirmationModal(action, message) {
-        pendingAction = action;
-        document.getElementById('confirmation-message').textContent = message;
-        
-        // Set appropriate button colors based on action
-        const confirmBtn = document.getElementById('confirm-action');
-        if (action === 'approve') {
-            confirmBtn.className = 'btn btn-confirm-approve';
-            confirmBtn.innerHTML = '<i class="fas fa-check"></i> Yes, Approve';
-        } else {
-            confirmBtn.className = 'btn btn-confirm-reject';
-            confirmBtn.innerHTML = '<i class="fas fa-times"></i> Yes, Reject';
-        }
-        
-        // Close the view details modal first
-        $('#viewDetailsModal').fadeOut(300);
-        
-        // Then open confirmation modal after a short delay
-        setTimeout(() => {
-            document.getElementById('confirmation-modal').style.display = 'flex';
-        }, 300);
+        $('#viewDetailsModal').css('display', 'flex');
+        $('body').addClass('modal-open');
     }
 
     function formatTime(time24) {
@@ -574,13 +522,48 @@ $(document).ready(function() {
         return `${hour12}:${minutes} ${ampm}`;
     }
 
+    // FIXED: SweetAlert2 with Confirm button on RIGHT, Cancel on LEFT (standard)
+    function showConfirmationDialog(action) {
+        const actionText = action === 'approve' ? 'approve' : 'reject';
+        const actionTitle = action === 'approve' ? 'Approve Class' : 'Reject Class';
+        const confirmButtonColor = action === 'approve' ? '#10b981' : '#ef4444';
+        
+        Swal.fire({
+            title: `Confirm ${actionTitle}`,
+            text: `Are you sure you want to ${actionText} this class?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: confirmButtonColor,
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: `Yes, ${actionText} it!`,
+            cancelButtonText: 'Cancel',
+            reverseButtons: false,  // false = Cancel on LEFT, Confirm on RIGHT (standard)
+            buttonsStyling: true,
+            focusConfirm: false,
+            focusCancel: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                processApproval(action);
+            }
+        });
+        
+        // Close the view modal
+        $('#viewDetailsModal').fadeOut(300);
+        $('body').removeClass('modal-open');
+    }
+
     function processApproval(action) {
         if (!currentClassId) return;
 
-        // Close confirmation modal
-        $('.modal').fadeOut(300);
-        document.body.style.overflow = '';
-        document.body.classList.remove('modal-open');
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         fetch(approvalUrl, {
             method: 'POST',
@@ -598,47 +581,37 @@ $(document).ready(function() {
         })
         .then(data => {
             if (data.status === 'success') {
-                showMessage(data.message, 'success');
-                
-                // Remove the class from the original classes array
+                // Remove the class from arrays
                 classes = classes.filter(cls => cls.class_id !== currentClassId);
                 filteredClasses = filteredClasses.filter(cls => cls.class_id !== currentClassId);
                 
-                // Re-render with updated data
-                renderClasses();
-                
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#003366',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    renderClasses();
+                });
             } else {
                 throw new Error(data.message || 'Unknown error occurred');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showMessage(error.message || 'An error occurred while processing the request', 'error');
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'An error occurred while processing the request',
+                icon: 'error',
+                confirmButtonColor: '#003366',
+                confirmButtonText: 'OK'
+            });
         })
         .finally(() => {
             currentClassId = null;
             currentClassData = null;
-            pendingAction = null;
         });
-    }
-
-    function showMessage(message, type = 'success') {
-        const messageContainer = document.getElementById('message-container');
-        const messageContent = document.getElementById('message-content');
-        
-        if (!messageContainer || !messageContent) return;
-        
-        messageContent.textContent = message;
-        messageContent.className = 'message ' + type;
-        messageContainer.style.display = 'block';
-        
-        // Scroll to message
-        messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-        // Hide message after 5 seconds
-        setTimeout(() => {
-            messageContainer.style.display = 'none';
-        }, 5000);
     }
     
     // Initialize everything

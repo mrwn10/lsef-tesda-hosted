@@ -1,13 +1,14 @@
-// staff_class_student_management.js - UPDATED WITH AUTO REFRESH
-// ===================== SMOOTH UX FIXES =====================
+// staff_class_student_management.js - COMPLETE UPDATED VERSION WITH ERROR DIAGNOSTICS
+
 // Global variables
 let currentAutoStatus = '';
 let currentAutoRemarks = '';
+let currentAverage = null;
 let debounceTimer = null;
 let isModalClosing = false;
 let currentOpenModal = null;
 let isSaving = false;
-let currentClassId = null; // Store current class ID for refresh
+let currentClassId = null;
 
 // Get current class ID from URL
 function getCurrentClassId() {
@@ -22,7 +23,10 @@ function getCurrentClassId() {
 
 // Initialize with class ID
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
     currentClassId = getCurrentClassId();
+    console.log('Current class ID:', currentClassId);
+    init();
 });
 
 // Smooth toast notification
@@ -36,16 +40,12 @@ function showSuccessToast(message) {
     }
     
     toast.style.display = 'flex';
-    
-    // Force reflow for smooth animation
     toast.offsetHeight;
     
-    // Show with animation
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
     
-    // Auto hide after 2 seconds
     setTimeout(() => {
         hideSuccessToast();
     }, 2000);
@@ -57,7 +57,6 @@ function hideSuccessToast() {
     
     toast.classList.remove('show');
     
-    // Wait for animation to complete before hiding
     setTimeout(() => {
         toast.style.display = 'none';
     }, 500);
@@ -88,94 +87,264 @@ function debouncedCalculateAutoStatusRemarks() {
     }, 500);
 }
 
-// Calculate auto status and remarks
+// Calculate status and remarks based on AVERAGE
+function calculateStatusAndRemarksFromGrades(prelim, midterm, final) {
+    console.log('Calculating status from grades:', { prelim, midterm, final });
+    
+    // Convert empty strings, null, undefined to null
+    const prelimNum = (prelim === '' || prelim === null || prelim === undefined) ? null : parseFloat(prelim);
+    const midtermNum = (midterm === '' || midterm === null || midterm === undefined) ? null : parseFloat(midterm);
+    const finalNum = (final === '' || final === null || final === undefined) ? null : parseFloat(final);
+    
+    console.log('Converted to numbers:', { prelimNum, midtermNum, finalNum });
+    
+    // Check for missing grades (any grade is null)
+    if (prelimNum === null || midtermNum === null || finalNum === null) {
+        console.log('Missing grades, returning Incomplete');
+        return {
+            status: 'Incomplete',
+            remarks: 'Incomplete',
+            average: null
+        };
+    }
+    
+    // Check if any value is NaN (invalid number)
+    if (isNaN(prelimNum) || isNaN(midtermNum) || isNaN(finalNum)) {
+        console.log('Invalid numbers, returning Incomplete');
+        return {
+            status: 'Incomplete',
+            remarks: 'Incomplete',
+            average: null
+        };
+    }
+    
+    const average = (prelimNum + midtermNum + finalNum) / 3;
+    console.log('Average calculated:', average);
+    
+    // Determine status based on average
+    let status, remarks;
+    if (average >= 96) {
+        status = "Excellent (Competent)";
+        remarks = "Competent";
+    } else if (average >= 91) {
+        status = "Very Satisfactory (Competent)";
+        remarks = "Competent";
+    } else if (average >= 86) {
+        status = "Satisfactory (Competent)";
+        remarks = "Competent";
+    } else if (average >= 81) {
+        status = "Fairly Satisfactory (Competent)";
+        remarks = "Competent";
+    } else if (average >= 75) {
+        status = "Passed (Competent)";
+        remarks = "Competent";
+    } else {
+        status = "Failed (Not Yet Competent)";
+        remarks = "Not Yet Competent";
+    }
+    
+    console.log('Determined status:', { status, remarks });
+    
+    return {
+        status: status,
+        remarks: remarks,
+        average: average
+    };
+}
+
+// Calculate auto status and remarks with improved error handling
 function calculateAutoStatusRemarks() {
-    const prelim = parseFloat(document.getElementById('prelimGrade').value) || null;
-    const midterm = parseFloat(document.getElementById('midtermGrade').value) || null;
-    const final = parseFloat(document.getElementById('finalGrade').value) || null;
+    console.log('calculateAutoStatusRemarks called');
+    
+    const prelimInput = document.getElementById('prelimGrade').value;
+    const midtermInput = document.getElementById('midtermGrade').value;
+    const finalInput = document.getElementById('finalGrade').value;
+    
+    console.log('Grade inputs:', { prelimInput, midtermInput, finalInput });
     
     const loadingEl = document.getElementById('autoRemarksLoading');
-    if (loadingEl) loadingEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'inline-block';
     
-    let localStatus = calculateStatusLocally(final);
-    let localRemarks = calculateRemarksLocally(prelim, midterm, final);
-    currentAutoStatus = localStatus;
-    currentAutoRemarks = localRemarks;
+    // Calculate locally first for immediate feedback
+    const result = calculateStatusAndRemarksFromGrades(prelimInput, midtermInput, finalInput);
+    currentAutoStatus = result.status;
+    currentAutoRemarks = result.remarks;
+    currentAverage = result.average;
+    
+    // Update displays
+    updateAverageDisplay();
     updateAutoStatusRemarksDisplay();
     
+    // Update remarks select if auto is enabled
     if (document.getElementById('useAutoRemarks').checked) {
         document.getElementById('remarks').value = currentAutoRemarks;
     }
     
-    if (prelim !== null && midterm !== null && final !== null) {
+    // Only verify with server if all grades are present and valid
+    const prelimNum = prelimInput === '' ? null : parseFloat(prelimInput);
+    const midtermNum = midtermInput === '' ? null : parseFloat(midtermInput);
+    const finalNum = finalInput === '' ? null : parseFloat(finalInput);
+    
+    if (prelimNum !== null && midtermNum !== null && finalNum !== null && 
+        !isNaN(prelimNum) && !isNaN(midtermNum) && !isNaN(finalNum)) {
+        
+        console.log('All grades present, verifying with server...');
+        
         const displayElement = document.getElementById('autoRemarksText');
-        const originalText = displayElement.textContent;
-        displayElement.innerHTML = `${localStatus} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
+        displayElement.innerHTML = `${result.status} <small><i class="fas fa-sync-alt fa-spin"></i> Verifying...</small>`;
+        
+        // Prepare request data
+        const requestData = {
+            prelim_grade: prelimNum,
+            midterm_grade: midtermNum,
+            final_grade: finalNum
+        };
+        
+        console.log('Sending to server:', requestData);
+        console.log('URL:', window.appUrls.autoStatusRemarksUrl);
         
         fetch(window.appUrls.autoStatusRemarksUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prelim_grade: prelim,
-                midterm_grade: midterm,
-                final_grade: final
-            })
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(requestData)
         })
-        .then(response => response.json())
+        .then(async response => {
+            console.log('Response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+            
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
+            
+            if (!response.ok) {
+                // Try to get error details
+                const text = await response.text();
+                console.error('Error response body:', text.substring(0, 500));
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // If not JSON, get text to see what's being returned
+                const text = await response.text();
+                console.error('Received non-JSON response:', text.substring(0, 500));
+                throw new Error('Server returned HTML instead of JSON. Check console for details.');
+            }
+        })
         .then(data => {
+            console.log('Server response data:', data);
+            
             if (data.success) {
-                if (data.status !== localStatus) {
-                    currentAutoStatus = data.status;
-                }
-                if (data.remarks !== localRemarks) {
-                    currentAutoRemarks = data.remarks;
-                }
+                currentAutoStatus = data.status;
+                currentAutoRemarks = data.remarks;
                 updateAutoStatusRemarksDisplay();
                 
                 if (document.getElementById('useAutoRemarks').checked) {
                     document.getElementById('remarks').value = currentAutoRemarks;
                 }
+                
+                // Show debug info if available
+                if (data.debug) {
+                    console.log('Debug info from server:', data.debug);
+                }
+            } else {
+                console.error('Server returned error:', data.error);
+                // Show error to user but keep local calculation
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Server Warning',
+                    text: data.error || 'Server validation failed, using local calculation',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
             }
         })
         .catch(error => {
             console.error('Error verifying auto status/remarks:', error);
+            
+            // Show error to user
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: error.message || 'Failed to connect to server. Using local calculation.',
+                timer: 4000,
+                showConfirmButton: false
+            });
+            
+            // Keep local calculation
+        })
+        .finally(() => {
+            if (loadingEl) loadingEl.style.display = 'none';
         });
-    }
-}
-
-// Local status calculation based on final grade
-function calculateStatusLocally(final) {
-    if (final === null) {
-        return 'Incomplete';
-    }
-    
-    if (final >= 96) {
-        return 'Excellent (Competent)';
-    } else if (final >= 91) {
-        return 'Very Satisfactory (Competent)';
-    } else if (final >= 86) {
-        return 'Satisfactory (Competent)';
-    } else if (final >= 81) {
-        return 'Fairly Satisfactory (Competent)';
-    } else if (final >= 75) {
-        return 'Passed (Competent)';
     } else {
-        return 'Failed (Not Yet Competent)';
+        console.log('Not all grades present, skipping server verification');
+        if (loadingEl) loadingEl.style.display = 'none';
     }
 }
 
-// Local remarks calculation based on average
-function calculateRemarksLocally(prelim, midterm, final) {
-    if (prelim === null || midterm === null || final === null) {
-        return 'Incomplete';
-    }
+// Update average display
+function updateAverageDisplay() {
+    const avgDisplay = document.getElementById('averageDisplay');
+    const avgText = document.getElementById('averageText');
     
-    const average = (prelim + midterm + final) / 3;
-    return average >= 75 ? 'Competent' : 'Not Yet Competent';
+    if (!avgDisplay || !avgText) return;
+    
+    // Reset classes
+    avgDisplay.className = 'average-display';
+    
+    if (currentAverage === null) {
+        avgText.textContent = '-- (Incomplete)';
+        avgDisplay.classList.add('incomplete');
+    } else {
+        avgText.textContent = currentAverage.toFixed(2);
+        if (currentAverage >= 75) {
+            avgDisplay.classList.add('passed');
+        } else {
+            avgDisplay.classList.add('failed');
+        }
+    }
+}
+
+// Update auto status remarks display
+function updateAutoStatusRemarksDisplay() {
+    const displayElement = document.getElementById('autoRemarksText');
+    const container = document.getElementById('autoRemarksDisplay');
+    
+    if (!displayElement || !container) return;
+    
+    // Clean the status text for display
+    const textOnly = currentAutoStatus.replace(/<[^>]*>/g, '').trim();
+    displayElement.textContent = textOnly;
+    
+    // Reset classes
+    container.className = 'auto-remarks-display';
+    
+    // Add appropriate class based on status
+    if (currentAutoStatus.includes('Excellent') || 
+        currentAutoStatus.includes('Very Satisfactory') || 
+        currentAutoStatus.includes('Satisfactory') || 
+        currentAutoStatus.includes('Fairly Satisfactory') || 
+        currentAutoStatus.includes('Passed')) {
+        container.classList.add('passed');
+    } else if (currentAutoStatus.includes('Failed')) {
+        container.classList.add('failed');
+    } else if (currentAutoStatus === 'Incomplete') {
+        container.classList.add('incomplete');
+    } else {
+        container.classList.add('neutral');
+    }
 }
 
 // Initialize all functionality
 function init() {
+    console.log('Initializing all functionality...');
     initMobileNavigation();
     initModals();
     initFileUpload();
@@ -187,7 +356,8 @@ function init() {
 
 // Initialize event listeners for buttons
 function initEditButtons() {
-    document.querySelectorAll('.edit-btn').forEach(button => {
+    console.log('Initializing edit buttons...');
+    document.querySelectorAll('.edit-btn:not(.disabled)').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -198,6 +368,8 @@ function initEditButtons() {
             const finalGrade = this.getAttribute('data-final');
             const remarks = this.getAttribute('data-remarks');
             const autoStatus = this.getAttribute('data-auto-status');
+            
+            console.log('Edit button clicked:', { enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus });
             
             openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus);
         });
@@ -210,19 +382,21 @@ function initProfileButtons() {
             e.preventDefault();
             e.stopPropagation();
             const userId = this.getAttribute('data-user-id');
+            console.log('Profile button clicked for user:', userId);
             openProfileModal(userId);
         });
     });
 }
 
 function initCertificateButtons() {
-    document.querySelectorAll('.completion-btn:not(:disabled)').forEach(button => {
+    document.querySelectorAll('.completion-btn:not(.disabled)').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             const enrollmentId = this.getAttribute('data-enrollment-id');
             const studentName = this.getAttribute('data-student-name');
             const remarks = this.getAttribute('data-remarks');
+            console.log('Certificate button clicked:', { enrollmentId, studentName, remarks });
             generatePrivateCompletion(enrollmentId, studentName, remarks);
         });
     });
@@ -315,28 +489,35 @@ function initGradeInputValidation() {
             input.addEventListener('blur', function() {
                 validateGradeInput(this);
             });
+            input.addEventListener('input', function() {
+                validateGradeInput(this);
+            });
         }
     });
 }
 
 function validateGradeInput(input) {
+    if (!input.value || input.value === '') {
+        input.classList.remove('valid', 'invalid');
+        return true;
+    }
+    
     const value = parseFloat(input.value);
-    if (input.value && (isNaN(value) || value < 0 || value > 100)) {
+    if (isNaN(value) || value < 0 || value > 100) {
         input.classList.add('invalid');
         input.classList.remove('valid');
         return false;
-    } else if (input.value) {
+    } else {
         input.classList.add('valid');
         input.classList.remove('invalid');
-        return true;
-    } else {
-        input.classList.remove('valid', 'invalid');
         return true;
     }
 }
 
 // Initialize all modal functionality
 function initModals() {
+    console.log('Initializing modals...');
+    
     // Smooth close function
     window.closeModal = function(modalId) {
         if (isModalClosing) return;
@@ -411,7 +592,7 @@ function initModals() {
     $('#logout-trigger').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        openModal('logout-modal');
+        openModal('logoutModal');
     });
     
     $('#mobile-logout-trigger').click(function(e) {
@@ -419,20 +600,20 @@ function initModals() {
         e.stopPropagation();
         closeMobileNavOnly();
         setTimeout(() => {
-            openModal('logout-modal');
+            openModal('logoutModal');
         }, 10);
     });
     
     $('#cancel-logout').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        closeModal('logout-modal');
+        closeModal('logoutModal');
     });
     
     $('#close-logout-modal').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        closeModal('logout-modal');
+        closeModal('logoutModal');
     });
     
     $('#confirm-logout').click(function(e) {
@@ -521,17 +702,24 @@ function initModals() {
 
 // Open edit modal
 function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus) {
+    console.log('Opening edit modal:', { enrollmentId, prelim, midterm, finalGrade, remarks, autoStatus });
+    
     if (debounceTimer) {
         clearTimeout(debounceTimer);
         debounceTimer = null;
     }
     
     document.getElementById('editEnrollmentId').value = enrollmentId;
-    document.getElementById('prelimGrade').value = prelim || '';
-    document.getElementById('midtermGrade').value = midterm || '';
-    document.getElementById('finalGrade').value = finalGrade || '';
-    document.getElementById('remarks').value = remarks || 'Competent';
     
+    // Handle null/undefined/NaN values by setting to empty string
+    document.getElementById('prelimGrade').value = (prelim !== null && prelim !== undefined && !isNaN(prelim) && prelim !== '') ? prelim : '';
+    document.getElementById('midtermGrade').value = (midterm !== null && midterm !== undefined && !isNaN(midterm) && midterm !== '') ? midterm : '';
+    document.getElementById('finalGrade').value = (finalGrade !== null && finalGrade !== undefined && !isNaN(finalGrade) && finalGrade !== '') ? finalGrade : '';
+    
+    // Set remarks, default to 'Incomplete' if null/empty
+    document.getElementById('remarks').value = (remarks && remarks !== 'null' && remarks !== 'undefined') ? remarks : 'Incomplete';
+    
+    // Reset validation classes
     ['prelimGrade', 'midtermGrade', 'finalGrade'].forEach(id => {
         const input = document.getElementById(id);
         if (input) {
@@ -539,13 +727,17 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoS
         }
     });
     
-    // Calculate initial status and remarks
-    const final = parseFloat(finalGrade) || null;
-    const prelimVal = parseFloat(prelim) || null;
-    const midtermVal = parseFloat(midterm) || null;
+    // Calculate initial status and remarks based on grades
+    const result = calculateStatusAndRemarksFromGrades(
+        document.getElementById('prelimGrade').value,
+        document.getElementById('midtermGrade').value,
+        document.getElementById('finalGrade').value
+    );
+    currentAutoStatus = result.status;
+    currentAutoRemarks = result.remarks;
+    currentAverage = result.average;
     
-    currentAutoStatus = autoStatus || calculateStatusLocally(final);
-    currentAutoRemarks = calculateRemarksLocally(prelimVal, midtermVal, final);
+    updateAverageDisplay();
     updateAutoStatusRemarksDisplay();
     
     document.getElementById('useAutoRemarks').checked = true;
@@ -562,35 +754,6 @@ function openEditModal(enrollmentId, prelim, midterm, finalGrade, remarks, autoS
             firstInput.focus();
         }
     }, 100);
-}
-
-function updateAutoStatusRemarksDisplay() {
-    const displayElement = document.getElementById('autoRemarksText');
-    const container = document.getElementById('autoRemarksDisplay');
-    
-    if (!displayElement || !container) return;
-    
-    // Clean the status text for display
-    const textOnly = currentAutoStatus.replace(/<[^>]*>/g, '').trim();
-    displayElement.textContent = textOnly;
-    
-    // Reset classes
-    container.className = 'auto-remarks-display';
-    
-    // Add appropriate class based on status
-    if (currentAutoStatus.includes('Excellent') || currentAutoStatus.includes('Very Satisfactory')) {
-        container.classList.add('excellent');
-    } else if (currentAutoStatus.includes('Satisfactory') || currentAutoStatus.includes('Fairly Satisfactory')) {
-        container.classList.add('satisfactory');
-    } else if (currentAutoStatus.includes('Passed')) {
-        container.classList.add('passed');
-    } else if (currentAutoStatus.includes('Failed')) {
-        container.classList.add('failed');
-    } else if (currentAutoStatus === 'Incomplete') {
-        container.classList.add('incomplete');
-    } else {
-        container.classList.add('neutral');
-    }
 }
 
 function toggleRemarksSelect() {
@@ -657,8 +820,22 @@ function refreshStudentTable() {
         });
 }
 
+// Helper function to get CSS class for status
+function getStatusClass(status) {
+    if (!status) return 'incomplete';
+    
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('excellent')) return 'excellent-competent';
+    if (statusLower.includes('very satisfactory')) return 'very-satisfactory-competent';
+    if (statusLower.includes('satisfactory')) return 'satisfactory-competent';
+    if (statusLower.includes('fairly satisfactory')) return 'fairly-satisfactory-competent';
+    if (statusLower.includes('passed')) return 'passed-competent';
+    if (statusLower.includes('failed')) return 'failed-not-yet-competent';
+    return 'incomplete';
+}
+
 // Update only the specific row (optimized version)
-function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks, status) {
+function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks, status, average) {
     // Find the row with matching enrollment_id
     const rows = document.querySelectorAll('.class-table tbody tr');
     let rowFound = false;
@@ -668,79 +845,100 @@ function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks
         if (editBtn && editBtn.getAttribute('data-enrollment-id') === enrollmentId) {
             rowFound = true;
             
+            // Get class status from global variable
+            const classStatus = window.classStatus;
+            
+            // Get student name from the row
+            const studentNameCell = row.children[0];
+            const studentName = studentNameCell ? studentNameCell.textContent.trim() : '';
+            
+            // Get user ID from profile button
+            const oldProfileBtn = row.querySelector('.profile-btn');
+            const userId = oldProfileBtn ? oldProfileBtn.getAttribute('data-user-id') : '';
+            
             // Update average cell
             const avgCell = row.children[2];
-            if (prelim && midterm && final) {
-                const avg = ((parseFloat(prelim) + parseFloat(midterm) + parseFloat(final)) / 3).toFixed(2);
-                avgCell.innerHTML = `<span class="average-grade">${avg}</span>`;
+            if (average !== null && average !== undefined && !isNaN(average)) {
+                const avgFormatted = parseFloat(average).toFixed(2);
+                const avgClass = parseFloat(average) >= 75 ? 'passed' : 'failed';
+                avgCell.innerHTML = `<span class="average-grade ${avgClass}">${avgFormatted}</span>`;
             } else {
-                avgCell.innerHTML = `<span class="average-grade na">N/A</span>`;
+                avgCell.innerHTML = `<span class="average-grade incomplete">N/A</span>`;
             }
             
-            // Update remarks/status cell
+            // Update status/remarks cell
             const statusCell = row.children[3];
-            const statusText = status || 'Not Evaluated';
-            const statusClass = getStatusClass(statusText);
-            statusCell.innerHTML = `<span class="status-remarks ${statusClass}">${statusText}</span>`;
+            const statusClass = getStatusClass(status || 'Incomplete');
+            const remarksBadge = remarks === 'Competent' ? 'competent' : 
+                                remarks === 'Not Yet Competent' ? 'not-yet-competent' : 
+                                remarks === 'Incomplete' ? 'incomplete' :
+                                remarks ? remarks.toLowerCase().replace(' ', '-') : 'incomplete';
+            
+            statusCell.innerHTML = `
+                <div class="status-remarks-container">
+                    <span class="status-remarks ${statusClass}">${status || 'Incomplete'}</span>
+                    ${remarks ? `<small class="remarks-badge ${remarksBadge}">${remarks}</small>` : ''}
+                </div>
+            `;
             
             // Update action buttons
             const actionCell = row.children[4];
-            const profileBtn = row.querySelector('.profile-btn');
-            const userId = profileBtn ? profileBtn.getAttribute('data-user-id') : '';
-            const studentName = `${row.children[0].textContent.trim()}`;
             
-            // Update completion button status
-            const completionBtn = row.querySelector('.completion-btn');
-            const shouldEnable = remarks === 'Competent';
+            // Determine button states based on class status and remarks
+            const canEdit = classStatus === 'ongoing' || classStatus === 'completed';
+            const canGenerate = classStatus === 'completed' && (remarks === 'Competent');
+            
+            // Prepare data attributes for edit button (handle null/undefined)
+            const prelimAttr = (prelim !== null && !isNaN(prelim)) ? prelim : '';
+            const midtermAttr = (midterm !== null && !isNaN(midterm)) ? midterm : '';
+            const finalAttr = (final !== null && !isNaN(final)) ? final : '';
             
             // Rebuild action buttons
             actionCell.innerHTML = `
-                <button class="edit-btn" 
-                        data-enrollment-id="${enrollmentId}"
-                        data-prelim="${prelim || ''}"
-                        data-midterm="${midterm || ''}"
-                        data-final="${final || ''}"
-                        data-remarks="${remarks || ''}"
-                        data-auto-status="${status || ''}">
+                <button class="edit-btn ${!canEdit ? 'disabled' : ''}" 
+                        ${canEdit ? `data-enrollment-id="${enrollmentId}" data-prelim="${prelimAttr}" data-midterm="${midtermAttr}" data-final="${finalAttr}" data-remarks="${remarks || ''}" data-auto-status="${status || 'Incomplete'}"` : 'disabled'}
+                        ${!canEdit ? `title="Editing disabled - Class status: ${classStatus}"` : ''}>
                     <i class="fas fa-edit"></i> Edit Grade
                 </button>
                 <button class="profile-btn" data-user-id="${userId}">
                     <i class="fas fa-user"></i> Profile
                 </button>
-                <button class="completion-btn" 
-                        data-enrollment-id="${enrollmentId}"
-                        data-student-name="${studentName}"
-                        data-remarks="${remarks || ''}"
-                        ${!shouldEnable ? 'disabled' : ''}>
+                <button class="completion-btn ${!canGenerate ? 'disabled' : ''}" 
+                        ${canGenerate ? `data-enrollment-id="${enrollmentId}" data-student-name="${studentName}" data-remarks="${remarks}"` : 'disabled'}
+                        ${!canGenerate ? 'title="Certificate generation requires: Class completed & Student competent"' : ''}>
                     <i class="fas fa-file-certificate"></i> Certificate
                 </button>
             `;
             
             // Reattach event listeners
-            const newEditBtn = actionCell.querySelector('.edit-btn');
+            const newEditBtn = actionCell.querySelector('.edit-btn:not(.disabled)');
             const newProfileBtn = actionCell.querySelector('.profile-btn');
-            const newCompletionBtn = actionCell.querySelector('.completion-btn');
+            const newCompletionBtn = actionCell.querySelector('.completion-btn:not(.disabled)');
             
-            newEditBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                openEditModal(
-                    enrollmentId,
-                    prelim || '',
-                    midterm || '',
-                    final || '',
-                    remarks || '',
-                    status || ''
-                );
-            });
+            if (newEditBtn) {
+                newEditBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openEditModal(
+                        enrollmentId,
+                        prelimAttr,
+                        midtermAttr,
+                        finalAttr,
+                        remarks || '',
+                        status || 'Incomplete'
+                    );
+                });
+            }
             
-            newProfileBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                openProfileModal(userId);
-            });
+            if (newProfileBtn) {
+                newProfileBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openProfileModal(userId);
+                });
+            }
             
-            if (shouldEnable) {
+            if (newCompletionBtn) {
                 newCompletionBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -756,23 +954,11 @@ function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks
     }
 }
 
-// Helper function to get CSS class for status
-function getStatusClass(status) {
-    if (!status) return 'incomplete';
-    
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('excellent')) return 'excellent-competent';
-    if (statusLower.includes('very satisfactory')) return 'very-satisfactory-competent';
-    if (statusLower.includes('satisfactory')) return 'satisfactory-competent';
-    if (statusLower.includes('fairly satisfactory')) return 'fairly-satisfactory-competent';
-    if (statusLower.includes('passed')) return 'passed-competent';
-    if (statusLower.includes('failed')) return 'failed-not-yet-competent';
-    return 'incomplete';
-}
-
 // SMOOTH SUBMIT FUNCTION WITH AUTO REFRESH
 function submitGradeEdit() {
     if (isSaving) return;
+    
+    console.log('submitGradeEdit called');
     
     const enrollmentId = document.getElementById('editEnrollmentId').value;
     const prelim = document.getElementById('prelimGrade').value;
@@ -781,16 +967,18 @@ function submitGradeEdit() {
     const useAutoRemarks = document.getElementById('useAutoRemarks').checked;
     let remarks = document.getElementById('remarks').value;
 
-    // Validate inputs
-    const prelimValid = validateGradeInput(document.getElementById('prelimGrade'));
-    const midtermValid = validateGradeInput(document.getElementById('midtermGrade'));
-    const finalValid = validateGradeInput(document.getElementById('finalGrade'));
+    console.log('Submit data:', { enrollmentId, prelim, midterm, finalGrade, useAutoRemarks, remarks });
+
+    // Validate inputs (empty is allowed - means not yet graded)
+    const prelimValid = prelim === '' || validateGradeInput(document.getElementById('prelimGrade'));
+    const midtermValid = midterm === '' || validateGradeInput(document.getElementById('midtermGrade'));
+    const finalValid = finalGrade === '' || validateGradeInput(document.getElementById('finalGrade'));
     
     if (!prelimValid || !midtermValid || !finalValid) {
         Swal.fire({
             icon: 'error',
             title: 'Invalid Grades',
-            text: 'Please fix invalid grade values (must be between 0 and 100)',
+            text: 'Please fix invalid grade values (must be between 0 and 100 or empty)',
             confirmButtonText: 'OK',
             confirmButtonColor: '#b91c1c',
             timer: 3000
@@ -813,37 +1001,75 @@ function submitGradeEdit() {
     // 2. Show loading screen
     showLoadingScreen('Saving grade changes...');
     
-    // 3. Make API call
+    // 3. Make API call with proper null handling
     fetch(window.appUrls.editGradeUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
         body: JSON.stringify({
             enrollment_id: enrollmentId,
-            prelim_grade: prelim || null,
-            midterm_grade: midterm || null,
-            final_grade: finalGrade || null,
+            prelim_grade: prelim === '' ? null : parseFloat(prelim),
+            midterm_grade: midterm === '' ? null : parseFloat(midterm),
+            final_grade: finalGrade === '' ? null : parseFloat(finalGrade),
             remarks: remarks,
             use_auto_remarks: useAutoRemarks
         })
     })
-    .then(response => {
+    .then(async response => {
+        console.log('Edit response received:', {
+            status: response.status,
+            statusText: response.statusText
+        });
+        
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        
         if (!response.ok) {
-            return response.json().then(err => { throw err; });
+            const text = await response.text();
+            console.error('Error response:', text.substring(0, 500));
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
-        return response.json();
+        
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 500));
+            throw new Error('Server returned HTML instead of JSON');
+        }
     })
     .then(data => {
+        console.log('Edit response data:', data);
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+        
         // Update loading message
         $('#loading-message').text('Refreshing table...');
+        
+        // Calculate average for display (handle null/empty properly)
+        const prelimNum = prelim === '' ? null : parseFloat(prelim);
+        const midtermNum = midterm === '' ? null : parseFloat(midterm);
+        const finalNum = finalGrade === '' ? null : parseFloat(finalGrade);
+        
+        let avg = null;
+        if (prelimNum !== null && midtermNum !== null && finalNum !== null && 
+            !isNaN(prelimNum) && !isNaN(midtermNum) && !isNaN(finalNum)) {
+            avg = (prelimNum + midtermNum + finalNum) / 3;
+        }
         
         // Update the specific row with new data
         updateStudentRowOptimized(
             enrollmentId, 
-            prelim, 
-            midterm, 
-            finalGrade, 
+            prelimNum, 
+            midtermNum, 
+            finalNum, 
             remarks, 
-            data.auto_status || currentAutoStatus
+            data.auto_status || currentAutoStatus,
+            avg
         );
         
         // 4. Hide loading screen after a short delay
@@ -861,6 +1087,7 @@ function submitGradeEdit() {
                         <small style="color: #475569;">
                             <i class="fas fa-info-circle"></i> 
                             Status: ${data.auto_status || currentAutoStatus}
+                            ${avg !== null ? `<br>Average: ${avg.toFixed(2)}` : '<br>Average: Incomplete'}
                         </small>
                     </div>
                 `,
@@ -884,13 +1111,18 @@ function submitGradeEdit() {
         hideLoadingScreen();
         isSaving = false;
         
-        console.error('Error:', error);
+        console.error('Error in submitGradeEdit:', error);
         
-        // Show error message
+        // Show error message with details
         Swal.fire({
             icon: 'error',
             title: 'Save Failed',
-            text: error.message || 'Failed to save grade changes. Please try again.',
+            html: `
+                <p>${error.message || 'Failed to save grade changes'}</p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Check browser console (F12) for more details
+                </p>
+            `,
             confirmButtonText: 'Try Again',
             confirmButtonColor: '#b91c1c'
         }).then(() => {
@@ -912,17 +1144,6 @@ function submitGradeEdit() {
             }
         });
     });
-}
-
-// Function to refresh table on demand (optional manual refresh button)
-function setupManualRefresh() {
-    const refreshBtn = document.getElementById('refresh-table-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            refreshStudentTable();
-        });
-    }
 }
 
 // Open profile modal
@@ -964,18 +1185,20 @@ function openProfileModal(userId) {
                 row.insertCell(0).textContent = cls.class_title || 'N/A';
                 
                 let scheduleText = cls.schedule || 'N/A';
-                if (cls.days_of_week && Array.isArray(cls.days_of_week)) {
-                    scheduleText += ` (${cls.days_of_week.join(', ')})`;
+                if (cls.days_of_week && typeof cls.days_of_week === 'object') {
+                    const days = Object.keys(cls.days_of_week).join(', ');
+                    scheduleText += ` (${days})`;
                 }
                 row.insertCell(1).textContent = scheduleText;
                 
                 row.insertCell(2).textContent = cls.venue || 'N/A';
                 
-                let avgGrade = 'N/A';
-                if (cls.prelim_grade && cls.midterm_grade && cls.final_grade) {
-                    avgGrade = ((parseFloat(cls.prelim_grade) + parseFloat(cls.midterm_grade) + parseFloat(cls.final_grade)) / 3).toFixed(2) + '%';
+                let avgDisplay = 'N/A';
+                let avgClass = '';
+                if (cls.average !== null && cls.average !== undefined) {
+                    avgDisplay = cls.average.toFixed(2);
                 }
-                row.insertCell(3).textContent = avgGrade;
+                row.insertCell(3).textContent = avgDisplay;
                 
                 row.insertCell(4).textContent = cls.grade_status || 'Not Evaluated';
                 row.insertCell(5).textContent = cls.remarks || 'N/A';
@@ -1049,7 +1272,7 @@ function openProfileModal(userId) {
         });
 }
 
-// Certificate functions (unchanged)
+// Certificate functions
 function generatePrivateCompletion(enrollmentId, studentName, remarks) {
     if (remarks !== 'Competent') {
         Swal.fire({
@@ -1141,11 +1364,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
     
-    // Update URLs in window.appUrls
-    window.appUrls.autoStatusRemarksUrl = "{{ url_for('staff_class_student_management.get_auto_status_remarks') }}";
-    
     init();
-    setupManualRefresh();
 });
 
 // Clean up

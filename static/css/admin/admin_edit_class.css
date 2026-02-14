@@ -20,7 +20,7 @@
 
 html, body {
     height: 100%;
-    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: var(--tesda-light-gray);
     line-height: 1.6;
     color: var(--tesda-text);
@@ -49,13 +49,9 @@ body.modal-open {
     position: relative;
 }
 
-.nav-left, .nav-right {
+.nav-left {
     display: flex;
     align-items: center;
-}
-
-.nav-right {
-    margin-left: auto;
 }
 
 .top-nav a {
@@ -68,9 +64,7 @@ body.modal-open {
     display: flex;
     align-items: center;
     transition: all 0.3s ease;
-    position: relative;
     margin: 0 2px;
-    font-family: 'Poppins', sans-serif;
 }
 
 .top-nav a:hover {
@@ -81,7 +75,6 @@ body.modal-open {
 .top-nav a.active {
     background-color: rgba(255, 255, 255, 0.25);
     border-radius: 4px 4px 0 0;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
 }
 
 .top-nav a i {
@@ -97,9 +90,6 @@ body.modal-open {
     width: 30px;
     height: 21px;
     justify-content: space-between;
-    background: none;
-    border: none;
-    padding: 0;
     margin-left: auto;
 }
 
@@ -110,10 +100,6 @@ body.modal-open {
     background-color: var(--tesda-white);
     border-radius: 3px;
     transition: all 0.3s ease;
-}
-
-.hamburger-menu:hover span {
-    background-color: var(--tesda-gold);
 }
 
 /* Mobile Navigation */
@@ -154,7 +140,6 @@ body.modal-open {
     color: var(--tesda-white);
     font-weight: 700;
     font-size: 1.1rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-brand img {
@@ -179,7 +164,6 @@ body.modal-open {
 
 .close-mobile-nav:hover {
     background-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
 }
 
 .mobile-nav-links {
@@ -192,13 +176,12 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 1rem 1rem;
+    padding: 1rem;
     color: var(--tesda-white);
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.3s ease;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
     background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -206,13 +189,11 @@ body.modal-open {
 .mobile-nav-links a.active {
     background-color: rgba(255, 255, 255, 0.2);
     transform: translateX(5px);
-    color: var(--tesda-white);
 }
 
 .mobile-nav-links a i {
     width: 20px;
     text-align: center;
-    font-size: 1.1rem;
 }
 
 /* Mobile Expandable Sections */
@@ -226,13 +207,12 @@ body.modal-open {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 1rem 1rem;
+    padding: 1rem;
     color: var(--tesda-white);
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.3s ease;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
     background-color: rgba(255, 255, 255, 0.1);
     cursor: pointer;
 }
@@ -278,7 +258,6 @@ body.modal-open {
     transition: all 0.3s ease;
     font-weight: 400;
     font-size: 0.95rem;
-    font-family: 'Poppins', sans-serif;
     background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -288,12 +267,6 @@ body.modal-open {
     transform: translateX(5px);
 }
 
-.mobile-nav-submenu a i {
-    width: 18px;
-    text-align: center;
-    font-size: 1rem;
-}
-
 .mobile-nav-divider {
     height: 1px;
     background-color: rgba(255, 255, 255, 0.3);
@@ -301,10 +274,6 @@ body.modal-open {
 }
 
 .mobile-nav-links .logout-btn {
-    color: #ff6b6b !important;
-}
-
-.mobile-nav-links .logout-btn i {
     color: #ff6b6b !important;
 }
 
@@ -330,7 +299,6 @@ body.modal-open {
     color: var(--tesda-blue);
     display: flex;
     align-items: center;
-    font-family: 'Poppins', sans-serif;
 }
 
 .brand-name::before {
@@ -355,17 +323,11 @@ body.modal-open {
 .logo-container img {
     height: 40px;
     object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-.logo-container img:hover {
-    transform: scale(1.05);
 }
 
 .user-section {
     display: flex;
     align-items: center;
-    gap: 25px;
 }
 
 /* Profile Dropdown */
@@ -410,7 +372,6 @@ body.modal-open {
     gap: 12px;
     transition: all 0.2s;
     text-decoration: none;
-    font-family: 'Poppins', sans-serif;
 }
 
 .dropdown-menu a:hover {
@@ -434,10 +395,6 @@ body.modal-open {
     color: var(--tesda-maroon) !important;
 }
 
-.logout-btn i {
-    color: var(--tesda-maroon) !important;
-}
-
 /* ===== Sub Navigation ===== */
 .subnav {
     background: var(--tesda-white);
@@ -448,6 +405,7 @@ body.modal-open {
 .subnav .subnav-right {
     display: flex;
     gap: 15px;
+    flex-wrap: wrap;
 }
 
 .subnav .subnav-right a {
@@ -462,11 +420,6 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: 'Poppins', sans-serif;
-}
-
-.subnav .subnav-right a i {
-    font-size: 0.9rem;
 }
 
 .subnav .subnav-right a:hover {
@@ -490,7 +443,7 @@ body.modal-open {
     border-radius: 3px 3px 0 0;
 }
 
-/* ===== Edit Classes Content Styles ===== */
+/* ===== Main Content Styles ===== */
 .content {
     padding: 30px 5%;
     max-width: 1400px;
@@ -517,7 +470,6 @@ body.modal-open {
     align-items: center;
     gap: 12px;
     font-size: 28px;
-    font-family: 'Poppins', sans-serif;
     font-weight: 700;
 }
 
@@ -525,7 +477,6 @@ body.modal-open {
     color: #64748b;
     font-size: 14px;
     margin-bottom: 0.5rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .breadcrumb span {
@@ -543,7 +494,6 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: 'Poppins', sans-serif;
 }
 
 /* Search and Filter Container */
@@ -551,7 +501,6 @@ body.modal-open {
     display: flex;
     gap: 1rem;
     margin-bottom: 1.5rem;
-    flex-wrap: wrap;
 }
 
 .filter-dropdown {
@@ -569,7 +518,6 @@ body.modal-open {
     background-color: white;
     padding-right: 2.5rem;
     cursor: pointer;
-    font-family: 'Poppins', sans-serif;
 }
 
 .filter-dropdown .dropdown-icon {
@@ -586,12 +534,13 @@ body.modal-open {
     box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.1);
 }
 
-/* Table styles */
+/* ===== TABLE STYLES ===== */
 .user-table-container {
     overflow-x: auto;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    margin-bottom: 2rem;
 }
 
 .user-table {
@@ -602,23 +551,20 @@ body.modal-open {
 
 .user-table th {
     background-color: #f8fafc;
-    padding: 1rem;
+    padding: 1rem 0.75rem;
     text-align: left;
     color: #334155;
     font-weight: 600;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
-    position: sticky;
-    top: 0;
-    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
 }
 
 .user-table td {
-    padding: 1rem;
+    padding: 1rem 0.75rem;
     border-bottom: 1px solid #e2e8f0;
     color: #475569;
     vertical-align: middle;
-    font-family: 'Poppins', sans-serif;
 }
 
 .user-table tr:last-child td {
@@ -629,37 +575,13 @@ body.modal-open {
     background-color: #f8fafc;
 }
 
-.no-data {
-    text-align: center;
-    padding: 2rem !important;
+.text-muted {
     color: #64748b;
-    font-style: italic;
+    font-size: 0.8rem;
+    font-weight: normal;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: #64748b;
-}
-
-.empty-state i {
-    font-size: 3rem;
-    color: #94a3b8;
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    color: #64748b;
-    margin-bottom: 0.5rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-.empty-state p {
-    color: #94a3b8;
-    font-family: 'Poppins', sans-serif;
-}
-
-/* Status badge */
+/* ===== STATUS BADGES ===== */
 .status-badge {
     padding: 0.5rem 0.75rem;
     border-radius: 20px;
@@ -667,12 +589,6 @@ body.modal-open {
     font-weight: 600;
     display: inline-block;
     text-transform: capitalize;
-    font-family: 'Poppins', sans-serif;
-}
-
-.status-active {
-    background-color: #d1fae5;
-    color: #065f46;
 }
 
 .status-pending {
@@ -680,14 +596,29 @@ body.modal-open {
     color: #92400e;
 }
 
+.status-open {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-ongoing {
+    background-color: #cffafe;
+    color: #0891b2;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
 .status-cancelled {
     background-color: #fee2e2;
     color: #b91c1c;
 }
 
-.status-completed {
-    background-color: #dbeafe;
-    color: #1d4ed8;
+.status-edited {
+    background-color: #f3e8ff;
+    color: #7e22ce;
 }
 
 .status-inactive {
@@ -695,43 +626,51 @@ body.modal-open {
     color: #64748b;
 }
 
-/* Button styles */
+/* ===== ACTION BUTTONS - COMPACT STYLE ===== */
 .action-btn {
     border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+    padding: 0;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
     transition: all 0.3s;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 0.125rem;
-    font-family: 'Poppins', sans-serif;
-    min-width: 80px;
     justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    margin: 0 3px;
 }
 
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.action-btn i {
-    font-size: 0.85rem;
-}
-
-.edit-btn {
+.action-btn.edit-btn {
     background: linear-gradient(135deg, var(--tesda-blue), var(--tesda-dark-blue));
     color: white;
     border: 2px solid var(--tesda-blue);
 }
 
-.edit-btn:hover {
+.action-btn.edit-btn:hover {
     background: linear-gradient(135deg, #00257a, #001a3d);
-    border-color: #00257a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn.status-btn {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+    border: 2px solid #8b5cf6;
+}
+
+.action-btn.status-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.action-btn i {
+    font-size: 1rem;
+    margin: 0;
 }
 
 /* ===== PAGINATION STYLES ===== */
@@ -749,12 +688,6 @@ body.modal-open {
 .pagination-info {
     color: #64748b;
     font-size: 0.9rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-.pagination-info span {
-    font-weight: 600;
-    color: #334155;
 }
 
 .pagination-controls {
@@ -774,7 +707,6 @@ body.modal-open {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
     color: #475569;
 }
 
@@ -808,9 +740,7 @@ body.modal-open {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
     color: #475569;
-    font-family: 'Poppins', sans-serif;
     padding: 0 0.5rem;
 }
 
@@ -833,7 +763,6 @@ body.modal-open {
     gap: 0.5rem;
     font-size: 0.9rem;
     color: #64748b;
-    font-family: 'Poppins', sans-serif;
 }
 
 .pagination-page-size select {
@@ -841,11 +770,9 @@ body.modal-open {
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background-color: white;
-    font-size: 0.9rem;
-    font-family: 'Poppins', sans-serif;
 }
 
-/* ===== MOBILE CLASS CARDS ===== */
+/* ===== MOBILE CARDS ===== */
 .mobile-users-container {
     display: none;
     flex-direction: column;
@@ -869,7 +796,7 @@ body.modal-open {
 
 .mobile-user-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
     gap: 1rem;
@@ -884,14 +811,11 @@ body.modal-open {
     color: var(--tesda-blue);
     font-size: 1.1rem;
     margin-bottom: 0.25rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-user-email {
     color: #64748b;
     font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-user-details {
@@ -905,19 +829,18 @@ body.modal-open {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    min-width: 140px;
 }
 
 .mobile-detail-label {
     font-size: 0.8rem;
     color: #64748b;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-detail-value {
     font-size: 0.9rem;
     color: #334155;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-user-actions {
@@ -928,7 +851,7 @@ body.modal-open {
 
 .mobile-action-btn {
     flex: 1;
-    min-width: 140px;
+    min-width: 120px;
     padding: 0.75rem 1rem;
     border: none;
     border-radius: 8px;
@@ -940,7 +863,6 @@ body.modal-open {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .mobile-action-btn.edit-btn {
@@ -951,9 +873,20 @@ body.modal-open {
 
 .mobile-action-btn.edit-btn:hover {
     background: linear-gradient(135deg, #00257a, #001a3d);
-    border-color: #00257a;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-action-btn.status-btn {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+    border: 2px solid #8b5cf6;
+}
+
+.mobile-action-btn.status-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
 }
 
 /* ===== MODAL STYLES ===== */
@@ -1009,7 +942,6 @@ body.modal-open {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: 'Poppins', sans-serif;
     font-weight: 600;
 }
 
@@ -1040,22 +972,16 @@ body.modal-open {
     overflow-y: auto;
 }
 
-.modal-body p {
-    margin: 0;
-    font-size: 1rem;
-    color: #333;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-}
-
 .modal-footer {
-    padding: 15px 20px;
+    padding: 1rem 1.5rem;
     display: flex;
-    justify-content: space-between;
-    gap: 15px;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid #e2e8f0;
     flex-shrink: 0;
 }
 
+/* ===== LOGOUT MODAL BUTTONS ===== */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -1066,7 +992,6 @@ body.modal-open {
     flex: 1;
     text-align: center;
     font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 .btn-yes {
@@ -1088,17 +1013,7 @@ body.modal-open {
     background-color: #e2e8f0;
 }
 
-.btn-secondary {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
-}
-
-.btn-secondary:hover {
-    background-color: #e2e8f0;
-}
-
-/* Edit Modal Specific Styles */
+/* ===== EDIT MODAL SPECIFIC STYLES ===== */
 #editModal .modal-body {
     padding: 30px;
     max-height: 70vh;
@@ -1144,7 +1059,6 @@ body.modal-open {
     align-items: center;
     gap: 12px;
     font-weight: 600;
-    font-family: 'Poppins', sans-serif;
 }
 
 #editModal .form-section h4 i {
@@ -1194,7 +1108,6 @@ body.modal-open {
     transition: all 0.3s ease;
     background-color: white;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
     line-height: 1.5;
     height: 52px;
 }
@@ -1225,7 +1138,6 @@ body.modal-open {
     font-weight: 600;
     color: #374151;
     font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
 }
 
 #editModal .required-field::after {
@@ -1274,7 +1186,6 @@ body.modal-open {
     font-weight: 500;
     min-width: 90px;
     justify-content: center;
-    font-family: 'Poppins', sans-serif;
 }
 
 #editModal .day-checkbox input[type="checkbox"]:checked + label {
@@ -1322,64 +1233,6 @@ body.modal-open {
     font-size: 1.1rem;
     font-weight: 500;
     color: #4b5563;
-    font-family: 'Poppins', sans-serif;
-}
-
-/* ===== TIME INPUT STYLES - NEWLY ADDED ===== */
-#editModal .day-time-input {
-    width: 100%;
-    padding: 14px 20px 14px 50px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background-color: white;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-    line-height: 1.5;
-    height: 52px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 16px center;
-    background-repeat: no-repeat;
-    background-size: 16px;
-    cursor: pointer;
-    color: #374151;
-}
-
-#editModal .day-time-input:focus {
-    outline: none;
-    border-color: var(--tesda-blue);
-    box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.1);
-    transform: translateY(-1px);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23003366' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-}
-
-#editModal .day-time-input:hover {
-    border-color: #cbd5e1;
-}
-
-#editModal .day-time-input option {
-    padding: 12px;
-    font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
-}
-
-#editModal .day-time-input option:checked {
-    background-color: var(--tesda-light-blue);
-    color: var(--tesda-blue);
-}
-
-/* Time Inputs with Icons */
-#editModal .time-inputs .input-with-icon i {
-    color: #64748b;
-    font-size: 1.1rem;
-    z-index: 3;
-}
-
-#editModal .time-inputs .day-time-input:focus + i {
-    color: var(--tesda-blue);
-    transform: translateY(-50%) scale(1.1);
 }
 
 /* Day Slot Styles */
@@ -1427,7 +1280,6 @@ body.modal-open {
     gap: 12px;
     font-size: 1.25rem;
     color: var(--tesda-blue);
-    font-family: 'Poppins', sans-serif;
 }
 
 #editModal .day-slot-title i {
@@ -1464,6 +1316,39 @@ body.modal-open {
 #editModal .time-inputs .form-group {
     flex: 1;
     margin-bottom: 0;
+}
+
+/* Time Input Styles */
+#editModal .day-time-input {
+    width: 100%;
+    padding: 14px 20px 14px 50px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: white;
+    box-sizing: border-box;
+    line-height: 1.5;
+    height: 52px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    cursor: pointer;
+    color: #374151;
+}
+
+#editModal .day-time-input:focus {
+    outline: none;
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.1);
+    transform: translateY(-1px);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23003366' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+#editModal .day-time-input:hover {
+    border-color: #cbd5e1;
 }
 
 #editModal .date-range-group {
@@ -1505,7 +1390,6 @@ body.modal-open {
     border: none;
     min-width: 140px;
     justify-content: center;
-    font-family: 'Poppins', sans-serif;
 }
 
 #editModal .cancel-btn {
@@ -1561,10 +1445,102 @@ body.modal-open {
     background-color: #fef2f2;
     border-radius: 6px;
     border-left: 4px solid #dc2626;
-    font-family: 'Poppins', sans-serif;
 }
 
-/* Message System */
+/* ===== STATUS MODAL STYLES ===== */
+#statusModal .modal-content {
+    width: 450px;
+}
+
+#statusModal .status-info {
+    background-color: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--tesda-blue);
+}
+
+#statusModal .status-info p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+#statusModal .status-info strong {
+    color: #475569;
+    min-width: 100px;
+    display: inline-block;
+}
+
+#statusModal .status-info .status-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+#statusModal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+#statusModal .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#statusModal .form-control:focus {
+    outline: none;
+    border-color: var(--tesda-blue);
+    box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.1);
+}
+
+#statusModal .modal-footer {
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+#statusModal .btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    font-size: 1rem;
+}
+
+#statusModal .save-btn {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+}
+
+#statusModal .save-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+#statusModal .cancel-btn {
+    background-color: #f8fafc;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+}
+
+#statusModal .cancel-btn:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== MESSAGE SYSTEM ===== */
 #message-container {
     margin: 1rem 0 2rem;
     padding: 0.5rem;
@@ -1579,7 +1555,6 @@ body.modal-open {
     align-items: center;
     gap: 10px;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
 }
 
 #message-content.success {
@@ -1600,7 +1575,29 @@ body.modal-open {
     border: 1px solid #bfdbfe;
 }
 
-/* Animation */
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #94a3b8;
+}
+
+/* Animations */
 @keyframes modalFadeIn {
     from {
         opacity: 0;
@@ -1662,12 +1659,6 @@ body.modal-open {
     
     .brand-section {
         padding: 10px 3%;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        text-align: center;
-        height: auto;
         min-height: 70px;
     }
     
@@ -1680,34 +1671,20 @@ body.modal-open {
     
     .brand-name {
         font-size: 1.1rem;
-        margin-right: 10px;
-        display: flex;
-        align-items: center;
     }
     
     .brand-name::before {
-        display: inline-block;
-        width: 2px;
         height: 25px;
         margin-right: 8px;
     }
     
     .logo-container {
-        justify-content: flex-start;
-        border-left: 2px solid var(--tesda-gold);
-        border-top: none;
         padding: 5px 10px;
         gap: 10px;
-        flex-shrink: 0;
     }
     
     .logo-container img {
         height: 30px;
-    }
-    
-    .user-section {
-        flex-shrink: 0;
-        margin-left: 10px;
     }
     
     .profile-img {
@@ -1715,7 +1692,6 @@ body.modal-open {
         height: 36px;
     }
     
-    /* Hide desktop subnav on mobile */
     .subnav {
         display: none;
     }
@@ -1736,7 +1712,6 @@ body.modal-open {
         min-width: 100%;
     }
     
-    /* Show mobile cards and hide table on small screens */
     .user-table-container {
         display: none;
     }
@@ -1745,14 +1720,12 @@ body.modal-open {
         display: flex;
     }
     
-    /* Modal adjustments for mobile */
     .modal {
         padding: 10px;
     }
     
     .modal-content {
         width: 95%;
-        margin: 20px auto;
     }
     
     .large-modal {
@@ -1794,12 +1767,26 @@ body.modal-open {
         margin-bottom: 2rem;
     }
     
-    #editModal .modal-header {
-        padding: 15px 20px;
+    #statusModal .modal-content {
+        width: 95%;
     }
     
-    #editModal .modal-header h3 {
-        font-size: 1.3rem;
+    #statusModal .status-info p {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    #statusModal .status-info strong {
+        min-width: auto;
+    }
+    
+    #statusModal .modal-footer {
+        flex-direction: column;
+    }
+    
+    #statusModal .btn {
+        width: 100%;
     }
     
     .modal-footer {
@@ -1820,45 +1807,17 @@ body.modal-open {
 }
 
 @media (max-width: 480px) {
-    .top-nav {
-        padding: 0 2%;
-    }
-    
-    .brand-section {
-        padding: 8px 2%;
-        min-height: 65px;
-    }
-    
     .brand-name {
         font-size: 1rem;
-        margin-right: 5px;
-    }
-    
-    .logo-container {
-        padding: 3px 8px;
-        gap: 8px;
     }
     
     .logo-container img {
         height: 25px;
     }
     
-    .brand-name::before {
-        height: 20px;
-        margin-right: 6px;
-    }
-    
     .profile-img {
         width: 32px;
         height: 32px;
-    }
-    
-    .content {
-        padding: 15px 2%;
-    }
-    
-    .container {
-        padding: 15px;
     }
     
     .page-header h1 {
@@ -1868,25 +1827,6 @@ body.modal-open {
     .mobile-nav {
         width: 90%;
         padding: 1.5rem 1rem;
-    }
-    
-    .mobile-brand {
-        font-size: 1rem;
-    }
-    
-    .mobile-brand img {
-        height: 30px;
-    }
-    
-    .modal-content {
-        width: 100%;
-        margin: 10px;
-    }
-    
-    .modal-header,
-    .modal-body,
-    .modal-footer {
-        padding: 15px;
     }
     
     .pagination-controls {
@@ -1906,54 +1846,7 @@ body.modal-open {
     }
 }
 
-/* Extra small devices */
-@media (max-width: 360px) {
-    .brand-name {
-        font-size: 0.9rem;
-    }
-    
-    .logo-container {
-        gap: 5px;
-    }
-    
-    .logo-container img {
-        height: 22px;
-    }
-    
-    .profile-img {
-        width: 30px;
-        height: 30px;
-    }
-    
-    .mobile-user-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .mobile-user-details {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .modal-footer {
-        gap: 10px;
-    }
-    
-    .btn {
-        padding: 12px 20px;
-    }
-}
-
-/* Additional utility classes */
+/* Utility Classes */
 .d-none {
     display: none !important;
-}
-
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.data-table .actions-cell {
-    white-space: nowrap;
 }

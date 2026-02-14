@@ -30,18 +30,21 @@ def view_editable_classes():
                 cl.class_id, cl.class_title, cl.schedule, cl.venue, cl.max_students,
                 cl.start_date, cl.end_date, cl.status, cl.date_created,
                 cl.school_year, cl.batch, cl.days_of_week, cl.instructor_name,
-                cl.instructor_id, cl.course_id, cl.prerequisites,  -- Added these fields
+                cl.instructor_id, cl.course_id, cl.prerequisites,
+                (SELECT COUNT(*) FROM enrollment e WHERE e.class_id = cl.class_id AND e.status IN ('enrolled', 'completed')) as current_students,
                 co.course_title, co.course_code, co.course_description
             FROM classes cl
             JOIN courses co ON cl.course_id = co.course_id
-            WHERE cl.status IN ('pending', 'open', 'ongoing', 'edited')
+            WHERE cl.status IN ('pending', 'open', 'ongoing', 'completed', 'cancelled', 'edited')
             ORDER BY 
                 CASE cl.status
                     WHEN 'pending' THEN 1
                     WHEN 'open' THEN 2
                     WHEN 'ongoing' THEN 3
-                    WHEN 'edited' THEN 4
-                    ELSE 5
+                    WHEN 'completed' THEN 4
+                    WHEN 'cancelled' THEN 5
+                    WHEN 'edited' THEN 6
+                    ELSE 7
                 END,
                 cl.date_created DESC
         """
@@ -98,7 +101,6 @@ def view_editable_classes():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
 @admin_edit_class_bp.route('/admin/update_class', methods=['POST'])
 def update_class():
     try:
@@ -150,8 +152,8 @@ def update_class():
         if not class_data:
             return jsonify({'status': 'error', 'message': 'Class not found'}), 404
 
+        # Keep the original status, don't change it
         current_status = class_data['status']
-        new_status = 'edited' if current_status != 'pending' else 'pending'
 
         update_query = """
             UPDATE classes
@@ -166,7 +168,6 @@ def update_class():
                 end_date = %s,
                 days_of_week = %s,
                 instructor_name = %s,
-                status = %s,
                 date_updated = %s
             WHERE class_id = %s
         """
@@ -183,16 +184,66 @@ def update_class():
             data['end_date'],
             json.dumps(data['days_of_week']),
             data['instructor_name'],
-            new_status,  
             now,
             data['class_id']
         ))
         db.commit()
 
+        # FIXED: Don't return duplicate 'status' key
+        return jsonify({
+            'result': 'success',
+            'message': 'Class updated successfully',
+            'original_status': current_status
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@admin_edit_class_bp.route('/admin/update_class_status', methods=['POST'])
+def update_class_status():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        data = request.get_json()
+
+        class_id = data.get('class_id')
+        new_status = data.get('status')
+
+        if not class_id or not new_status:
+            return jsonify({
+                'status': 'error',
+                'message': 'Class ID and status are required'
+            }), 400
+
+        valid_statuses = ['pending', 'open', 'ongoing', 'completed', 'cancelled', 'edited']
+        if new_status not in valid_statuses:
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'
+            }), 400
+
+        # Check if class exists
+        cursor.execute("SELECT status FROM classes WHERE class_id = %s", (class_id,))
+        class_data = cursor.fetchone()
+        
+        if not class_data:
+            return jsonify({'status': 'error', 'message': 'Class not found'}), 404
+
+        # Update the status
+        update_query = """
+            UPDATE classes
+            SET status = %s, date_updated = %s
+            WHERE class_id = %s
+        """
+        
+        now = datetime.now()
+        cursor.execute(update_query, (new_status, now, class_id))
+        db.commit()
+
         return jsonify({
             'status': 'success',
-            'message': 'Class updated successfully',
-            'new_status': new_status
+            'message': f'Class status updated to {new_status} successfully'
         })
 
     except Exception as e:

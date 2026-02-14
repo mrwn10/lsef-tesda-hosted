@@ -28,7 +28,6 @@
                     <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
                     <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
                     <a href="{{ url_for('admin_class_management.view_active_classes') }}" class="active"><i class="fas fa-users"></i> Classes</a>
-                    <!--<a href="{{ url_for('admin_student_grades.view_grades') }}"><i class="fas fa-user-plus"></i> Student Grade</a>-->
                     <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
                     <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
                     <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
@@ -150,7 +149,7 @@
         </nav>
     </div>
 
-    <!-- Logout Confirmation Modal -->
+    <!-- Logout Confirmation Modal (Keep as is) -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -169,26 +168,7 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal for Approve/Reject -->
-    <div class="modal" id="confirmation-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Action</h3>
-                <button class="close-modal" id="close-confirmation-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="confirmation-message">Are you sure you want to proceed with this action?</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-confirm" id="confirm-action">Yes</button>
-                <button class="btn btn-cancel-confirm" id="cancel-action">No</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- View Details Modal -->
+    <!-- View Details Modal (Updated with more fields) -->
     <div id="viewDetailsModal" class="modal">
         <div class="modal-content large-modal">
             <div class="modal-header">
@@ -209,6 +189,10 @@
                             <div class="detail-item">
                                 <label>Course:</label>
                                 <span id="detail-course"></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Course Code:</label>
+                                <span id="detail-course-code"></span>
                             </div>
                             <div class="detail-item">
                                 <label>School Year:</label>
@@ -232,7 +216,7 @@
                     </div>
 
                     <div class="details-section">
-                        <h4><i class="fas fa-map-marker-alt"></i> Location Information</h4>
+                        <h4><i class="fas fa-map-marker-alt"></i> Location & Capacity</h4>
                         <div class="details-grid">
                             <div class="detail-item">
                                 <label>Venue:</label>
@@ -242,13 +226,17 @@
                                 <label>Max Students:</label>
                                 <span id="detail-max-students"></span>
                             </div>
+                            <div class="detail-item">
+                                <label>Enrolled:</label>
+                                <span id="detail-enrolled"></span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="details-section">
                         <h4><i class="fas fa-calendar-check"></i> Schedule Information</h4>
                         <div class="details-grid">
-                            <div class="detail-item">
+                            <div class="detail-item full-width">
                                 <label>Schedule:</label>
                                 <span id="detail-schedule"></span>
                             </div>
@@ -280,10 +268,10 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-approve" id="modal-approve-btn">
-                    <i class="fas fa-check"></i> Approve Class
+                    <i class="fas fa-check"></i> Approve
                 </button>
                 <button class="btn btn-reject" id="modal-reject-btn">
-                    <i class="fas fa-times"></i> Reject Class
+                    <i class="fas fa-times"></i> Reject
                 </button>
                 <button class="btn btn-cancel" id="modal-cancel-btn">
                     <i class="fas fa-times"></i> Cancel
@@ -299,10 +287,6 @@
                 <div class="breadcrumb">
                     <span>Class Management</span> / <span>Class Approval</span>
                 </div>
-            </div>
-            
-            <div id="message-container">
-                <div id="message-content" class="message"></div>
             </div>
 
             <!-- Search and Filter Container -->
@@ -322,7 +306,7 @@
                 </div>
             </div>
 
-            <!-- Desktop Table View -->
+            <!-- Desktop Table View (UPDATED with more columns and compact button) -->
             <div class="user-table-container">
                 <table id="classTable" class="user-table">
                     <thead>
@@ -330,6 +314,9 @@
                             <th>Class Title</th>
                             <th>Course</th>
                             <th>Instructor</th>
+                            <th>Schedule</th>
+                            <th>Venue</th>
+                            <th>Students</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -338,9 +325,17 @@
                         {% if classes %}
                             {% for cls in classes %}
                             <tr id="class-{{ cls.class_id }}" data-class='{{ cls|tojson|safe }}' data-course-title="{{ cls.course_title }}">
-                                <td>{{ cls.class_title }}</td>
-                                <td>{{ cls.course_title }}</td>
-                                <td>{{ cls.first_name }} {{ cls.last_name }}</td>
+                                <td><strong>{{ cls.class_title }}</strong><br><small class="text-muted">Batch {{ cls.batch }}</small></td>
+                                <td>{{ cls.course_title }}<br><small class="text-muted">{{ cls.course_code }}</small></td>
+                                <td>{{ cls.instructor_name or (cls.first_name + ' ' + cls.last_name) }}</td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <i class="fas fa-calendar-alt"></i> {{ cls.start_date[:10] }}<br>
+                                        <i class="fas fa-clock"></i> {{ cls.schedule|truncate(20) }}
+                                    </div>
+                                </td>
+                                <td>{{ cls.venue }}</td>
+                                <td class="text-center">{{ cls.enrolled_count|default(0) }}/{{ cls.max_students }}</td>
                                 <td>
                                     <span class="status-badge status-pending">
                                         Pending
@@ -348,14 +343,14 @@
                                 </td>
                                 <td>
                                     <button class="action-btn view-btn view-class-btn" data-class='{{ cls|tojson|safe }}'>
-                                        <i class="fas fa-eye"></i> View 
+                                        <i class="fas fa-eye"></i> 
                                     </button>
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" class="no-data">
+                                <td colspan="8" class="no-data">
                                     <div class="empty-state">
                                         <i class="fas fa-check-circle"></i>
                                         <h3>No Pending Classes</h3>
@@ -401,7 +396,7 @@
                 </div>
             </div>
 
-            <!-- Mobile Class Cards (for small screens) -->
+            <!-- Mobile Class Cards (UPDATED) -->
             <div class="mobile-users-container" id="mobile-classes-container">
                 {% if classes %}
                     {% for cls in classes %}
@@ -409,19 +404,30 @@
                         <div class="mobile-user-header">
                             <div class="mobile-user-info">
                                 <div class="mobile-user-name">{{ cls.class_title }}</div>
-                                <div class="mobile-user-email">{{ cls.course_title }}</div>
+                                <div class="mobile-user-email">{{ cls.course_title }} (Batch {{ cls.batch }})</div>
                             </div>
+                            <span class="status-badge status-pending">Pending</span>
                         </div>
                         <div class="mobile-user-details">
                             <div class="mobile-user-detail">
                                 <div class="mobile-detail-label">Instructor</div>
-                                <div class="mobile-detail-value">{{ cls.first_name }} {{ cls.last_name }}</div>
+                                <div class="mobile-detail-value">{{ cls.instructor_name or (cls.first_name + ' ' + cls.last_name) }}</div>
                             </div>
                             <div class="mobile-user-detail">
-                                <div class="mobile-detail-label">Status</div>
-                                <div class="mobile-detail-value">
-                                    <span class="status-badge status-pending">Pending</span>
-                                </div>
+                                <div class="mobile-detail-label">Schedule</div>
+                                <div class="mobile-detail-value">{{ cls.schedule }}</div>
+                            </div>
+                            <div class="mobile-user-detail">
+                                <div class="mobile-detail-label">Venue</div>
+                                <div class="mobile-detail-value">{{ cls.venue }}</div>
+                            </div>
+                            <div class="mobile-user-detail">
+                                <div class="mobile-detail-label">Students</div>
+                                <div class="mobile-detail-value">{{ cls.enrolled_count|default(0) }}/{{ cls.max_students }}</div>
+                            </div>
+                            <div class="mobile-user-detail">
+                                <div class="mobile-detail-label">Dates</div>
+                                <div class="mobile-detail-value">{{ cls.start_date[:10] }} to {{ cls.end_date[:10] }}</div>
                             </div>
                         </div>
                         <div class="mobile-user-actions">

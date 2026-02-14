@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 21, 2026 at 11:36 AM
+-- Generation Time: Feb 14, 2026 at 07:31 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -72,7 +72,7 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `batch`, `schedule`, `days_of_week`, `venue`, `max_students`, `instructor_id`, `instructor_name`, `start_date`, `end_date`, `prerequisites`, `status`, `date_created`, `date_updated`, `edit_reason`) VALUES
-(11, 1, 'BOOKING', '2026-2027', '1', 'Monday 6:00 AM-6:00 PM', '{\"Monday\":{\"start\":\"06:00\",\"end\":\"18:00\"}}', 'sda', 25, 2, 'Vincent Octavio', '2026-01-21', '2027-02-03', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'pending', '2026-01-21 18:00:52', NULL, NULL);
+(12, 1, 'BOOKING', '2026-2027', '2', 'Monday 7:00 AM-4:00 PM, Wednesday 6:00 AM-2:00 PM', '{\"Monday\":{\"start\":\"07:00\",\"end\":\"16:00\"},\"Wednesday\":{\"start\":\"06:00\",\"end\":\"14:00\"}}', 'Sta. Cruz', 25, 2, 'Vincent Octavio', '2026-02-14', '2027-02-09', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'ongoing', '2026-02-14 11:10:54', '2026-02-14 13:49:39', NULL);
 
 -- --------------------------------------------------------
 
@@ -124,6 +124,13 @@ CREATE TABLE `enrollment` (
   `status` enum('enrolled','pending','cancelled','completed','rejected','dropped') NOT NULL DEFAULT 'enrolled'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `enrollment`
+--
+
+INSERT INTO `enrollment` (`enrollment_id`, `user_id`, `class_id`, `enrollment_date`, `status`) VALUES
+(3, 3, 12, '2026-02-14 13:34:53', 'completed');
+
 -- --------------------------------------------------------
 
 --
@@ -132,8 +139,8 @@ CREATE TABLE `enrollment` (
 
 CREATE TABLE `login` (
   `user_id` int(11) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `email` varchar(100) NOT NULL,
   `role` enum('admin','staff','student') DEFAULT NULL,
   `account_status` enum('active','inactive','pending') NOT NULL DEFAULT 'pending',
@@ -218,7 +225,7 @@ CREATE TABLE `student_grades` (
   `midterm_grade` decimal(5,2) DEFAULT NULL,
   `final_grade` decimal(5,2) DEFAULT NULL,
   `status` varchar(50) GENERATED ALWAYS AS (case when `final_grade` >= 96 then 'Excellent (Competent)' when `final_grade` >= 91 then 'Very Satisfactory (Competent)' when `final_grade` >= 86 then 'Satisfactory (Competent)' when `final_grade` >= 81 then 'Fairly Satisfactory (Competent)' when `final_grade` >= 75 then 'Passed (Competent)' when `final_grade` < 75 then 'Failed (Not Yet Competent)' when `final_grade` is null then 'Incomplete' else 'Not Evaluated' end) STORED,
-  `remarks` enum('Competent','Not yet competent','Dropped') DEFAULT NULL,
+  `remarks` enum('Competent','Not yet competent','Dropped','Incomplete') DEFAULT NULL,
   `date_recorded` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -227,7 +234,9 @@ CREATE TABLE `student_grades` (
 --
 
 INSERT INTO `student_grades` (`grade_id`, `enrollment_id`, `prelim_grade`, `midterm_grade`, `final_grade`, `remarks`, `date_recorded`) VALUES
-(1, 1, 98.00, 99.00, 99.00, 'Competent', '2026-01-11 15:08:09');
+(1, 1, 98.00, 99.00, 99.00, 'Competent', '2026-01-11 15:08:09'),
+(2, 2, 32.00, 77.00, 77.00, 'Not yet competent', '2026-02-14 13:15:29'),
+(3, 3, NULL, 98.00, 80.00, 'Incomplete', '2026-02-14 14:30:24');
 
 -- --------------------------------------------------------
 
@@ -403,7 +412,7 @@ ALTER TABLE `certificates`
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -415,7 +424,7 @@ ALTER TABLE `courses`
 -- AUTO_INCREMENT for table `enrollment`
 --
 ALTER TABLE `enrollment`
-  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `login`
@@ -439,7 +448,7 @@ ALTER TABLE `personal_information`
 -- AUTO_INCREMENT for table `student_grades`
 --
 ALTER TABLE `student_grades`
-  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `student_requirements`

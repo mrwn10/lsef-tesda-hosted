@@ -10,6 +10,14 @@
     --tesda-border: #e2e8f0;
     --tesda-text: #333;
     --tesda-text-light: #64748b;
+    --success-green: #10b981;
+    --success-light: #d1fae5;
+    --danger-red: #ef4444;
+    --danger-light: #fee2e2;
+    --warning-yellow: #f59e0b;
+    --warning-light: #fef3c7;
+    --neutral-gray: #6b7280;
+    --neutral-light: #f3f4f6;
 }
 
 * {
@@ -30,7 +38,7 @@ body.modal-open {
     overflow: hidden;
 }
 
-/* ===== Navigation Styles ===== */
+/* ===== Navigation Styles (unchanged from original) ===== */
 .nav-container {
     position: sticky;
     top: 0;
@@ -438,7 +446,7 @@ body.modal-open {
     color: var(--tesda-maroon) !important;
 }
 
-/* Class Student Management Subnav - HIDDEN ON MOBILE */
+/* Class Student Management Subnav */
 .courses-subnav {
     background: var(--tesda-white);
     padding: 15px 5%;
@@ -501,6 +509,10 @@ body.modal-open {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .page-header h1 {
@@ -518,6 +530,54 @@ body.modal-open {
     color: #64748b;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    margin: 0;
+}
+
+.class-status-badge {
+    font-weight: 500;
+    font-size: 1rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.status-badge.open {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+}
+
+.status-badge.ongoing {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #10b981;
+}
+
+.status-badge.completed {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #6366f1;
+}
+
+.status-badge.edited {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+    border: 1px solid #a855f7;
 }
 
 /* Flash messages */
@@ -589,41 +649,98 @@ body.modal-open {
     background-color: rgba(0, 51, 160, 0.05);
 }
 
-.grade-value {
-    font-weight: 600;
-    color: #166534;
-}
-
-.grade-na {
-    color: #64748b;
-    font-style: italic;
-}
-
-/* Remarks styles */
-.auto-remarks, .current-remarks {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
+/* Average grade styling */
+.average-grade {
     display: inline-block;
-    text-transform: capitalize;
-    font-family: 'Poppins', sans-serif;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
-.auto-remarks.passed, .current-remarks.passed,
-.auto-remarks.completed, .current-remarks.completed {
-    background-color: #d1fae5;
+.average-grade.passed {
+    background-color: var(--success-light);
+    color: #065f46;
+    border: 1px solid var(--success-green);
+}
+
+.average-grade.failed {
+    background-color: var(--danger-light);
+    color: #b91c1c;
+    border: 1px solid var(--danger-red);
+}
+
+.average-grade.incomplete {
+    background-color: var(--neutral-light);
+    color: var(--neutral-gray);
+    border: 1px solid #d1d5db;
+}
+
+/* Status and remarks styling */
+.status-remarks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status-remarks {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.remarks-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    width: fit-content;
+}
+
+.remarks-badge.competent {
+    background-color: var(--success-light);
     color: #065f46;
 }
 
-.auto-remarks.failed, .current-remarks.failed {
-    background-color: #fee2e2;
+.remarks-badge.not-yet-competent {
+    background-color: var(--danger-light);
     color: #b91c1c;
 }
 
-.auto-remarks.incomplete, .current-remarks.incomplete {
-    background-color: #fef3c7;
+.remarks-badge.incomplete {
+    background-color: var(--warning-light);
     color: #92400e;
+}
+
+.remarks-badge.dropped {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+/* Status colors */
+.status-remarks.excellent-competent,
+.status-remarks.very-satisfactory-competent,
+.status-remarks.satisfactory-competent,
+.status-remarks.fairly-satisfactory-competent,
+.status-remarks.passed-competent {
+    background-color: var(--success-light);
+    color: #065f46;
+    border: 1px solid var(--success-green);
+}
+
+.status-remarks.failed-not-yet-competent {
+    background-color: var(--danger-light);
+    color: #b91c1c;
+    border: 1px solid var(--danger-red);
+}
+
+.status-remarks.incomplete {
+    background-color: var(--warning-light);
+    color: #92400e;
+    border: 1px solid var(--warning-yellow);
 }
 
 /* Action buttons */
@@ -647,16 +764,17 @@ button {
     font-family: 'Poppins', sans-serif;
 }
 
-button:hover {
+button:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none !important;
     box-shadow: none !important;
+    background-color: #9ca3af !important;
 }
 
 button i {
@@ -668,7 +786,7 @@ button i {
     color: white;
 }
 
-.edit-btn:hover {
+.edit-btn:hover:not(:disabled) {
     background-color: #1d4ed8;
 }
 
@@ -681,21 +799,12 @@ button i {
     background-color: #374151;
 }
 
-.certificate-btn {
-    background-color: #166534;
-    color: white;
-}
-
-.certificate-btn:hover {
-    background-color: #14532d;
-}
-
 .completion-btn {
     background-color: #9d174d;
     color: white;
 }
 
-.completion-btn:hover {
+.completion-btn:hover:not(:disabled) {
     background-color: #831843;
 }
 
@@ -805,7 +914,25 @@ button i {
     font-family: 'Poppins', sans-serif;
 }
 
-/* ===== MODAL STYLES - UPDATED FOR CONSISTENCY ===== */
+/* No data message */
+.no-data-message {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.no-data-message i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #94a3b8;
+}
+
+.no-data-message h3 {
+    margin-bottom: 0.5rem;
+    color: #475569;
+}
+
+/* ===== MODAL STYLES ===== */
 .modal {
     display: none;
     position: fixed;
@@ -825,7 +952,7 @@ button i {
     background-color: #fff;
     margin: 0 auto;
     padding: 0;
-    width: 400px;
+    width: 500px;
     max-width: 100%;
     max-height: 90vh;
     border-radius: 8px;
@@ -895,15 +1022,6 @@ button i {
     overflow-y: auto;
 }
 
-.modal-body p {
-    margin: 0;
-    font-size: 1rem;
-    color: #333;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-}
-
-/* ===== UPDATED MODAL FOOTER FOR CONSISTENT BUTTON SIZES ===== */
 .modal-footer {
     padding: 15px 20px;
     display: flex;
@@ -912,13 +1030,16 @@ button i {
     flex-shrink: 0;
 }
 
-/* Edit Grade Modal - WIDER SIZE */
-.edit-grade-modal .modal-content {
-    width: 600px;
-}
-
+/* Edit Grade Modal */
 .edit-grade-content .modal-body {
     padding: 2rem;
+}
+
+.edit-grade-content .form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 1.5rem;
 }
 
 .edit-grade-content .form-group {
@@ -951,6 +1072,62 @@ button i {
     outline: none;
 }
 
+.edit-grade-content .form-input.valid {
+    border-color: var(--success-green);
+    background-color: #f0fdf4;
+}
+
+.edit-grade-content .form-input.invalid {
+    border-color: var(--danger-red);
+    background-color: #fef2f2;
+}
+
+.form-text {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    display: block;
+    font-family: 'Poppins', sans-serif;
+}
+
+.text-muted {
+    color: #6b7280;
+}
+
+/* Average Display */
+.average-display-section {
+    margin-bottom: 1.5rem;
+}
+
+.average-display {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    text-align: center;
+    font-size: 1.2rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+.average-display.passed {
+    background-color: var(--success-light);
+    color: #065f46;
+    border: 2px solid var(--success-green);
+}
+
+.average-display.failed {
+    background-color: var(--danger-light);
+    color: #b91c1c;
+    border: 2px solid var(--danger-red);
+}
+
+.average-display.incomplete,
+.average-display.neutral {
+    background-color: var(--neutral-light);
+    color: var(--neutral-gray);
+    border: 2px solid #d1d5db;
+}
+
 /* Auto Remarks Display */
 .auto-remarks-display {
     padding: 1rem;
@@ -961,28 +1138,39 @@ button i {
     font-family: 'Poppins', sans-serif;
 }
 
-.auto-remarks-display.passed {
-    background-color: #d1fae5;
+.auto-remarks-display.passed,
+.auto-remarks-display.excellent-competent,
+.auto-remarks-display.very-satisfactory-competent,
+.auto-remarks-display.satisfactory-competent,
+.auto-remarks-display.fairly-satisfactory-competent,
+.auto-remarks-display.passed-competent {
+    background-color: var(--success-light);
     color: #065f46;
-    border: 2px solid #a7f3d0;
+    border: 2px solid var(--success-green);
 }
 
-.auto-remarks-display.failed {
-    background-color: #fee2e2;
+.auto-remarks-display.failed,
+.auto-remarks-display.failed-not-yet-competent {
+    background-color: var(--danger-light);
     color: #b91c1c;
-    border: 2px solid #fecaca;
+    border: 2px solid var(--danger-red);
 }
 
 .auto-remarks-display.incomplete {
-    background-color: #fef3c7;
+    background-color: var(--warning-light);
     color: #92400e;
-    border: 2px solid #fde68a;
+    border: 2px solid var(--warning-yellow);
 }
 
 .auto-remarks-display.neutral {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 2px solid #e2e8f0;
+    background-color: var(--neutral-light);
+    color: var(--neutral-gray);
+    border: 2px solid #d1d5db;
+}
+
+.inline-loading {
+    display: inline-block;
+    color: var(--tesda-blue);
 }
 
 /* Toggle Switch */
@@ -1035,14 +1223,17 @@ button i {
     transform: translateX(26px);
 }
 
-/* Profile Modal - UPDATED FOR SCROLL FIX AND SINGLE CLOSE BUTTON */
-.profile-modal .modal-content {
-    width: 800px;
-    max-height: 90vh;
+/* Disabled select */
+.form-input.disabled {
+    background-color: var(--neutral-light);
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
+/* Profile Modal */
 .user-details-modal {
-    width: 800px;
+    width: 900px;
+    max-width: 95%;
     max-height: 90vh;
 }
 
@@ -1050,13 +1241,6 @@ button i {
     padding: 2rem;
     overflow-y: auto;
     flex-grow: 1;
-}
-
-.user-details-modal .modal-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    flex-shrink: 0;
 }
 
 .profile-header {
@@ -1198,7 +1382,7 @@ button i {
     border: 1px solid #e2e8f0;
 }
 
-/* ===== UPDATED BUTTON STYLES FOR CONSISTENT MODAL BUTTON SIZES ===== */
+/* Button styles */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -1222,16 +1406,6 @@ button i {
     background-color: #064e3b;
 }
 
-.btn-danger {
-    background-color: #b91c1c;
-    color: white;
-    border: none;
-}
-
-.btn-danger:hover {
-    background-color: #991b1b;
-}
-
 .btn-secondary {
     background-color: #f1f5f9;
     color: #475569;
@@ -1240,14 +1414,6 @@ button i {
 
 .btn-secondary:hover {
     background-color: #e2e8f0;
-}
-
-/* Logout Modal Buttons - CENTERED TEXT */
-.btn-yes, .btn-no {
-    text-align: center;
-    justify-content: center;
-    display: flex;
-    align-items: center;
 }
 
 .btn-yes {
@@ -1269,7 +1435,6 @@ button i {
     background-color: #e2e8f0;
 }
 
-/* Profile Modal Single Close Button */
 .close-profile-full {
     width: 100%;
     text-align: center;
@@ -1315,18 +1480,44 @@ button i {
     transform: translateY(-1px);
 }
 
+/* Success Toast */
+.success-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(to right, var(--tesda-blue), var(--tesda-dark-blue));
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    z-index: 9999;
+    font-family: 'Poppins', sans-serif;
+}
+
+.success-toast.show {
+    transform: translateX(0);
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+    color: var(--tesda-gold);
+}
+
+.toast-message {
+    font-weight: 500;
+}
+
 /* Loading Screen */
 #loading-screen {
     z-index: 3000;
-}
-
-#loading-screen .modal-content {
-    width: 300px;
-    text-align: center;
-}
-
-#loading-screen .modal-body {
-    padding: 2rem;
 }
 
 .loading-spinner {
@@ -1378,6 +1569,12 @@ button i {
         padding: 20px;
     }
     
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
     .action-buttons {
         flex-direction: column;
         gap: 5px;
@@ -1390,16 +1587,19 @@ button i {
     
     .upload-form {
         width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .file-input-container {
+        width: 100%;
+    }
+    
+    .edit-grade-content .form-row {
+        grid-template-columns: 1fr;
     }
     
     .modal-content {
-        width: 95%;
-        margin: 2% auto;
-    }
-    
-    .edit-grade-modal .modal-content,
-    .user-details-modal,
-    .logout-modal .modal-content {
         width: 95%;
         margin: 2% auto;
     }
@@ -1416,26 +1616,9 @@ button i {
         width: 100%;
     }
 
-    /* HIDE SUBNAV ON MOBILE */
+    /* Hide subnav on mobile */
     .courses-subnav {
         display: none;
-    }
-    
-    .modal-body {
-        padding: 1.5rem;
-    }
-    
-    .user-details-modal .modal-body {
-        padding: 1.5rem;
-    }
-    
-    .profile-header {
-        margin-bottom: 1.5rem;
-    }
-    
-    #profilePicture {
-        width: 80px;
-        height: 80px;
     }
 }
 
@@ -1449,121 +1632,34 @@ button i {
     }
     
     .edit-grade-content .modal-body,
-    .user-details-modal .modal-body,
-    .logout-modal-content .modal-body {
+    .user-details-modal .modal-body {
         padding: 1rem;
     }
-    
-    .modal-header {
-        padding: 1rem 1.5rem;
-    }
-    
-    .modal-footer {
-        padding: 1rem 1.5rem;
-    }
 }
 
-/* Add these styles to your existing CSS file */
-
-/* Average with Remarks styling */
-.average-with-remarks {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 14px;
-    border: 1px solid transparent;
+/* Logout Modal Buttons */
+.btn-yes, .btn-no {
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
 }
 
-.average-with-remarks.competent {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #10b981;
+.btn-yes {
+    background-color: var(--tesda-maroon);
+    color: white;
 }
 
-.average-with-remarks.not-competent {
-    background-color: #fee2e2;
-    color: #7f1d1d;
-    border-color: #ef4444;
+.btn-yes:hover {
+    background-color: #6b0000;
 }
 
-.average-with-remarks.incomplete {
-    background-color: #fef3c7;
-    color: #92400e;
-    border-color: #f59e0b;
+.btn-no {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 
-/* Auto remarks display */
-.auto-remarks-display.competent {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-left: 4px solid #10b981;
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-
-.auto-remarks-display.not-competent {
-    background-color: #fee2e2;
-    color: #7f1d1d;
-    border-left: 4px solid #ef4444;
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-
-.auto-remarks-display.incomplete {
-    background-color: #fef3c7;
-    color: #92400e;
-    border-left: 4px solid #f59e0b;
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-
-/* Current remarks styling */
-.current-remarks.competent {
-    background-color: #d1fae5;
-    color: #065f46;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-.current-remarks.not-yet-competent {
-    background-color: #fee2e2;
-    color: #7f1d1d;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-.current-remarks.dropped {
-    background-color: #e5e7eb;
-    color: #374151;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-.current-remarks.not-set {
-    background-color: #f3f4f6;
-    color: #6b7280;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-style: italic;
-}
-
-/* Grade value styling */
-.grade-value {
-    font-weight: 600;
-}
-
-.grade-na {
-    color: #6b7280;
-    font-style: italic;
-}
-
-/* Disabled remarks select */
-.form-input.disabled {
-    background-color: #f3f4f6;
-    cursor: not-allowed;
-    opacity: 0.7;
+.btn-no:hover {
+    background-color: #e2e8f0;
 }

@@ -1,6 +1,7 @@
-// admin_edit_class.js - Enhanced Version with Improved UI/UX
+// admin_edit_class.js - Enhanced Version with Status Management and Compact Buttons
 $(document).ready(function() {
     const editClassUrl = "/admin/update_class";
+    const updateStatusUrl = "/admin/update_class_status";
     let classes = [];
     let filteredClasses = [];
     
@@ -9,11 +10,15 @@ $(document).ready(function() {
     let pageSize = 10;
     let totalPages = 1;
     
+    // Current class data for status update
+    let currentStatusClassData = null;
+    
     // Initialize all functionality
     function init() {
         initMobileNavigation();
         initModals();
         initEditClass();
+        initStatusManagement();
         initFiltering();
         initPagination();
         loadClasses();
@@ -21,31 +26,24 @@ $(document).ready(function() {
     
     // Load classes from existing DOM elements
     function loadClasses() {
-        // Get classes from existing table rows
         const tableRows = document.querySelectorAll('#classes-container tr[data-course-title]');
-        const mobileCards = document.querySelectorAll('#mobile-classes-container .mobile-user-card');
         
         classes = [];
         
-        // Extract data from desktop table rows
-        tableRows.forEach((row, index) => {
+        tableRows.forEach((row) => {
             const classData = {
-                class_id: row.cells[0].textContent,
-                class_title: row.cells[1].textContent,
-                course_title: row.cells[2].textContent,
+                class_id: row.cells[0].textContent.trim(),
+                class_title: row.cells[1].textContent.trim().replace('Batch', '').trim(),
+                course_title: row.cells[2].textContent.trim().replace(/\n.*$/, '').trim(),
+                course_code: row.cells[2].querySelector('.text-muted')?.textContent || '',
                 duration: row.cells[3].textContent,
                 students: row.cells[4].textContent,
-                status: row.querySelector('.status-badge').textContent,
-                instructor_name: row.cells[6].textContent,
-                start_date: row.cells[3].textContent.split(' to ')[0],
-                end_date: row.cells[3].textContent.split(' to ')[1],
-                schedule: '',
-                venue: '',
+                status: row.querySelector('.status-badge').textContent.trim(),
+                instructor_name: row.cells[6].textContent.trim(),
+                start_date: row.cells[3].textContent.split(' to ')[0].trim(),
+                end_date: row.cells[3].textContent.split(' to ')[1].trim(),
                 max_students: row.cells[4].textContent.split('/')[1],
-                current_students: row.cells[4].textContent.split('/')[0],
-                date_created: '',
-                school_year: '',
-                batch: ''
+                current_students: row.cells[4].textContent.split('/')[0]
             };
             
             // Get edit data
@@ -62,7 +60,6 @@ $(document).ready(function() {
             classes.push(classData);
         });
         
-        // Format dates for all classes
         classes.forEach(cls => {
             cls.formatted_start_date = formatDate(cls.start_date);
             cls.formatted_end_date = formatDate(cls.end_date);
@@ -74,13 +71,11 @@ $(document).ready(function() {
         renderClasses();
     }
     
-    // Format date to "Nov 1, 2025" format
+    // Format date function
     function formatDate(dateString) {
         if (!dateString) return 'Not specified';
-        
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return dateString;
-        
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -90,14 +85,12 @@ $(document).ready(function() {
     
     // Initialize pagination
     function initPagination() {
-        // Page size change
         $('#page-size').on('change', function() {
             pageSize = parseInt($(this).val());
             currentPage = 1;
             renderClasses();
         });
         
-        // Pagination button handlers
         $('#first-page').on('click', function() {
             if (!$(this).prop('disabled')) {
                 currentPage = 1;
@@ -132,47 +125,40 @@ $(document).ready(function() {
         const totalClasses = filteredClasses.length;
         totalPages = Math.ceil(totalClasses / pageSize);
         
-        // Update pagination info
-        const start = ((currentPage - 1) * pageSize) + 1;
+        const start = totalClasses === 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
         const end = Math.min(currentPage * pageSize, totalClasses);
+        
         $('#pagination-start').text(start);
         $('#pagination-end').text(end);
         $('#pagination-total').text(totalClasses);
         
-        // Update button states
-        $('#first-page').prop('disabled', currentPage === 1);
-        $('#prev-page').prop('disabled', currentPage === 1);
-        $('#next-page').prop('disabled', currentPage === totalPages);
-        $('#last-page').prop('disabled', currentPage === totalPages);
+        $('#first-page').prop('disabled', currentPage === 1 || totalClasses === 0);
+        $('#prev-page').prop('disabled', currentPage === 1 || totalClasses === 0);
+        $('#next-page').prop('disabled', currentPage === totalPages || totalClasses === 0);
+        $('#last-page').prop('disabled', currentPage === totalPages || totalClasses === 0);
         
-        // Update page numbers
         const $pagesContainer = $('#pagination-pages');
         $pagesContainer.empty();
         
-        // Show up to 5 page numbers
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-        
-        // Adjust if we're near the end
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
-            pageBtn.on('click', function() {
-                currentPage = i;
-                renderClasses();
-            });
-            $pagesContainer.append(pageBtn);
-        }
-        
-        // Show/hide pagination
         if (totalClasses > 0) {
-            $('#pagination-container').show();
-        } else {
-            $('#pagination-container').hide();
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = $(`<button class="pagination-page ${i === currentPage ? 'active' : ''}">${i}</button>`);
+                pageBtn.on('click', function() {
+                    currentPage = i;
+                    renderClasses();
+                });
+                $pagesContainer.append(pageBtn);
+            }
         }
+        
+        $('#pagination-container').toggle(totalClasses > 0);
     }
     
     // Render classes based on current pagination
@@ -182,18 +168,12 @@ $(document).ready(function() {
             return;
         }
         
-        // Calculate pagination
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = Math.min(startIndex + pageSize, filteredClasses.length);
         const currentClasses = filteredClasses.slice(startIndex, endIndex);
         
-        // Render desktop table
         renderDesktopTable(currentClasses);
-        
-        // Render mobile cards
         renderMobileCards(currentClasses);
-        
-        // Update pagination
         updatePagination();
     }
     
@@ -205,8 +185,8 @@ $(document).ready(function() {
             tableHtml += `
                 <tr data-course-title="${cls.course_title}">
                     <td>${cls.class_id}</td>
-                    <td>${cls.class_title}</td>
-                    <td>${cls.course_title}</td>
+                    <td><strong>${cls.class_title}</strong><br><small class="text-muted">Batch ${cls.batch || 'N/A'}</small></td>
+                    <td>${cls.course_title}<br><small class="text-muted">${cls.course_code || ''}</small></td>
                     <td>${cls.formatted_start_date} to ${cls.formatted_end_date}</td>
                     <td>${cls.current_students || 0}/${cls.max_students}</td>
                     <td>
@@ -216,8 +196,11 @@ $(document).ready(function() {
                     </td>
                     <td>${cls.instructor_name}</td>
                     <td>
-                        <button class="action-btn edit-btn edit-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}'>
-                            <i class="fas fa-pencil-alt"></i> Edit
+                        <button class="action-btn edit-btn edit-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}' title="Edit Class">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="action-btn status-btn status-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}' title="Change Status">
+                            <i class="fas fa-toggle-on"></i>
                         </button>
                     </td>
                 </tr>
@@ -237,8 +220,9 @@ $(document).ready(function() {
                     <div class="mobile-user-header">
                         <div class="mobile-user-info">
                             <div class="mobile-user-name">${cls.class_title}</div>
-                            <div class="mobile-user-email">${cls.course_title}</div>
+                            <div class="mobile-user-email">${cls.course_title} (Batch ${cls.batch || 'N/A'})</div>
                         </div>
+                        <span class="status-badge status-${cls.status.toLowerCase()}">${cls.status}</span>
                     </div>
                     <div class="mobile-user-details">
                         <div class="mobile-user-detail">
@@ -254,19 +238,16 @@ $(document).ready(function() {
                             <div class="mobile-detail-value">${cls.current_students || 0}/${cls.max_students}</div>
                         </div>
                         <div class="mobile-user-detail">
-                            <div class="mobile-detail-label">Status</div>
-                            <div class="mobile-detail-value">
-                                <span class="status-badge status-${cls.status.toLowerCase()}">${cls.status}</span>
-                            </div>
-                        </div>
-                        <div class="mobile-user-detail">
                             <div class="mobile-detail-label">Instructor</div>
                             <div class="mobile-detail-value">${cls.instructor_name}</div>
                         </div>
                     </div>
                     <div class="mobile-user-actions">
                         <button class="mobile-action-btn edit-btn mobile-edit-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}'>
-                            <i class="fas fa-pencil-alt"></i> Edit Class
+                            <i class="fas fa-pencil-alt"></i> Edit
+                        </button>
+                        <button class="mobile-action-btn status-btn mobile-status-class-btn" data-class='${JSON.stringify(cls).replace(/'/g, "&#39;")}'>
+                            <i class="fas fa-toggle-on"></i> Status
                         </button>
                     </div>
                 </div>
@@ -314,7 +295,7 @@ $(document).ready(function() {
             filteredClasses = [...classes];
         } else {
             filteredClasses = classes.filter(cls => 
-                cls.course_title.toLowerCase().includes(filterValue) || filterValue === ''
+                cls.course_title && cls.course_title.toLowerCase().includes(filterValue)
             );
         }
         
@@ -341,7 +322,6 @@ $(document).ready(function() {
                 });
             }
             
-            // Close mobile nav when clicking on links
             const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
             mobileNavLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -350,7 +330,6 @@ $(document).ready(function() {
                 });
             });
             
-            // Expandable mobile menu sections
             const mobileNavHeaders = document.querySelectorAll('.mobile-nav-header-link');
             mobileNavHeaders.forEach(header => {
                 header.addEventListener('click', function() {
@@ -358,22 +337,18 @@ $(document).ready(function() {
                     const submenu = document.getElementById(`${section}-submenu`);
                     const chevron = this.querySelector('.chevron-icon');
                     
-                    // Toggle active class
                     this.classList.toggle('active');
                     
-                    // Toggle submenu
                     if (submenu) {
                         submenu.classList.toggle('active');
                     }
                     
-                    // Rotate only the chevron icon
                     if (chevron) {
                         chevron.style.transform = this.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
                 });
             });
             
-            // Close mobile nav when clicking outside
             document.addEventListener('click', function(e) {
                 if (!hamburgerMenu.contains(e.target) && !mobileNav.contains(e.target) && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
@@ -381,7 +356,6 @@ $(document).ready(function() {
                 }
             });
             
-            // Close mobile nav with Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
                     mobileNav.classList.remove('active');
@@ -391,69 +365,53 @@ $(document).ready(function() {
         }
     }
     
+    // Close all modals function
+    function closeAllModals() {
+        $('.modal').fadeOut(300);
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+    }
+
+    // Open modal function
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+        }
+    }
+    
     // Initialize all modal functionality
     function initModals() {
-        // Close modal function - works for ALL modals
-        function closeAllModals() {
-            $('.modal').fadeOut(300);
-            document.body.style.overflow = '';
-            document.body.classList.remove('modal-open');
-        }
-
-        // Open modal function
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                document.body.classList.add('modal-open');
-            }
-        }
-
-        // Close modal when clicking outside - works for ALL modals
         $(document).on('click', function(e) {
             if ($(e.target).hasClass('modal')) {
                 closeAllModals();
             }
         });
 
-        // Escape key to close modals - works for ALL modals
         $(document).keyup(function(e) {
             if (e.keyCode === 27) {
                 closeAllModals();
             }
         });
 
-        // ===== SPECIFIC MODAL FUNCTIONALITY =====
-
         // Logout Modal
-        $('#logout-trigger').click(function(e) {
+        $('#logout-trigger, #mobile-logout-trigger').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
-            openModal('logout-modal');
-        });
-        
-        $('#mobile-logout-trigger').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // First close mobile nav properly
-            const mobileNav = document.getElementById('mobileNav');
-            if (mobileNav) {
-                mobileNav.classList.remove('active');
+            if ($(this).attr('id') === 'mobile-logout-trigger') {
+                const mobileNav = document.getElementById('mobileNav');
+                if (mobileNav) {
+                    mobileNav.classList.remove('active');
+                }
             }
-            // Then open logout modal
             setTimeout(() => {
                 openModal('logout-modal');
             }, 10);
         });
         
-        $('#cancel-logout').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeAllModals();
-        });
-        
-        $('#close-logout-modal').click(function(e) {
+        $('#cancel-logout, #close-logout-modal').click(function(e) {
             e.preventDefault();
             e.stopPropagation();
             closeAllModals();
@@ -466,26 +424,178 @@ $(document).ready(function() {
             if (logoutUrl) {
                 window.location.href = logoutUrl;
             } else {
-                console.error('Logout URL not found');
                 window.location.href = "/logout";
             }
         });
 
         // Edit Class Modal
-        $('#close-edit-modal').click(function() {
+        $('#close-edit-modal, #cancel-btn').click(function() {
             closeAllModals();
         });
 
-        $('#cancel-btn').click(function() {
+        // Status Modal
+        $('#close-status-modal, #cancel-status-btn').click(function() {
             closeAllModals();
+            currentStatusClassData = null;
+        });
+    }
+    
+    // Initialize status management
+    function initStatusManagement() {
+        $(document).on('click', '.status-class-btn, .mobile-status-class-btn', function() {
+            try {
+                const classData = $(this).data('class');
+                openStatusModal(classData);
+            } catch (error) {
+                console.error('Error parsing class data:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Error loading class data',
+                    icon: 'error',
+                    confirmButtonColor: '#003366',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+
+        $('#update-status-btn').click(function() {
+            updateClassStatus();
+        });
+
+        $('#new_status').change(function() {
+            $('#status_error').hide();
+        });
+    }
+
+    function openStatusModal(classData) {
+        currentStatusClassData = classData;
+        
+        $('#status_class_id').val(classData.class_id);
+        $('#status_class_title').text(classData.class_title || 'N/A');
+        
+        const currentStatusSpan = $('#status_current_status');
+        currentStatusSpan.text(classData.status || 'N/A');
+        currentStatusSpan.removeClass().addClass(`status-badge status-${(classData.status || 'pending').toLowerCase()}`);
+        
+        // Reset dropdown
+        $('#new_status').val('');
+        $('#status_error').hide();
+        
+        $('#statusModal').css('display', 'flex');
+        $('body').addClass('modal-open');
+    }
+
+    function updateClassStatus() {
+        const classId = $('#status_class_id').val();
+        const newStatus = $('#new_status').val();
+        
+        if (!classId) {
+            showMessage('Class ID is missing', 'error');
+            return;
+        }
+        
+        if (!newStatus) {
+            $('#status_error').text('Please select a new status').show();
+            return;
+        }
+
+        // Close the status modal first
+        closeAllModals();
+
+        Swal.fire({
+            title: 'Update Status?',
+            text: `Are you sure you want to change status to "${newStatus}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#8b5cf6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, update it!',
+            cancelButtonText: 'Cancel',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performStatusUpdate(classId, newStatus);
+            } else {
+                // If cancelled, reopen the status modal
+                if (currentStatusClassData) {
+                    setTimeout(() => {
+                        openStatusModal(currentStatusClassData);
+                    }, 100);
+                }
+            }
+        });
+    }
+
+    function performStatusUpdate(classId, newStatus) {
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch(updateStatusUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ class_id: classId, status: newStatus })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#003366',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                throw new Error(data.message || 'Unknown error occurred');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'An error occurred',
+                icon: 'error',
+                confirmButtonColor: '#003366',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => {
+                // Reopen status modal on error
+                if (currentStatusClassData) {
+                    setTimeout(() => {
+                        openStatusModal(currentStatusClassData);
+                    }, 100);
+                }
+            });
+        })
+        .finally(() => {
+            currentStatusClassData = null;
         });
     }
     
     // Initialize edit class functionality
     function initEditClass() {
         let daySlots = new Set();
+        let originalData = {};
         
-        // Template for day time slot
         function createDaySlot(day) {
             return `
                 <div class="day-slot" data-day="${day}">
@@ -521,7 +631,6 @@ $(document).ready(function() {
             `;
         }
 
-        // Generate time options in 1-hour increments from 6AM to 6PM
         function generateTimeOptions() {
             let options = '';
             for (let hour = 6; hour <= 18; hour++) {
@@ -534,7 +643,6 @@ $(document).ready(function() {
             return options;
         }
 
-        // Manage day selections and time slots
         function initializeDaySelectors() {
             const daySelectors = document.querySelectorAll('.day-selector');
             const dayTimeSlots = document.getElementById('dayTimeSlots');
@@ -544,36 +652,32 @@ $(document).ready(function() {
                     const day = this.value;
                     
                     if (this.checked && !daySlots.has(day)) {
-                        // Add new day slot
                         daySlots.add(day);
                         updateDaySlotsDisplay();
                     } else if (!this.checked && daySlots.has(day)) {
-                        // Remove day slot
                         daySlots.delete(day);
                         updateDaySlotsDisplay();
                     }
+                    checkForChanges();
                 });
             });
 
-            // Handle remove day button clicks (delegated event)
             dayTimeSlots.addEventListener('click', function(e) {
                 if (e.target.closest('.remove-day')) {
                     const daySlot = e.target.closest('.day-slot');
                     const day = daySlot.dataset.day;
                     
-                    // Uncheck the corresponding checkbox
                     const checkbox = document.querySelector(`.day-selector[value="${day}"]`);
                     if (checkbox) {
                         checkbox.checked = false;
                     }
                     
-                    // Remove from set and update display
                     daySlots.delete(day);
                     updateDaySlotsDisplay();
+                    checkForChanges();
                 }
             });
 
-            // Time validation for day slots
             dayTimeSlots.addEventListener('change', function(e) {
                 if (e.target.classList.contains('day-time-input')) {
                     const day = e.target.dataset.day;
@@ -592,11 +696,11 @@ $(document).ready(function() {
                             e.target.value = '';
                         }
                     }
+                    checkForChanges();
                 }
             });
         }
 
-        // Update the day slots display
         function updateDaySlotsDisplay() {
             const dayTimeSlots = document.getElementById('dayTimeSlots');
             if (!dayTimeSlots) return;
@@ -611,7 +715,6 @@ $(document).ready(function() {
                 return;
             }
             
-            // Sort days in order (Monday to Sunday)
             const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             const sortedDays = Array.from(daySlots).sort((a, b) => {
                 return daysOrder.indexOf(a) - daysOrder.indexOf(b);
@@ -625,7 +728,96 @@ $(document).ready(function() {
             dayTimeSlots.innerHTML = html;
         }
 
-        // Edit button event listeners
+        // Track changes and disable save button when no changes
+        function storeOriginalValues() {
+            originalData = {
+                class_title: $('#class_title').val(),
+                school_year: $('#school_year').val(),
+                batch: $('#batch').val(),
+                instructor_name: $('#instructor_name').val(),
+                venue: $('#venue').val(),
+                start_date: $('#start_date').val(),
+                end_date: $('#end_date').val(),
+                days: new Set(daySlots),
+                times: {}
+            };
+            
+            daySlots.forEach(day => {
+                originalData.times[day] = {
+                    start: $(`.day-time-input[data-day="${day}"][data-type="start"]`).val(),
+                    end: $(`.day-time-input[data-day="${day}"][data-type="end"]`).val()
+                };
+            });
+        }
+
+        function checkForChanges() {
+            const saveBtn = document.getElementById('save-btn');
+            if (!saveBtn) return;
+            
+            let hasChanges = false;
+            
+            // Check text fields
+            if ($('#class_title').val() !== originalData.class_title) hasChanges = true;
+            if ($('#school_year').val() !== originalData.school_year) hasChanges = true;
+            if ($('#batch').val() !== originalData.batch) hasChanges = true;
+            if ($('#instructor_name').val() !== originalData.instructor_name) hasChanges = true;
+            if ($('#venue').val() !== originalData.venue) hasChanges = true;
+            if ($('#start_date').val() !== originalData.start_date) hasChanges = true;
+            if ($('#end_date').val() !== originalData.end_date) hasChanges = true;
+            
+            // Check days
+            if (!hasChanges) {
+                // Check if day sets are different size
+                if (daySlots.size !== originalData.days.size) {
+                    hasChanges = true;
+                } else {
+                    // Check if any day is different
+                    const dayArray = Array.from(daySlots).sort();
+                    const originalDayArray = Array.from(originalData.days).sort();
+                    
+                    for (let i = 0; i < dayArray.length; i++) {
+                        if (dayArray[i] !== originalDayArray[i]) {
+                            hasChanges = true;
+                            break;
+                        }
+                    }
+                    
+                    // Check times if days are the same
+                    if (!hasChanges) {
+                        daySlots.forEach(day => {
+                            const startVal = $(`.day-time-input[data-day="${day}"][data-type="start"]`).val();
+                            const endVal = $(`.day-time-input[data-day="${day}"][data-type="end"]`).val();
+                            
+                            if (startVal !== originalData.times[day]?.start || 
+                                endVal !== originalData.times[day]?.end) {
+                                hasChanges = true;
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // Enable/disable save button
+            saveBtn.disabled = !hasChanges;
+            saveBtn.style.opacity = hasChanges ? '1' : '0.5';
+            saveBtn.style.cursor = hasChanges ? 'pointer' : 'not-allowed';
+            
+            // Update button title
+            saveBtn.title = hasChanges ? 'Save Changes' : 'No changes to save';
+        }
+
+        // Add event listeners for change tracking
+        function initChangeTracking() {
+            $('#editModal input, #editModal select').on('input change', function() {
+                checkForChanges();
+            });
+            
+            // Also track day selector changes
+            $('.day-selector').on('change', function() {
+                setTimeout(checkForChanges, 50); // Small delay to let daySlots update
+            });
+        }
+
         $(document).on('click', '.edit-class-btn, .mobile-edit-class-btn', function() {
             try {
                 const classData = $(this).data('class');
@@ -636,7 +828,6 @@ $(document).ready(function() {
             }
         });
 
-        // Date validation to ensure end date is after start date
         const endDateField = document.getElementById('end_date');
         const startDateField = document.getElementById('start_date');
         
@@ -654,10 +845,10 @@ $(document).ready(function() {
                         errorElement.style.display = 'none';
                     }
                 }
+                checkForChanges();
             });
         }
 
-        // Set minimum end date based on start date
         if (startDateField) {
             startDateField.addEventListener('change', function() {
                 const startDate = new Date(this.value);
@@ -674,17 +865,16 @@ $(document).ready(function() {
                 } else if (endDateField) {
                     endDateField.min = '';
                 }
+                checkForChanges();
             });
         }
 
-        // Save button event listener
         $('#save-btn').click(submitEditRequest);
 
         function openEditModal(classData) {
             const modal = document.getElementById('editModal');
             if (!modal) return;
 
-            // Clear previous errors and reset form
             document.querySelectorAll('.error-message').forEach(el => {
                 el.style.display = 'none';
             });
@@ -692,7 +882,6 @@ $(document).ready(function() {
                 el.classList.remove('error');
             });
 
-            // Set basic form values
             document.getElementById('class_id').value = classData.class_id;
             document.getElementById('class_title').value = classData.class_title || '';
             document.getElementById('school_year').value = classData.school_year || '';
@@ -700,12 +889,10 @@ $(document).ready(function() {
             document.getElementById('instructor_name').value = classData.instructor_name || '';
             document.getElementById('venue').value = classData.venue || '';
             
-            // Set max students to 25 (read-only)
             const maxStudentsField = document.getElementById('max_students');
             maxStudentsField.value = "25";
             maxStudentsField.setAttribute('readonly', 'true');
             
-            // Format dates for date inputs
             if (classData.start_date) {
                 const startDate = new Date(classData.start_date);
                 document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
@@ -716,12 +903,10 @@ $(document).ready(function() {
                 document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
             }
             
-            // Handle days_of_week
             daySlots.clear();
             if (classData.days_of_week) {
                 let daysData;
                 
-                // Parse days_of_week if it's a string
                 if (typeof classData.days_of_week === 'string') {
                     try {
                         daysData = JSON.parse(classData.days_of_week);
@@ -733,7 +918,6 @@ $(document).ready(function() {
                     daysData = classData.days_of_week;
                 }
                 
-                // Check the checkboxes and create time slots
                 if (daysData && typeof daysData === 'object') {
                     for (const day in daysData) {
                         if (daysData.hasOwnProperty(day)) {
@@ -746,7 +930,6 @@ $(document).ready(function() {
                     }
                     updateDaySlotsDisplay();
                     
-                    // After slots are created, set the time values
                     setTimeout(() => {
                         for (const day in daysData) {
                             if (daysData.hasOwnProperty(day)) {
@@ -757,16 +940,31 @@ $(document).ready(function() {
                                 if (endSelect && times.end) endSelect.value = times.end;
                             }
                         }
+                        // Store original values after everything is loaded
+                        setTimeout(() => {
+                            storeOriginalValues();
+                            checkForChanges();
+                        }, 200);
                     }, 100);
+                } else {
+                    // Store original values even if no days
+                    setTimeout(() => {
+                        storeOriginalValues();
+                        checkForChanges();
+                    }, 200);
                 }
+            } else {
+                // Store original values if no days data
+                setTimeout(() => {
+                    storeOriginalValues();
+                    checkForChanges();
+                }, 200);
             }
 
-            // Show modal
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
             
-            // Focus on first field
             setTimeout(() => {
                 const firstInput = document.getElementById('class_title');
                 if (firstInput) {
@@ -784,7 +982,6 @@ $(document).ready(function() {
                 errorElement.style.display = 'block';
                 fieldElement.classList.add('error');
                 
-                // Scroll to error
                 errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
@@ -799,10 +996,8 @@ $(document).ready(function() {
             messageContent.className = 'message ' + type;
             messageContainer.style.display = 'block';
             
-            // Scroll to message
             messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             
-            // Hide message after 5 seconds
             setTimeout(() => {
                 messageContainer.style.display = 'none';
             }, 5000);
@@ -815,6 +1010,13 @@ $(document).ready(function() {
                 return;
             }
 
+            // Check if there are actual changes
+            const saveBtn = document.getElementById('save-btn');
+            if (saveBtn.disabled) {
+                showMessage('No changes to save', 'info');
+                return;
+            }
+
             const data = {
                 class_id: classId,
                 class_title: document.getElementById('class_title').value.trim(),
@@ -822,12 +1024,11 @@ $(document).ready(function() {
                 batch: document.getElementById('batch').value.trim(),
                 instructor_name: document.getElementById('instructor_name').value.trim(),
                 venue: document.getElementById('venue').value.trim(),
-                max_students: 25, // Fixed at 25 students
+                max_students: 25,
                 start_date: document.getElementById('start_date').value,
                 end_date: document.getElementById('end_date').value
             };
 
-            // Create days_of_week JSON
             const daysData = {};
             let allTimesValid = true;
             
@@ -864,7 +1065,6 @@ $(document).ready(function() {
             
             data.days_of_week = daysData;
 
-            // Clear previous errors
             document.querySelectorAll('.error-message').forEach(el => {
                 el.style.display = 'none';
             });
@@ -872,7 +1072,6 @@ $(document).ready(function() {
                 el.classList.remove('error');
             });
 
-            // Validation
             let isValid = allTimesValid;
 
             if (!data.class_title) {
@@ -909,8 +1108,6 @@ $(document).ready(function() {
                 return;
             }
 
-            // Show loading state
-            const saveBtn = document.getElementById('save-btn');
             if (saveBtn) {
                 saveBtn.classList.add('loading');
                 saveBtn.disabled = true;
@@ -935,22 +1132,38 @@ $(document).ready(function() {
                 return response.json();
             })
             .then(res => {
-                if (res.status === 'success') {
-                    showMessage(res.message || 'Class updated successfully', 'success');
-                    // Close modal using the new modal system
-                    $('.modal').fadeOut(300);
-                    document.body.style.overflow = '';
-                    document.body.classList.remove('modal-open');
-                    setTimeout(() => {
+                // FIXED: Check for 'result' instead of 'status'
+                if (res.result === 'success') {
+                    // Close modal first
+                    closeAllModals();
+                    
+                    Swal.fire({
+                        title: 'Success!',
+                        text: res.message || 'Class updated successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#003366',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then(() => {
                         location.reload();
-                    }, 1500);
+                    });
                 } else {
                     throw new Error(res.message || 'Unknown error occurred');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage(error.message || 'An error occurred while saving changes', 'error');
+                closeAllModals();
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'An error occurred while saving changes',
+                    icon: 'error',
+                    confirmButtonColor: '#003366',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
             })
             .finally(() => {
                 if (saveBtn) {
@@ -964,8 +1177,8 @@ $(document).ready(function() {
             });
         }
 
-        // Initialize day selectors
         initializeDaySelectors();
+        initChangeTracking();
     }
     
     // Initialize everything

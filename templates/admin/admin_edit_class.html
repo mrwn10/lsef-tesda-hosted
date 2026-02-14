@@ -28,7 +28,6 @@
                     <a href="{{ url_for('admin_homepage') }}"><i class="fas fa-home"></i> Home</a>
                     <a href="{{ url_for('admin_user_management') }}"><i class="fas fa-users-cog"></i> Users</a>
                     <a href="{{ url_for('admin_class_management.view_active_classes') }}" class="active"><i class="fas fa-users"></i> Classes</a>
-                    <!--<a href="{{ url_for('admin_student_grades.view_grades') }}"><i class="fas fa-user-plus"></i> Student Grade</a>-->
                     <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
                     <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
                     <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
@@ -220,9 +219,9 @@
                             {% for cls in classes %}
                             <tr data-course-title="{{ cls.course_title }}">
                                 <td>{{ cls.class_id }}</td>
-                                <td>{{ cls.class_title }}</td>
-                                <td>{{ cls.course_title }}</td>
-                                <td class="duration-cell">{{ cls.start_date }} to {{ cls.end_date }}</td>
+                                <td><strong>{{ cls.class_title }}</strong><br><small class="text-muted">Batch {{ cls.batch or 'N/A' }}</small></td>
+                                <td>{{ cls.course_title }}<br><small class="text-muted">{{ cls.course_code }}</small></td>
+                                <td class="duration-cell">{{ cls.start_date[:10] }} to {{ cls.end_date[:10] }}</td>
                                 <td>{{ cls.current_students or 0 }}/{{ cls.max_students }}</td>
                                 <td>
                                     <span class="status-badge status-{{ cls.status|lower }}">
@@ -231,8 +230,11 @@
                                 </td>
                                 <td>{{ cls.instructor_name }}</td>
                                 <td>
-                                    <button class="action-btn edit-btn edit-class-btn" data-class='{{ cls|tojson|safe }}'>
-                                        <i class="fas fa-pencil-alt"></i> Edit
+                                    <button class="action-btn edit-btn edit-class-btn" data-class='{{ cls|tojson|safe }}' title="Edit Class">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="action-btn status-btn status-class-btn" data-class='{{ cls|tojson|safe }}' title="Change Status">
+                                        <i class="fas fa-toggle-on"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -293,8 +295,9 @@
                         <div class="mobile-user-header">
                             <div class="mobile-user-info">
                                 <div class="mobile-user-name">{{ cls.class_title }}</div>
-                                <div class="mobile-user-email">{{ cls.course_title }}</div>
+                                <div class="mobile-user-email">{{ cls.course_title }} (Batch {{ cls.batch or 'N/A' }})</div>
                             </div>
+                            <span class="status-badge status-{{ cls.status|lower }}">{{ cls.status }}</span>
                         </div>
                         <div class="mobile-user-details">
                             <div class="mobile-user-detail">
@@ -303,17 +306,11 @@
                             </div>
                             <div class="mobile-user-detail">
                                 <div class="mobile-detail-label">Duration</div>
-                                <div class="mobile-detail-value duration-cell">{{ cls.start_date }} to {{ cls.end_date }}</div>
+                                <div class="mobile-detail-value duration-cell">{{ cls.start_date[:10] }} to {{ cls.end_date[:10] }}</div>
                             </div>
                             <div class="mobile-user-detail">
                                 <div class="mobile-detail-label">Students</div>
                                 <div class="mobile-detail-value">{{ cls.current_students or 0 }}/{{ cls.max_students }}</div>
-                            </div>
-                            <div class="mobile-user-detail">
-                                <div class="mobile-detail-label">Status</div>
-                                <div class="mobile-detail-value">
-                                    <span class="status-badge status-{{ cls.status|lower }}">{{ cls.status }}</span>
-                                </div>
                             </div>
                             <div class="mobile-user-detail">
                                 <div class="mobile-detail-label">Instructor</div>
@@ -322,7 +319,10 @@
                         </div>
                         <div class="mobile-user-actions">
                             <button class="mobile-action-btn edit-btn mobile-edit-class-btn" data-class='{{ cls|tojson|safe }}'>
-                                <i class="fas fa-pencil-alt"></i> Edit Class
+                                <i class="fas fa-pencil-alt"></i> Edit
+                            </button>
+                            <button class="mobile-action-btn status-btn mobile-status-class-btn" data-class='{{ cls|tojson|safe }}'>
+                                <i class="fas fa-toggle-on"></i> Status
                             </button>
                         </div>
                     </div>
@@ -491,6 +491,48 @@
                         <i class="fas fa-save"></i> <span class="btn-text">Save Changes</span>
                     </button>
                     <button id="cancel-btn" class="btn cancel-btn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Status Modal -->
+        <div id="statusModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-toggle-on"></i> Change Class Status</h3>
+                    <button class="close-modal" id="close-status-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="status_class_id">
+                    
+                    <div class="status-info">
+                        <p><strong>Class:</strong> <span id="status_class_title"></span></p>
+                        <p><strong>Current Status:</strong> <span id="status_current_status" class="status-badge"></span></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new_status" class="required-field">New Status</label>
+                        <select id="new_status" class="form-control">
+                            <option value="">Select new status</option>
+                            <option value="pending">Pending</option>
+                            <option value="open">Open</option>
+                            <option value="ongoing">Ongoing</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="edited">Edited</option>
+                        </select>
+                        <div class="error-message" id="status_error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="update-status-btn" class="btn save-btn">
+                        <i class="fas fa-check"></i> Update Status
+                    </button>
+                    <button id="cancel-status-btn" class="btn cancel-btn">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                 </div>
