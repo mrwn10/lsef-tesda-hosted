@@ -1,4 +1,4 @@
-# staff_class_management.py - Updated Flask route
+# staff_class_management.py - Updated Flask route to show all classes
 from flask import Blueprint, render_template, request, jsonify, session
 from datetime import datetime
 from database import get_db
@@ -50,8 +50,7 @@ def view_active_classes():
             JOIN login l ON cl.instructor_id = l.user_id
             LEFT JOIN enrollment e ON cl.class_id = e.class_id 
                 AND e.status IN ('enrolled', 'completed')  -- Only count active/completed enrollments
-            WHERE cl.status IN ('open', 'ongoing', 'edited')  -- Updated to match your database status values
-                AND l.role = 'staff' 
+            WHERE l.role = 'staff' 
                 AND cl.instructor_id = %s
             GROUP BY cl.class_id, cl.class_title, cl.schedule, cl.venue, 
                      cl.max_students, cl.prerequisites, cl.start_date, 
@@ -62,14 +61,16 @@ def view_active_classes():
                     WHEN 'ongoing' THEN 1
                     WHEN 'open' THEN 2
                     WHEN 'edited' THEN 3
-                    ELSE 4
+                    WHEN 'pending' THEN 4
+                    WHEN 'completed' THEN 5
+                    ELSE 6
                 END,
                 cl.start_date ASC
         """
         cursor.execute(query, (instructor_id,))
-        active_classes = cursor.fetchall()
+        all_classes = cursor.fetchall()
  
-        for cls in active_classes: 
+        for cls in all_classes: 
             cls['start_date'] = cls['start_date'].isoformat() if cls['start_date'] else None
             cls['end_date'] = cls['end_date'].isoformat() if cls['end_date'] else None
              
@@ -106,7 +107,7 @@ def view_active_classes():
 
         return render_template(
             'staffs/staff_class_management.html',
-            classes=active_classes,
+            classes=all_classes,
             profile_picture=profile_picture
         )
 

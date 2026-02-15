@@ -1112,19 +1112,21 @@ def generate_private_completion():
             
         print(f"Student data: {student}")
             
-        # Certificate can only be generated if:
+        # STRICTER RULES: Certificate can only be generated if:
         # 1. Class status is 'completed'
-        # 2. Student remarks is 'Competent' OR enrollment status is 'completed'
+        # 2. Student remarks is 'Competent' (this is the ONLY source of truth for competency)
         if student['class_status'] != 'completed':
             return jsonify({
                 'success': False,
                 'error': 'Class must be completed to generate certificates'
             }), 400
             
-        if student['remarks'] != 'Competent' and student['enrollment_status'] != 'completed':
+        # Check if student is competent based on remarks field
+        # Remarks must be exactly 'Competent' - no exceptions for enrollment_status
+        if student['remarks'] != 'Competent':
             return jsonify({
                 'success': False,
-                'error': 'Student must be competent/completed to generate certificate'
+                'error': 'Student must have "Competent" remarks to generate certificate. Current remarks: ' + str(student['remarks'])
             }), 400
 
         recipient_name = f"{student['first_name']} {student['last_name']}"
