@@ -1,4 +1,4 @@
-// staff_class_student_management.js - COMPLETE UPDATED VERSION WITH FIXED REVISIT BUG
+// staff_class_student_management.js - COMPLETE UPDATED VERSION WITH ERROR DIAGNOSTICS
 
 // Global variables
 let currentAutoStatus = '';
@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
     currentClassId = getCurrentClassId();
     console.log('Current class ID:', currentClassId);
-    console.log('Class status:', window.classStatus);
     init();
 });
 
@@ -346,10 +345,6 @@ function updateAutoStatusRemarksDisplay() {
 // Initialize all functionality
 function init() {
     console.log('Initializing all functionality...');
-    
-    // FIX: Re-validate all buttons on page load to ensure they're properly disabled
-    validateAllCertificateButtons();
-    
     initMobileNavigation();
     initModals();
     initFileUpload();
@@ -357,83 +352,6 @@ function init() {
     initEditButtons();
     initProfileButtons();
     initCertificateButtons();
-    
-    // FIX: Add mutation observer to watch for DOM changes that might affect buttons
-    observeDOMChanges();
-}
-
-// FIX: New function to validate all certificate buttons on page load
-function validateAllCertificateButtons() {
-    console.log('Validating all certificate buttons on page load...');
-    
-    const classStatus = window.classStatus;
-    const completionButtons = document.querySelectorAll('.completion-btn');
-    
-    completionButtons.forEach(button => {
-        // Get the remarks from the button's data attribute or from the row
-        const remarks = button.getAttribute('data-remarks');
-        const studentName = button.getAttribute('data-student-name');
-        
-        // Strict validation: Class must be completed AND remarks must be 'Competent'
-        const canGenerate = classStatus === 'completed' && remarks === 'Competent';
-        
-        if (!canGenerate) {
-            // Ensure button is disabled
-            button.disabled = true;
-            button.classList.add('disabled');
-            
-            // Update tooltip with clear reason
-            let reason = 'Certificate requires: Class completed AND student remarks = "Competent"';
-            if (classStatus !== 'completed') {
-                reason = `Class must be completed (current: ${classStatus})`;
-            } else if (remarks !== 'Competent') {
-                reason = `Student remarks must be "Competent" (current: ${remarks || 'Not set'})`;
-            }
-            button.setAttribute('title', reason);
-        } else {
-            // Ensure button is enabled
-            button.disabled = false;
-            button.classList.remove('disabled');
-            button.setAttribute('title', 'Generate certificate for competent student');
-        }
-    });
-    
-    console.log('Certificate button validation complete');
-}
-
-// FIX: Observe DOM changes to re-validate buttons if needed
-function observeDOMChanges() {
-    // Create a mutation observer to watch for changes to the table
-    const tableContainer = document.querySelector('.table-container');
-    if (!tableContainer) return;
-    
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' || mutation.type === 'attributes') {
-                // Debounce validation to avoid too many calls
-                if (window.validationTimeout) {
-                    clearTimeout(window.validationTimeout);
-                }
-                
-                window.validationTimeout = setTimeout(function() {
-                    console.log('DOM changed, re-validating certificate buttons...');
-                    validateAllCertificateButtons();
-                    // Also re-attach event listeners to new buttons
-                    initCertificateButtons();
-                }, 100);
-            }
-        });
-    });
-    
-    // Observe changes to the table container and its descendants
-    observer.observe(tableContainer, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['data-remarks', 'class']
-    });
-    
-    console.log('Mutation observer set up for DOM changes');
 }
 
 // Initialize event listeners for buttons
@@ -471,37 +389,16 @@ function initProfileButtons() {
 }
 
 function initCertificateButtons() {
-    console.log('Initializing certificate buttons...');
-    
-    // FIX: Only attach event listeners to enabled buttons, but double-check they should be enabled
-    document.querySelectorAll('.completion-btn').forEach(button => {
-        // Remove any existing event listeners by cloning and replacing
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // Now attach new event listener if button should be enabled
-        if (!newButton.disabled && !newButton.classList.contains('disabled')) {
-            newButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // FIX: Double-check validation on click
-                const classStatus = window.classStatus;
-                const remarks = this.getAttribute('data-remarks');
-                
-                if (classStatus !== 'completed' || remarks !== 'Competent') {
-                    console.warn('Button should be disabled but was clicked! Re-validating...');
-                    validateAllCertificateButtons();
-                    return;
-                }
-                
-                const enrollmentId = this.getAttribute('data-enrollment-id');
-                const studentName = this.getAttribute('data-student-name');
-                console.log('Certificate button clicked:', { enrollmentId, studentName, remarks });
-                
-                generatePrivateCompletion(enrollmentId, studentName, remarks);
-            });
-        }
+    document.querySelectorAll('.completion-btn:not(.disabled)').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const enrollmentId = this.getAttribute('data-enrollment-id');
+            const studentName = this.getAttribute('data-student-name');
+            const remarks = this.getAttribute('data-remarks');
+            console.log('Certificate button clicked:', { enrollmentId, studentName, remarks });
+            generatePrivateCompletion(enrollmentId, studentName, remarks);
+        });
     });
 }
 
@@ -904,11 +801,10 @@ function refreshStudentTable() {
                 const currentTableContainer = document.querySelector('.table-container');
                 currentTableContainer.innerHTML = newTable.innerHTML;
                 
-                // Reinitialize event listeners and validate buttons
+                // Reinitialize event listeners
                 initEditButtons();
                 initProfileButtons();
                 initCertificateButtons();
-                validateAllCertificateButtons(); // Extra validation
                 
                 // Show success message
                 showSuccessToast('Table refreshed successfully!');
@@ -990,8 +886,7 @@ function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks
             
             // Determine button states based on class status and remarks
             const canEdit = classStatus === 'ongoing' || classStatus === 'completed';
-            // STRICT RULE: Certificate only if class completed AND remarks is exactly 'Competent'
-            const canGenerate = classStatus === 'completed' && remarks === 'Competent';
+            const canGenerate = classStatus === 'completed' && (remarks === 'Competent');
             
             // Prepare data attributes for edit button (handle null/undefined)
             const prelimAttr = (prelim !== null && !isNaN(prelim)) ? prelim : '';
@@ -1010,7 +905,7 @@ function updateStudentRowOptimized(enrollmentId, prelim, midterm, final, remarks
                 </button>
                 <button class="completion-btn ${!canGenerate ? 'disabled' : ''}" 
                         ${canGenerate ? `data-enrollment-id="${enrollmentId}" data-student-name="${studentName}" data-remarks="${remarks}"` : 'disabled'}
-                        ${!canGenerate ? `title="Certificate requires: Class completed AND student remarks = 'Competent' (current: ${remarks})"` : ''}>
+                        ${!canGenerate ? 'title="Certificate generation requires: Class completed & Student competent"' : ''}>
                     <i class="fas fa-file-certificate"></i> Certificate
                 </button>
             `;
@@ -1209,10 +1104,6 @@ function submitGradeEdit() {
                 saveBtn.classList.remove('btn-saving');
                 saveBtn.disabled = false;
             }
-            
-            // FIX: Re-validate all certificate buttons after save
-            validateAllCertificateButtons();
-            
         }, 500);
         
     })
@@ -1381,55 +1272,21 @@ function openProfileModal(userId) {
         });
 }
 
-// ===================== STRICT CERTIFICATE GENERATION =====================
-// Certificate functions with strict rules
+// Certificate functions
 function generatePrivateCompletion(enrollmentId, studentName, remarks) {
-    // STRICT RULE: Only allow if remarks is exactly 'Competent'
     if (remarks !== 'Competent') {
         Swal.fire({
             icon: 'warning',
             title: 'Cannot Generate Certificate',
-            html: `
-                <p>Certificate can only be generated for students with <strong>"Competent"</strong> status.</p>
-                <p style="margin-top: 10px; padding: 8px; background-color: #fee2e2; border-radius: 4px; color: #b91c1c;">
-                    Current remarks: <strong>${remarks || 'Not set'}</strong>
-                </p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
-                    Please ensure the student has "Competent" remarks before generating a certificate.
-                </p>
-            `,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#b91c1c'
-        });
-        return;
-    }
-    
-    // Check if class is completed (this will be validated on backend too)
-    if (window.classStatus !== 'completed') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cannot Generate Certificate',
-            html: `
-                <p>Class must be <strong>completed</strong> to generate certificates.</p>
-                <p style="margin-top: 10px; padding: 8px; background-color: #fee2e2; border-radius: 4px; color: #b91c1c;">
-                    Current class status: <strong>${window.classStatus || 'unknown'}</strong>
-                </p>
-            `,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#b91c1c'
+            text: 'Certificate can only be generated for students with "Competent" status',
+            confirmButtonText: 'OK'
         });
         return;
     }
     
     Swal.fire({
         title: 'Generate Certificate of Completion',
-        html: `
-            <p>Generate completion certificate for:</p>
-            <p style="font-size: 1.2rem; font-weight: 600; color: #003366;">${studentName}</p>
-            <p style="margin-top: 10px; padding: 5px 10px; background-color: #d1fae5; border-radius: 20px; display: inline-block; color: #065f46;">
-                <i class="fas fa-check-circle"></i> Competent
-            </p>
-        `,
+        html: `<p>Generate private completion certificate for <strong>${studentName}</strong>?</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Generate',

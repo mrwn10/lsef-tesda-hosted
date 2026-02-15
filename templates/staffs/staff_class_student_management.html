@@ -203,8 +203,7 @@
                             </td>
                             <td class="action-buttons">
                                 {% set can_edit = class_status in ['ongoing', 'completed'] %}
-                                <!-- STRICTER RULE: Certificate only if class completed AND remarks is exactly 'Competent' -->
-                                {% set can_generate = class_status == 'completed' and student.remarks == 'Competent' %}
+                                {% set can_generate = class_status == 'completed' and (student.remarks == 'Competent' or student.calculated_remarks == 'Competent') %}
                                 
                                 <button class="edit-btn {% if not can_edit %}disabled{% endif %}" 
                                         {% if can_edit %}
@@ -229,10 +228,10 @@
                                         {% if can_generate %}
                                         data-enrollment-id="{{ student.enrollment_id }}"
                                         data-student-name="{{ student.first_name }} {{ student.last_name }}"
-                                        data-remarks="{{ student.remarks }}"
+                                        data-remarks="{{ student.remarks or student.calculated_remarks }}"
                                         {% else %}
                                         disabled
-                                        title="Certificate requires: Class completed AND student remarks = 'Competent' (current: {{ student.remarks }})"
+                                        title="Certificate generation requires: Class completed & Student competent"
                                         {% endif %}>
                                     <i class="fas fa-file-certificate"></i> Certificate
                                 </button>
@@ -243,30 +242,6 @@
                 </table>
                 {% endif %}
             </div>
-
-            {% if students|length > 0 %}
-            <div class="bulk-actions">
-                <h3><i class="fas fa-tasks"></i> Bulk Actions</h3>
-                <div class="bulk-actions-container">
-                    <a href="{{ url_for('staff_class_student_management.download_grade_sheet', class_id=class_id) }}" class="quick-action-btn primary">
-                        <i class="fas fa-file-excel"></i> Download Grade Sheet (Excel)
-                    </a>
-
-                    <form action="{{ url_for('staff_class_student_management.upload_grade_sheet', class_id=class_id) }}" method="post" enctype="multipart/form-data" class="upload-form">
-                        <div class="file-input-container">
-                            <label for="file-upload" class="file-upload-label">
-                                <i class="fas fa-cloud-upload-alt"></i> Choose Excel File
-                            </label>
-                            <input id="file-upload" type="file" name="file" required>
-                            <span id="file-name">No file chosen</span>
-                        </div>
-                        <button type="submit" class="quick-action-btn secondary">
-                            <i class="fas fa-upload"></i> Upload Grade Sheet
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </main>
 
@@ -455,7 +430,7 @@
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal -->
+    <!-- Logout Confirmation Modal - ORIGINAL ID RESTORED -->
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <div class="modal-header">
