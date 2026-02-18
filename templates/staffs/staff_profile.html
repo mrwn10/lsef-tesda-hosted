@@ -92,7 +92,7 @@
                 <a href="{{ url_for('staff_materials.materials') }}"><i class="fas fa-tasks"></i> Materials</a>
                 
                 <div class="mobile-nav-divider"></div>
-                <a href="{{ url_for('staff_profile.staff_profile_page') }}" class="active"><i class="fas fa-user-circle"></i> My Profile</a> <!-- CHANGED -->
+                <a href="{{ url_for('staff_profile.staff_profile_page') }}" class="active"><i class="fas fa-user-circle"></i> My Profile</a>
                 <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                 <a href="#" class="logout-btn" id="mobile-logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -113,7 +113,7 @@
                     <img id="nav-profile-pic" src="{{ url_for('static', filename='img/tesda_logo.png') }}" alt="Profile" class="profile-img">
 
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('staff_profile.staff_profile_page') }}"><i class="fas fa-user-circle"></i> My Profile</a> <!-- CHANGED -->
+                        <a href="{{ url_for('staff_profile.staff_profile_page') }}"><i class="fas fa-user-circle"></i> My Profile</a>
                         <a href="#"><i class="fas fa-bookmark"></i> Contact Us</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="logout-btn" id="logout-trigger"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -335,19 +335,35 @@
                         </div>
                     </div>
 
-                    <!-- Signature Upload Section -->
+                    <!-- Signature Upload Section - UPDATED WITH STATUS INDICATORS -->
                     <div class="form-section signature-section">
                         <h2><i class="fas fa-signature"></i> Signature</h2>
                         <div class="signature-container">
-                            <div class="signature-frame">
+                            <!-- Signature Status Badge -->
+                            <div class="signature-status-badge" id="signatureStatusBadge" style="display: none;">
+                                <span class="status-icon"></span>
+                                <span class="status-text"></span>
+                            </div>
+                            
+                            <div class="signature-frame" id="signatureFrame">
                                 <img id="signature-preview" 
                                     src="{{ url_for('static', filename='img/default_signature.png') }}" 
                                     alt="Signature Preview">
                             </div>
+                            
+                            <!-- Status Description -->
+                            <div class="signature-status-description" id="signatureStatusDescription"></div>
+                            
+                            <!-- Warning for Pending/Verified status -->
+                            <div class="signature-warning" id="signatureWarning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span id="warningMessage"></span>
+                            </div>
+                            
                             <div class="signature-controls">
                                 <div class="file-input-wrapper">
                                     <input type="file" id="signature" name="signature" accept="image/png,image/jpeg,image/jpg">
-                                    <label for="signature" class="upload-btn">
+                                    <label for="signature" class="upload-btn" id="signatureUploadBtn">
                                         <i class="fas fa-cloud-upload-alt"></i> Upload Signature
                                     </label>
                                     <div class="file-name-display" id="signature-file-name"></div>

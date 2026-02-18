@@ -49,6 +49,7 @@ from admin_verified_req import admin_verified_req_bp
 from admin_create_staff import admin_create_staff_bp
 from admin_materials import admin_materials_bp
 from admin_student_grade import admin_student_grades_bp
+from admin_staff_verified_req import admin_staff_verified_req_bp
  
 app.register_blueprint(admin_homepage_bp)
 app.register_blueprint(admin_user_management_bp, url_prefix='/admin/user-management')
@@ -71,6 +72,7 @@ app.register_blueprint(admin_verified_req_bp)
 app.register_blueprint(admin_create_staff_bp)
 app.register_blueprint(admin_materials_bp)
 app.register_blueprint(admin_student_grades_bp, url_prefix='/admin/student_grades')
+app.register_blueprint(admin_staff_verified_req_bp)
  
 from staff_profile import staff_profile_bp
 from staff_courses_creation import staff_courses_creation_bp

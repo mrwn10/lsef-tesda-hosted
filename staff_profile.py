@@ -37,7 +37,7 @@ def staff_profile_data():
 
     try:
         query = """
-            SELECT l.user_id, l.username, l.email, l.role, l.account_status,
+            SELECT l.user_id, l.username, l.email, l.role, l.account_status, l.verified,
                    pi.info_id, pi.first_name, pi.middle_name, pi.last_name,
                    pi.province, pi.municipality, pi.baranggay,
                    pi.contact_number, pi.date_of_birth, pi.gender,
@@ -66,6 +66,24 @@ def staff_profile_data():
             filename=f"uploads/signatures/{staff['signature']}",
             _external=True
         ) if staff['signature'] else None
+        
+        # Determine signature status
+        if not staff['signature']:
+            staff['signature_status'] = 'none'
+            staff['signature_status_text'] = 'No signature uploaded'
+            staff['signature_status_description'] = 'You haven\'t uploaded a signature yet. Please upload your e-signature for document verification.'
+        elif staff['verified'] == 'verified':
+            staff['signature_status'] = 'verified'
+            staff['signature_status_text'] = 'Verified'
+            staff['signature_status_description'] = '✓ Your signature has been verified and approved for official documents.'
+        elif staff['verified'] == 'rejected':
+            staff['signature_status'] = 'rejected'
+            staff['signature_status_text'] = 'Rejected'
+            staff['signature_status_description'] = '✗ Your signature was rejected. Please upload a new signature following the guidelines.'
+        else:  # pending or null
+            staff['signature_status'] = 'pending'
+            staff['signature_status_text'] = 'Pending Verification'
+            staff['signature_status_description'] = 'Your signature is pending admin verification. You\'ll be notified once approved.'
 
         return jsonify({'success': True, 'staff': staff})
 
@@ -94,6 +112,7 @@ def update_staff_profile():
         if not user:
             return jsonify({'error': 'User not found'}), 404
  
+        # Handle profile picture upload (overwrite)
         profile_picture = None
         if 'profile_picture' in files:
             file = files['profile_picture']
@@ -102,17 +121,21 @@ def update_staff_profile():
                 filename = f"{user_id}_{uuid.uuid4().hex}.{ext}"
                 upload_dir = os.path.join(current_app.static_folder, 'uploads', 'profile_pictures')
                 os.makedirs(upload_dir, exist_ok=True)
-                file.save(os.path.join(upload_dir, secure_filename(filename)))
-                profile_picture = filename
-
+                
+                # Delete old profile picture if exists
                 cursor.execute("SELECT profile_picture FROM personal_information WHERE user_id=%s", (user_id,))
                 old = cursor.fetchone()
                 if old and old['profile_picture']:
                     old_path = os.path.join(upload_dir, old['profile_picture'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
+                
+                file.save(os.path.join(upload_dir, secure_filename(filename)))
+                profile_picture = filename
  
+        # Handle signature upload (overwrite) - this will reset verification status
         signature_file = None
+        signature_updated = False
         if 'signature' in files:
             file = files['signature']
             if file and file.filename and allowed_signature(file.filename):
@@ -120,16 +143,20 @@ def update_staff_profile():
                 filename = f"{user_id}_{uuid.uuid4().hex}.{ext}"
                 upload_dir = os.path.join(current_app.static_folder, 'uploads', 'signatures')
                 os.makedirs(upload_dir, exist_ok=True)
-                file.save(os.path.join(upload_dir, secure_filename(filename)))
-                signature_file = filename
-
+                
+                # Delete old signature if exists
                 cursor.execute("SELECT signature FROM personal_information WHERE user_id=%s", (user_id,))
                 old = cursor.fetchone()
                 if old and old['signature']:
                     old_path = os.path.join(upload_dir, old['signature'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
+                
+                file.save(os.path.join(upload_dir, secure_filename(filename)))
+                signature_file = filename
+                signature_updated = True
  
+        # Handle password update
         password_update = ""
         password_params = ()
         if data.get('current_password') and data.get('new_password'):
@@ -138,12 +165,21 @@ def update_staff_profile():
             password_update = ", password=%s"
             password_params = (data['new_password'],)
 
+        # Update login table
         cursor.execute(
             f"UPDATE login SET username=%s, email=%s {password_update} WHERE user_id=%s",
             (data.get('username', user['username']),
              data.get('email', user['email'])) + password_params + (user_id,)
         )
 
+        # If signature was updated, reset verification status to pending
+        if signature_updated:
+            cursor.execute("""
+                UPDATE login SET verified='pending' 
+                WHERE user_id=%s AND role='staff'
+            """, (user_id,))
+
+        # Prepare fields for personal_information update
         fields = {
             'first_name': data.get('first_name', ''),
             'middle_name': data.get('middle_name', ''),
@@ -157,31 +193,37 @@ def update_staff_profile():
             'user_id': user_id
         }
 
+        # Build dynamic SQL for personal_information update
+        update_fields = []
+        update_values = []
+        
+        for key, value in fields.items():
+            if key != 'user_id':
+                update_fields.append(f"{key}=%s")
+                update_values.append(value)
+        
         if profile_picture:
-            fields['profile_picture'] = profile_picture
+            update_fields.append("profile_picture=%s")
+            update_values.append(profile_picture)
+            
         if signature_file:
-            fields['signature'] = signature_file
-
-        cursor.execute(f"""
-            UPDATE personal_information SET
-                first_name=%(first_name)s,
-                middle_name=%(middle_name)s,
-                last_name=%(last_name)s,
-                contact_number=%(contact_number)s,
-                province=%(province)s,
-                municipality=%(municipality)s,
-                baranggay=%(baranggay)s,
-                date_of_birth=%(date_of_birth)s,
-                gender=%(gender)s
-                {', profile_picture=%(profile_picture)s' if profile_picture else ''}
-                {', signature=%(signature)s' if signature_file else ''}
-            WHERE user_id=%(user_id)s
-        """, fields)
+            update_fields.append("signature=%s")
+            update_values.append(signature_file)
+        
+        update_values.append(user_id)
+        
+        if update_fields:
+            cursor.execute(f"""
+                UPDATE personal_information SET
+                    {', '.join(update_fields)}
+                WHERE user_id=%s
+            """, update_values)
 
         db.commit()
          
+        # Fetch updated profile
         query = """
-            SELECT l.username, l.email, l.role, l.account_status,
+            SELECT l.username, l.email, l.role, l.account_status, l.verified,
                    pi.first_name, pi.middle_name, pi.last_name,
                    pi.province, pi.municipality, pi.baranggay,
                    pi.contact_number, pi.date_of_birth, pi.gender,
@@ -207,11 +249,31 @@ def update_staff_profile():
             filename=f"uploads/signatures/{updated_profile['signature']}",
             _external=True
         ) if updated_profile['signature'] else None
+        
+        # Determine signature status for updated profile
+        if not updated_profile['signature']:
+            updated_profile['signature_status'] = 'none'
+            updated_profile['signature_status_text'] = 'No signature uploaded'
+            updated_profile['signature_status_description'] = 'You haven\'t uploaded a signature yet. Please upload your e-signature for document verification.'
+        elif updated_profile['verified'] == 'verified':
+            updated_profile['signature_status'] = 'verified'
+            updated_profile['signature_status_text'] = 'Verified'
+            updated_profile['signature_status_description'] = '✓ Your signature has been verified and approved for official documents.'
+        elif updated_profile['verified'] == 'rejected':
+            updated_profile['signature_status'] = 'rejected'
+            updated_profile['signature_status_text'] = 'Rejected'
+            updated_profile['signature_status_description'] = '✗ Your signature was rejected. Please upload a new signature following the guidelines.'
+        else:  # pending or null
+            updated_profile['signature_status'] = 'pending'
+            updated_profile['signature_status_text'] = 'Pending Verification'
+            updated_profile['signature_status_description'] = 'Your signature is pending admin verification. You\'ll be notified once approved.'
 
         return jsonify({
             'success': True, 
             'message': 'Profile updated successfully',
-            'updated_profile': updated_profile
+            'updated_profile': updated_profile,
+            'signature_updated': signature_updated,
+            'new_status': 'pending' if signature_updated else None
         })
 
     except Exception as e:

@@ -199,27 +199,79 @@ function initEventListeners() {
         showMessage('info', 'Profile picture removed. Remember to save changes.');
     });
     
-    // Signature handling
+    // Signature handling - UPDATED with status awareness
     $('#signature').change(function () {
         const file = this.files[0];
         if (!file) return;
 
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            showMessage('error', 'File size exceeds 10MB limit');
+            this.value = '';
+            return;
+        }
+
+        // Check file type
         if (!['image/png','image/jpeg','image/jpg'].includes(file.type)) {
             showMessage('error', 'Signature must be PNG or JPG');
             this.value = '';
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = e => $('#signature-preview').attr('src', e.target.result);
-        reader.readAsDataURL(file);
+        // Show warning about status reset if signature already exists
+        const currentStatus = $('#signatureStatusBadge').data('status');
+        if (currentStatus && currentStatus !== 'none') {
+            Swal.fire({
+                title: 'Reset Verification Status?',
+                text: 'Uploading a new signature will reset your verification status to "Pending". You will need to wait for admin approval again.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#003366',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, upload anyway',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    proceedWithSignatureUpload(file);
+                } else {
+                    $('#signature').val('');
+                }
+            });
+        } else {
+            proceedWithSignatureUpload(file);
+        }
     });
     
     // Remove signature
     $('#remove-signature').click(function() {
-        $('#signature').val('');
-        $('#signature-preview').attr('src', defaultSignaturePic);
-        showMessage('info', 'Signature removed. Remember to save changes.');
+        const currentStatus = $('#signatureStatusBadge').data('status');
+        
+        if (currentStatus && currentStatus !== 'none') {
+            Swal.fire({
+                title: 'Remove Signature?',
+                text: 'Removing your signature will require you to upload a new one and go through verification again.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#b91c1c',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, remove',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#signature').val('');
+                    $('#signature-preview').attr('src', defaultSignaturePic);
+                    updateSignatureStatus('none', 'No signature uploaded', 
+                        'You haven\'t uploaded a signature yet. Please upload your e-signature for document verification.');
+                    showMessage('info', 'Signature removed. Remember to save changes.');
+                }
+            });
+        } else {
+            $('#signature').val('');
+            $('#signature-preview').attr('src', defaultSignaturePic);
+            updateSignatureStatus('none', 'No signature uploaded', 
+                'You haven\'t uploaded a signature yet. Please upload your e-signature for document verification.');
+            showMessage('info', 'Signature removed. Remember to save changes.');
+        }
     });
     
     // Show/hide password
@@ -287,6 +339,18 @@ function initEventListeners() {
                     showMessage('success', response.message);
                     if (response.updated_profile) {
                         updateFormFields(response.updated_profile);
+                        
+                        // Show additional message if signature was updated
+                        if (response.signature_updated) {
+                            setTimeout(() => {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Signature Updated',
+                                    text: 'Your signature has been uploaded and is now pending admin verification.',
+                                    confirmButtonColor: '#003366'
+                                });
+                            }, 500);
+                        }
                     }
                 } else {
                     showMessage('error', response.error || 'Update failed');
@@ -307,6 +371,18 @@ function initEventListeners() {
             }
         });
     });
+}
+
+// Helper function to proceed with signature upload
+function proceedWithSignatureUpload(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        $('#signature-preview').attr('src', e.target.result);
+        // Update status to pending temporarily (will be confirmed on save)
+        updateSignatureStatus('pending', 'Pending Verification', 
+            'Your signature will be pending verification after you save changes.');
+    };
+    reader.readAsDataURL(file);
 }
 
 // Load profile data on page load
@@ -332,6 +408,7 @@ function loadProfileData() {
     });
 }
 
+// Update form fields with profile data
 function updateFormFields(profileData) {
     $('#username').val(profileData.username || '');
     $('#email').val(profileData.email || '');
@@ -354,11 +431,68 @@ function updateFormFields(profileData) {
         $('#nav-profile-pic').attr('src', defaultProfilePic);
     }
     
-    // Update signature
+    // Update signature with status
     if (profileData.signature_url) {
         $('#signature-preview').attr('src', profileData.signature_url);
     } else {
         $('#signature-preview').attr('src', defaultSignaturePic);
+    }
+    
+    // Update signature status display
+    if (profileData.signature_status) {
+        updateSignatureStatus(
+            profileData.signature_status,
+            profileData.signature_status_text,
+            profileData.signature_status_description
+        );
+    }
+}
+
+// Update signature status UI
+function updateSignatureStatus(status, statusText, description) {
+    const badge = $('#signatureStatusBadge');
+    const frame = $('#signatureFrame');
+    const descriptionDiv = $('#signatureStatusDescription');
+    const warningDiv = $('#signatureWarning');
+    const warningMessage = $('#warningMessage');
+    const uploadBtn = $('#signatureUploadBtn');
+    
+    // Remove all status classes
+    badge.removeClass('status-none status-pending status-verified status-rejected');
+    frame.removeClass('status-none status-pending status-verified status-rejected');
+    
+    // Add appropriate class
+    badge.addClass(`status-${status}`);
+    frame.addClass(`status-${status}`);
+    
+    // Update badge text and icon
+    badge.find('.status-text').text(statusText);
+    
+    // Store status in data attribute
+    badge.data('status', status);
+    
+    // Show badge
+    badge.show();
+    
+    // Update description
+    descriptionDiv.text(description).show();
+    
+    // Handle warnings and upload button state based on status
+    if (status === 'pending') {
+        warningMessage.text('Your signature is pending approval. Uploading a new signature will reset this status.');
+        warningDiv.show();
+        uploadBtn.removeClass('disabled');
+    } else if (status === 'verified') {
+        warningMessage.text('Your signature is verified. Uploading a new signature will reset it to pending status.');
+        warningDiv.show();
+        uploadBtn.removeClass('disabled');
+    } else if (status === 'rejected') {
+        warningMessage.text('Your signature was rejected. Please upload a new signature following the guidelines.');
+        warningDiv.show();
+        uploadBtn.removeClass('disabled');
+    } else {
+        warningDiv.hide();
+        uploadBtn.removeClass('disabled');
     }
 }
 

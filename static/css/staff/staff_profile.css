@@ -1483,3 +1483,142 @@ input, select, textarea, button {
     word-break: break-word;
     overflow-wrap: break-word;
 }
+
+/* ===== Signature Status Styles ===== */
+.signature-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    width: auto;
+    align-self: flex-start;
+}
+
+.signature-status-badge.status-none {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.signature-status-badge.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.signature-status-badge.status-verified {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.signature-status-badge.status-rejected {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    border: 1px solid #ef4444;
+}
+
+.signature-status-badge .status-icon {
+    font-size: 1rem;
+}
+
+.signature-status-badge.status-none .status-icon::before {
+    content: "⏺";
+}
+
+.signature-status-badge.status-pending .status-icon::before {
+    content: "⏳";
+}
+
+.signature-status-badge.status-verified .status-icon::before {
+    content: "✓";
+}
+
+.signature-status-badge.status-rejected .status-icon::before {
+    content: "✗";
+}
+
+.signature-status-description {
+    font-size: 0.95rem;
+    color: #334155;
+    margin: 0.5rem 0 1rem 0;
+    padding: 0.75rem 1rem;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid var(--tesda-blue);
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+}
+
+/* Signature frame with status border */
+.signature-frame {
+    width: 100%;
+    max-width: 300px;
+    height: 150px;
+    border: 2px solid var(--tesda-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.3s ease;
+}
+
+.signature-frame.status-none {
+    border-color: #94a3b8;
+}
+
+.signature-frame.status-pending {
+    border-color: #f59e0b;
+}
+
+.signature-frame.status-verified {
+    border-color: #10b981;
+}
+
+.signature-frame.status-rejected {
+    border-color: #ef4444;
+}
+
+/* Warning message */
+.signature-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin: 0.5rem 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.signature-warning i {
+    font-size: 1.1rem;
+    color: #856404;
+}
+
+/* Disabled state for upload button */
+.upload-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+    background-color: #94a3b8;
+}
+
+.upload-btn.disabled:hover {
+    background-color: #94a3b8;
+    transform: none;
+    box-shadow: none;
+}

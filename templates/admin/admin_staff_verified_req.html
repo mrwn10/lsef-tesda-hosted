@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_verified_req.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_staff_verified_req.css') }}" />
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
-    <title>Verify Student Requirements</title>
+    <title>Verify Staff Requirements</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,20 +19,19 @@
     window.appUrls = {
         dashboardData: "{{ url_for('admin_homepage') }}",
         logoutUrl: "{{ url_for('login.logout') }}",
-        previewFile: "{{ url_for('admin_verified_req.get_file', filename='') }}",
-        documentInfo: "{{ url_for('admin_verified_req.get_document_info', user_id=0, field_name='') }}",
-        fetchData: "{{ url_for('admin_verified_req.fetch_data') }}",
-        getStats: "{{ url_for('admin_verified_req.get_stats') }}",
-        studentDetails: "{{ url_for('admin_verified_req.get_student_details', user_id=0) }}",
+        getSignature: "{{ url_for('admin_staff_verified_req.get_signature', filename='') }}",
+        fetchData: "{{ url_for('admin_staff_verified_req.fetch_data') }}",
+        getStats: "{{ url_for('admin_staff_verified_req.get_stats') }}",
+        staffDetails: "{{ url_for('admin_staff_verified_req.get_staff_details', user_id=0) }}",
         staticProfilePath: "{{ url_for('static', filename='uploads/profile_pictures/') }}",
-        staticRequirementsPath: "{{ url_for('static', filename='uploads/requirements/') }}",
-        acceptVerification: "{{ url_for('admin_verified_req.accept_verification', user_id=0) }}",
-        rejectVerification: "{{ url_for('admin_verified_req.reject_verification', user_id=0) }}",
-        reopenVerification: "{{ url_for('admin_verified_req.reopen_verification', user_id=0) }}"
+        staticSignaturePath: "{{ url_for('static', filename='uploads/signatures/') }}",
+        acceptVerification: "{{ url_for('admin_staff_verified_req.accept_verification', user_id=0) }}",
+        rejectVerification: "{{ url_for('admin_staff_verified_req.reject_verification', user_id=0) }}",
+        reopenVerification: "{{ url_for('admin_staff_verified_req.reopen_verification', user_id=0) }}"
     };
     
-    // Store current student ID globally for modal actions
-    window.currentStudentId = null;
+    // Store current staff ID globally for modal actions
+    window.currentStaffId = null;
     
     // SweetAlert2 Default Configuration
     window.swalConfig = {
@@ -60,7 +59,7 @@
                     <a href="{{ url_for('admin_class_management.view_active_classes') }}"><i class="fas fa-users"></i> Classes</a>
                     <!--<a href="{{ url_for('admin_student_grades.view_grades') }}"><i class="fas fa-user-plus"></i> Student Grade</a>-->
                     <a href="{{ url_for('admin_courses_approval.view_pending_courses') }}"><i class="fas fa-book"></i> Courses</a>
-                    <a href="{{ url_for('admin_verified_req.view_requirements') }}" class="active"><i class="fas fa-user-check"></i> Verification</a>
+                    <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Verification</a>
                     <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
                     <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
                 </div>
@@ -134,7 +133,8 @@
                     </div>
                 </div>
                 
-                <a href="{{ url_for('admin_verified_req.view_requirements') }}" class="active"><i class="fas fa-user-check"></i> Verification</a>
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}"><i class="fas fa-user-check"></i> Student Verification</a>
+                <a href="{{ url_for('admin_staff_verified_req.view_staff_requirements') }}" class="active"><i class="fas fa-user-tie"></i> Staff Verification</a>
                 <a href="{{ url_for('admin_materials.materials') }}"><i class="fas fa-bullhorn"></i> Announce</a>
                 <a href="{{ url_for('admin_create_staff.create_staff') }}"><i class="fas fa-user-plus"></i> Add Staff</a>
                 
@@ -168,20 +168,20 @@
             </div>
         </div>
 
-        <!-- Verification Subnav - Desktop Only (COPYING FROM COURSES APPROVAL PAGE) -->
+        <!-- Verification Subnav - Desktop Only -->
         <nav class="subnav">
             <div class="subnav-right">
-                <a href="{{ url_for('admin_verified_req.view_requirements') }}" class="active">
+                <a href="{{ url_for('admin_verified_req.view_requirements') }}">
                     <i class="fas fa-user-check"></i> Student Requirements Verification
                 </a>
-                <a href="{{ url_for('admin_staff_verified_req.view_staff_requirements') }}">
+                <a href="{{ url_for('admin_staff_verified_req.view_staff_requirements') }}" class="active">
                     <i class="fas fa-user-tie"></i> Staff Requirements Verification
                 </a>
             </div>
         </nav>
     </div>
 
-    <!-- Logout Confirmation Modal (Added - Consistent with Admin Homepage) -->
+    <!-- Logout Confirmation Modal -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -200,33 +200,33 @@
         </div>
     </div>
 
-    <!-- Student Details Modal (Keep this one as it's complex) -->
-    <div id="studentDetailsModal" class="modal">
+    <!-- Staff Details Modal -->
+    <div id="staffDetailsModal" class="modal">
         <div class="modal-content extra-large-modal">
             <div class="modal-header">
-                <h3><i class="fas fa-user-circle"></i> Student Details</h3>
-                <button class="close-modal" id="close-student-details-modal">
+                <h3><i class="fas fa-user-tie"></i> Staff Details</h3>
+                <button class="close-modal" id="close-staff-details-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="student-details-container">
-                    <!-- Left Column: Student Profile Info -->
-                    <div class="student-profile-column">
+                <div class="staff-details-container">
+                    <!-- Left Column: Staff Profile Info -->
+                    <div class="staff-profile-column">
                         <!-- Profile Header with Picture -->
                         <div class="profile-header">
-                            <img id="studentProfilePicture" src="{{ url_for('static', filename='img/default_profile.png') }}" 
-                                 alt="Student Profile Picture" class="profile-picture">
+                            <img id="staffProfilePicture" src="{{ url_for('static', filename='img/default_profile.png') }}" 
+                                 alt="Staff Profile Picture" class="profile-picture">
                             <div class="profile-info">
-                                <h3 id="studentName">Student Name</h3>
-                                <p id="studentEmail">student@email.com</p>
-                                <div id="studentStatus"></div>
+                                <h3 id="staffName">Staff Name</h3>
+                                <p id="staffEmail">staff@email.com</p>
+                                <div id="staffStatus"></div>
                             </div>
                         </div>
                         
-                        <!-- Student Information -->
-                        <div class="student-details-content" id="studentDetailsContent">
-                            <!-- Student details will be inserted here by JavaScript -->
+                        <!-- Staff Information -->
+                        <div class="staff-details-content" id="staffDetailsContent">
+                            <!-- Staff details will be inserted here by JavaScript -->
                         </div>
                         
                         <!-- Sticky Verification Actions (Only for pending status) -->
@@ -235,26 +235,25 @@
                                 <h4><i class="fas fa-clipboard-check"></i> Verification Actions</h4>
                             </div>
                             <div class="actions-buttons">
-                                <button class="btn btn-success" id="verifyStudentBtn">
-                                    <i class="fas fa-check"></i> Verify Student
+                                <button class="btn btn-success" id="verifyStaffBtn">
+                                    <i class="fas fa-check"></i> Verify Staff
                                 </button>
-                                <button class="btn btn-reject" id="rejectStudentBtn">
+                                <button class="btn btn-reject" id="rejectStaffBtn">
                                     <i class="fas fa-times"></i> Reject Verification
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Right Column: Document Preview - NOW WITH TABS -->
-                    <div class="document-preview-column">
+                    <!-- Right Column: Signature Preview - NOW WITH TABS -->
+                    <div class="signature-preview-column">
                         <!-- Tab Navigation -->
                         <div class="document-tabs">
                             <button class="document-tab active" data-tab="preview">
-                                <i class="fas fa-file-alt"></i> Document Preview
+                                <i class="fas fa-signature"></i> Signature Preview
                             </button>
-                            <button class="document-tab" data-tab="list">
-                                <i class="fas fa-folder-open"></i> Uploaded Documents
-                                <span class="document-count" id="documentCount">0</span>
+                            <button class="document-tab" data-tab="info">
+                                <i class="fas fa-info-circle"></i> Signature Info
                             </button>
                         </div>
                         
@@ -262,27 +261,24 @@
                         <div class="tab-content">
                             <!-- Preview Tab -->
                             <div class="tab-pane active" id="previewTab">
-                                <div class="document-preview-container" id="documentPreviewContainer">
-                                    <div class="no-document-selected">
-                                        <i class="fas fa-file-alt"></i>
-                                        <h5>No Document Selected</h5>
-                                        <p>Select a document from the Documents tab to preview it here</p>
+                                <div class="signature-preview-container" id="signaturePreviewContainer">
+                                    <div class="no-signature-selected" id="noSignatureMessage">
+                                        <i class="fas fa-signature"></i>
+                                        <h5>No Signature Uploaded</h5>
+                                        <p>This staff member has not uploaded an e-signature yet</p>
                                     </div>
-                                    <div class="document-viewer" id="documentViewer" style="display: none;"></div>
+                                    <div class="signature-viewer" id="signatureViewer" style="display: none;"></div>
                                 </div>
                             </div>
                             
-                            <!-- List Tab -->
-                            <div class="tab-pane" id="listTab">
-                                <div class="document-list-container">
-                                    <div class="document-list-header">
-                                        <h4><i class="fas fa-folder-open"></i> All Uploaded Documents</h4>
-                                        <div class="document-summary">
-                                            <span id="uploadedCount">0 documents</span>
-                                        </div>
+                            <!-- Info Tab -->
+                            <div class="tab-pane" id="infoTab">
+                                <div class="signature-info-container">
+                                    <div class="signature-info-header">
+                                        <h4><i class="fas fa-info-circle"></i> Signature Information</h4>
                                     </div>
-                                    <div class="document-list" id="documentList">
-                                        <!-- Documents will be inserted here -->
+                                    <div class="signature-info-content" id="signatureInfoContent">
+                                        <!-- Signature info will be inserted here -->
                                     </div>
                                 </div>
                             </div>
@@ -291,16 +287,16 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeStudentDetailsModal">Close</button>
+                <button class="btn btn-secondary" id="closeStaffDetailsModal">Close</button>
             </div>
         </div>
     </div>
 
     <main>
         <div class="page-header">
-            <h1><i class="fas fa-user-check"></i> Student Requirement Verification</h1>
+            <h1><i class="fas fa-user-tie"></i> Staff Requirement Verification</h1>
             <div class="breadcrumb">
-                <span>Home</span> / <span>Verification</span>
+                <span>Home</span> / <span>Staff Verification</span>
             </div>
         </div>
 
@@ -333,7 +329,7 @@
             <!-- Loading Spinner -->
             <div class="loading-spinner">
                 <div class="spinner"></div>
-                <span>Loading student data...</span>
+                <span>Loading staff data...</span>
             </div>
 
             <!-- Stats Overview -->
@@ -342,7 +338,7 @@
                     <div class="stat-content">
                         <div class="stat-value" id="pending-count">0</div>
                         <div class="stat-label">Pending Verification</div>
-                        <div class="stat-description">Active students awaiting verification</div>
+                        <div class="stat-description">Staff awaiting verification</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-clock"></i>
@@ -352,7 +348,7 @@
                     <div class="stat-content">
                         <div class="stat-value" id="verified-count">0</div>
                         <div class="stat-label">Verified Accounts</div>
-                        <div class="stat-description">Active & verified students</div>
+                        <div class="stat-description">Verified staff members</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-check-circle"></i>
@@ -362,7 +358,7 @@
                     <div class="stat-content">
                         <div class="stat-value" id="rejected-count">0</div>
                         <div class="stat-label">Rejected Accounts</div>
-                        <div class="stat-description">Verification rejected students</div>
+                        <div class="stat-description">Verification rejected staff</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-times-circle"></i>
@@ -371,8 +367,8 @@
                 <div class="stat-card total-card">
                     <div class="stat-content">
                         <div class="stat-value" id="total-count">0</div>
-                        <div class="stat-label">Total Students</div>
-                        <div class="stat-description">All active students</div>
+                        <div class="stat-label">Total Staff</div>
+                        <div class="stat-description">All active staff members</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-users"></i>
@@ -386,14 +382,14 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Student</th>
+                                <th>Staff Member</th>
                                 <th>Email</th>
                                 <th>Status</th>
-                                <th>Documents</th>
+                                <th>E-Signature</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="studentsTableBody">
+                        <tbody id="staffTableBody">
                             <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
                         </tbody>
                     </table>
@@ -405,7 +401,7 @@
         </div>
     </main>
 
-    <!-- Loading Overlay (Kept for consistency) -->
+    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-content">
             <div class="spinner"></div>
@@ -413,6 +409,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/admin/admin_verified_req.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/admin_staff_verified_req.js') }}"></script>
 </body>
 </html>
