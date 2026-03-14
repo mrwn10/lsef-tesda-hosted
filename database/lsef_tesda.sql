@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Feb 14, 2026 at 07:31 AM
+-- Generation Time: Mar 14, 2026 at 06:08 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -67,13 +67,6 @@ CREATE TABLE `classes` (
   `edit_reason` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `classes`
---
-
-INSERT INTO `classes` (`class_id`, `course_id`, `class_title`, `school_year`, `batch`, `schedule`, `days_of_week`, `venue`, `max_students`, `instructor_id`, `instructor_name`, `start_date`, `end_date`, `prerequisites`, `status`, `date_created`, `date_updated`, `edit_reason`) VALUES
-(12, 1, 'BOOKING', '2026-2027', '2', 'Monday 7:00 AM-4:00 PM, Wednesday 6:00 AM-2:00 PM', '{\"Monday\":{\"start\":\"07:00\",\"end\":\"16:00\"},\"Wednesday\":{\"start\":\"06:00\",\"end\":\"14:00\"}}', 'Sta. Cruz', 25, 2, 'Vincent Octavio', '2026-02-14', '2027-02-09', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'ongoing', '2026-02-14 11:10:54', '2026-02-14 13:49:39', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -103,13 +96,6 @@ CREATE TABLE `courses` (
   `edit_reason` varchar(150) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `courses`
---
-
-INSERT INTO `courses` (`course_id`, `course_code`, `course_title`, `course_description`, `course_category`, `target_audience`, `prerequisites`, `learning_outcomes`, `duration_hours`, `course_fee`, `max_students`, `course_status`, `published`, `created_by`, `approved_by`, `date_created`, `date_updated`, `date_published`, `date_modified`, `edit_reason`) VALUES
-(1, 'BOOK-101', 'Bookkeping', 'This course equips learners with the knowledge and skills to record, classify, and summarize financial transactions in accordance with accounting principles and TESDA standards. It covers journalizing, posting to ledgers, preparing trial balances, and generating basic financial reports. The training prepares graduates for entry-level bookkeeping and accounting support roles in various organizations.', 'Skills', 'All Levels', 'Applicants must have at least completed Senior High School or an equivalent qualification. Basic knowledge of mathematics and the ability to read, write, and understand simple financial documents are required. Computer literacy is an advantage, especially in using spreadsheets and basic accounting software.', 'Upon completion of the course, learners will be able to accurately record and classify financial transactions using accepted accounting principles. They can prepare journals, ledgers, trial balances, and basic financial statements. Learners will also demonstrate competence in using bookkeeping tools and software while observing ethical standards and workplace policies.', 256, 0.00, 25, 'active', 1, 1, NULL, '2026-01-11 15:03:26', NULL, '2026-01-11 15:03:26', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -123,13 +109,6 @@ CREATE TABLE `enrollment` (
   `enrollment_date` datetime NOT NULL DEFAULT current_timestamp(),
   `status` enum('enrolled','pending','cancelled','completed','rejected','dropped') NOT NULL DEFAULT 'enrolled'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `enrollment`
---
-
-INSERT INTO `enrollment` (`enrollment_id`, `user_id`, `class_id`, `enrollment_date`, `status`) VALUES
-(3, 3, 12, '2026-02-14 13:34:53', 'completed');
 
 -- --------------------------------------------------------
 
@@ -153,8 +132,7 @@ CREATE TABLE `login` (
 
 INSERT INTO `login` (`user_id`, `username`, `password`, `email`, `role`, `account_status`, `verified`) VALUES
 (1, 'admin', '12345', 'adminakoo@gmail.com', 'admin', 'active', 'verified'),
-(2, 'niko', '123', 'niko1@gmail.com', 'staff', 'active', 'verified'),
-(3, 'marwindalin', 'Marwindalin09!', 'marwindalin10@gmail.com', 'student', 'active', 'verified');
+(2, 'niko', '123', 'niko1@gmail.com', 'staff', 'active', 'verified');
 
 -- --------------------------------------------------------
 
@@ -209,8 +187,7 @@ CREATE TABLE `personal_information` (
 
 INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`, `signature`) VALUES
 (1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09172468147', 'Enrico Ariel', 'T.', 'Ting', '1990-06-03', 'male', '1_1ad7293dcd594a5eb423b0cac628e78c.jpg', 1, '2025-06-05 22:58:27', '1_881260fd21c64829b6458605ecb810db.png'),
-(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', NULL, 'Octavio', '2000-11-05', 'male', '2_ad6f4478904e46199b30c680096bfb2d.jpeg', 1, '2025-06-08 09:55:38', '2_70a2a5bc8de6481e8dd56e04197a418e.png'),
-(3, 3, 'Laguna', 'Pila', 'Pansol', '09474371682', 'Marwin', 'Mejorada', 'Dalin', '2004-03-01', 'male', '20260111150021_Formal_Picture.jpeg', 1, '2026-01-11 15:00:21', NULL);
+(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', NULL, 'Octavio', '2000-11-05', 'male', '2_ad6f4478904e46199b30c680096bfb2d.jpeg', 1, '2025-06-08 09:55:38', '2_70a2a5bc8de6481e8dd56e04197a418e.png');
 
 -- --------------------------------------------------------
 
@@ -229,15 +206,6 @@ CREATE TABLE `student_grades` (
   `date_recorded` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_grades`
---
-
-INSERT INTO `student_grades` (`grade_id`, `enrollment_id`, `prelim_grade`, `midterm_grade`, `final_grade`, `remarks`, `date_recorded`) VALUES
-(1, 1, 98.00, 99.00, 99.00, 'Competent', '2026-01-11 15:08:09'),
-(2, 2, 32.00, 77.00, 77.00, 'Not yet competent', '2026-02-14 13:15:29'),
-(3, 3, NULL, 98.00, 80.00, 'Incomplete', '2026-02-14 14:30:24');
-
 -- --------------------------------------------------------
 
 --
@@ -255,13 +223,6 @@ CREATE TABLE `student_requirements` (
   `additional_notes` text DEFAULT NULL,
   `date_uploaded` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_requirements`
---
-
-INSERT INTO `student_requirements` (`requirement_id`, `user_id`, `barangay_clearance`, `medical_certificate`, `marriage_certificate`, `valid_id`, `transcript_form`, `additional_notes`, `date_uploaded`) VALUES
-(1, 3, '3_barangay_clearance_Database_Connection.png', '3_medical_certificate_Formal_Picture.jpeg', NULL, '3_valid_id_Desktop.jpg', '3_transcript_form_Desktop.jpg', 'please accept.', '2026-01-11 15:05:59');
 
 -- --------------------------------------------------------
 
@@ -406,31 +367,31 @@ ALTER TABLE `user_archived`
 -- AUTO_INCREMENT for table `certificates`
 --
 ALTER TABLE `certificates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `courses`
 --
 ALTER TABLE `courses`
-  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `enrollment`
 --
 ALTER TABLE `enrollment`
-  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `enrollment_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `login`
 --
 ALTER TABLE `login`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `materials`
@@ -442,19 +403,19 @@ ALTER TABLE `materials`
 -- AUTO_INCREMENT for table `personal_information`
 --
 ALTER TABLE `personal_information`
-  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `student_grades`
 --
 ALTER TABLE `student_grades`
-  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_requirements`
 --
 ALTER TABLE `student_requirements`
-  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `submissions`
