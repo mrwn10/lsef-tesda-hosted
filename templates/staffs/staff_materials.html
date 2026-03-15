@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Materials</title>
+    <title>Materials</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/staff/staff_materials.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/lsef_logo.png') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- Define URLs for JavaScript -->
-    <script>
-        window.appUrls = {
-            logoutUrl: "{{ url_for('login.logout') }}"
-        };
-    </script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body data-logout-url="{{ url_for('login.logout') }}">
+<body>
     <!-- Navigation Container -->
     <div class="nav-container">
         <!-- Top Navigation -->
@@ -113,7 +108,7 @@
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal - EXACT COPY FROM HOMEPAGE -->
+    <!-- Logout Confirmation Modal -->
     <div class="modal" id="logout-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -132,388 +127,233 @@
         </div>
     </div>
 
-    <!-- Success Modal - EXACT COPY FROM HOMEPAGE -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header success">
-                <h3><i class="fas fa-check-circle"></i> Success</h3>
-                <button class="close-modal" id="close-success-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage">Operation completed successfully.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="closeSuccessModal">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Screen Modal - EXACT COPY FROM HOMEPAGE -->
-    <div id="loading-screen" class="modal" style="display: none; z-index: 3000;">
-        <div class="modal-content" style="width: 300px; text-align: center;">
-            <div class="modal-body">
-                <div class="loading-spinner" style="margin-bottom: 15px;">
-                    <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto;"></div>
-                </div>
-                <p id="loading-message" style="margin: 0; font-size: 16px; color: #333;">Loading...</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <main class="content">
         <div class="container">
             <div class="page-header">
-                <h1><i class="fas fa-tasks"></i> Materials & Announcements</h1>
-                <p class="subtitle">Upload and manage learning materials and announcements</p>
+                <h1><i class="fas fa-tasks"></i> Classwork Management</h1>
+                <p class="subtitle">Create and manage classwork assignments for your classes</p>
             </div>
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-info alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+            <!-- Flash Messages Container -->
+            <div id="flash-messages-container" style="display: none;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message" data-category="{{ category }}" data-message="{{ message }}"></div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
 
-            <!-- Upload Form -->
-            <div class="form-section">
-                <h2><i class="fas fa-upload"></i> Upload Materials / Announcements</h2>
-                
-                {% if not classes %}
-                    <div class="alert no-classes-alert">
-                        <i class="fas fa-users"></i>
-                        <h4>No Classes Assigned</h4>
-                        <p>You don't have any active classes assigned to you. Please contact the administrator to get assigned to classes.</p>
-                    </div>
-                {% else %}
+            {% if not classes %}
+                <div class="alert no-classes-alert">
+                    <i class="fas fa-users"></i>
+                    <h4>No Classes Assigned</h4>
+                    <p>You don't have any active classes assigned to you. Please contact the administrator to get assigned to classes.</p>
+                </div>
+            {% else %}
+                <!-- Create Classwork Section -->
+                <div class="form-section create-section">
+                    <h2><i class="fas fa-plus-circle"></i> Create New Classwork</h2>
+                    
                     <form method="POST" action="{{ url_for('staff_materials.materials') }}" enctype="multipart/form-data" class="styled-form" id="material-form">
+                        <input type="hidden" name="material_id" id="edit-material-id" value="">
+                        
                         <!-- Title -->
                         <div class="form-group">
-                            <label class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="title" required class="form-control" placeholder="Enter material title">
+                            <label class="form-label">Classwork Title <span class="text-danger">*</span></label>
+                            <input type="text" name="title" required class="form-control" placeholder="Enter classwork title" id="title-input">
                         </div>
 
                         <!-- Description -->
                         <div class="form-group">
                             <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="4" placeholder="Enter material description (optional)"></textarea>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Enter classwork description (optional)" id="description-input"></textarea>
                         </div>
 
-                        <!-- Type and Class Selection -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Type <span class="text-danger">*</span></label>
-                                <select name="type" required class="form-select" id="type-select">
-                                    <option value="">Select Type</option>
-                                    <option value="classwork">Classwork</option>
-                                    <option value="announcement">Announcement</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Class</label>
-                                <select name="class_id" class="form-select" id="class-select">
-                                    <option value="">-- All Classes --</option>
-                                    {% for c in classes %}
-                                        <option value="{{ c.class_id }}">
-                                            {{ c.class_title }}
-                                            {% if c.instructor_name %} ({{ c.instructor_name }}){% endif %}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <!-- Class Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Assign to Class <span class="text-danger">*</span></label>
+                            <select name="class_id" required class="form-select" id="class-select">
+                                <option value="">-- Select a Class --</option>
+                                {% for c in classes %}
+                                    <option value="{{ c.class_id }}" data-student-count="{{ c.student_count }}">
+                                        {{ c.class_title }} (Batch {{ c.batch }}) - {{ c.student_count }} student{% if c.student_count != 1 %}s{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <!-- Submission Dates Section -->
-                        <div class="submission-dates-section" id="submission-dates">
-                            <h5><i class="fas fa-calendar-alt"></i> Submission Period</h5>
+                        <div class="submission-dates-section">
+                            <h5><i class="fas fa-calendar-alt"></i> Submission Period <span class="text-danger">*</span></h5>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Start Date & Time</label>
-                                    <input type="datetime-local" name="submission_start" class="form-control" id="submission-start">
+                                    <input type="datetime-local" name="submission_start" required class="form-control" id="submission-start">
                                     <div class="form-text">When students can start submitting</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">End Date & Time (Deadline)</label>
-                                    <input type="datetime-local" name="submission_end" class="form-control" id="submission-end">
+                                    <input type="datetime-local" name="submission_end" required class="form-control" id="submission-end">
                                     <div class="form-text">Final submission deadline</div>
                                 </div>
-                            </div>
-                            <div class="alert info-alert" id="dates-info">
-                                <i class="fas fa-info-circle"></i>
-                                <span id="dates-message">Set the submission period for this classwork</span>
                             </div>
                         </div>
 
                         <!-- File Upload -->
                         <div class="form-group">
                             <label class="form-label">Upload File (optional)</label>
-                            <input type="file" name="file" class="form-control" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.png">
-                            <div class="form-text">Allowed formats: PDF, PowerPoint, Word, Excel, JPG, PNG (Max: 10MB)</div>
+                            <input type="file" name="file" class="form-control" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.png" id="file-input">
+                            <div class="form-text">Allowed: PDF, PPT, Word, Excel, JPG, PNG (Max: 10MB)</div>
+                            <div class="current-file-info" style="display: none; margin-top: 10px; padding: 10px; background: #e8f0fe; border-radius: 4px;">
+                                <i class="fas fa-paperclip"></i> <span class="current-filename"></span>
+                                <small class="text-muted">(Leave empty to keep current file)</small>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Upload Material
+                            <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+                                <i class="fas fa-upload"></i> Create Classwork
+                            </button>
+                        </div>
+                        
+                        <!-- Cancel Edit Button (hidden by default) -->
+                        <div class="form-group" id="cancel-edit-container" style="display: none;">
+                            <button type="button" class="btn btn-secondary btn-block" id="cancel-edit-btn">
+                                <i class="fas fa-times"></i> Cancel Editing
                             </button>
                         </div>
                     </form>
-                {% endif %}
-            </div>
+                </div>
 
-            <!-- Materials List -->
-            <div class="form-section">
-                <h2><i class="fas fa-list"></i> Uploaded Materials & Announcements</h2>
-
-                <!-- Filter Section -->
-                <div class="filter-section">
-                    <div class="filter-row">
-                        <span class="filter-label">Filter by:</span>
-                        <div class="filter-controls">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn filter-btn active" data-filter-type="all">
-                                    <i class="fas fa-layer-group"></i> All
-                                </button>
-                                <button type="button" class="btn filter-btn" data-filter-type="classwork">
-                                    <i class="fas fa-tasks"></i> Classwork
-                                </button>
-                                <button type="button" class="btn filter-btn" data-filter-type="announcement">
-                                    <i class="fas fa-bullhorn"></i> Announcements
-                                </button>
-                            </div>
-                            
+                <!-- Existing Classwork Section -->
+                <div class="form-section list-section">
+                    <div class="list-header">
+                        <h2><i class="fas fa-list"></i> Existing Classwork</h2>
+                        <div class="filter-wrapper">
                             <select class="form-select" id="class-filter">
                                 <option value="all">All Classes</option>
                                 {% for c in classes %}
                                     <option value="{{ c.class_id }}">{{ c.class_title }}</option>
                                 {% endfor %}
                             </select>
-                            
-                            <button type="button" class="btn btn-secondary" id="clear-filters">
-                                <i class="fas fa-times"></i> Clear Filters
-                            </button>
                         </div>
                     </div>
-                </div>
 
-                {% if not materials %}
-                    <div class="alert info-alert">
-                        <i class="fas fa-inbox"></i>
-                        <h5>No materials or announcements uploaded yet</h5>
-                        <p>Start by uploading your first material or announcement using the form above.</p>
-                    </div>
-                {% else %}
-                    <div id="materials-container">
-                        {% for m in materials %}
-                            <div class="material-card" 
-                                 data-material-type="{{ m.type }}" 
-                                 data-class-id="{{ m.class_id or 'all' }}">
-                                <div class="material-header">
-                                    <div class="material-title-section">
+                    {% if not materials %}
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h5>No classwork yet</h5>
+                            <p>Create your first classwork using the form above</p>
+                        </div>
+                    {% else %}
+                        <div id="materials-container" class="materials-list">
+                            {% for m in materials %}
+                                <div class="material-card" 
+                                     data-class-id="{{ m.class_id or 'all' }}" 
+                                     data-material-id="{{ m.material_id }}"
+                                     data-title="{{ m.title|e }}"
+                                     data-description="{{ m.description|e or '' }}"
+                                     data-class="{{ m.class_id }}"
+                                     data-start="{{ m.submission_start_formatted }}"
+                                     data-end="{{ m.submission_end_formatted }}"
+                                     data-has-file="{{ 'true' if m.stored_filename else 'false' }}"
+                                     data-filename="{{ m.original_filename|e or '' }}"
+                                     data-stored-filename="{{ m.stored_filename|e or '' }}">
+                                    
+                                    <div class="material-header">
                                         <h3>{{ m.title }}</h3>
-                                        <div class="material-badges">
-                                            <span class="badge {% if m.type == 'classwork' %}bg-primary{% else %}bg-success{% endif %}">
-                                                {{ m.type|title }}
-                                            </span>
-                                            {% if not m.class_title %}
-                                                <span class="badge bg-secondary">All Classes</span>
+                                        <span class="badge bg-primary">Classwork</span>
+                                    </div>
+                                    
+                                    <div class="material-meta">
+                                        <span><i class="fas fa-user"></i> {{ m.instructor_name }}</span>
+                                        <span><i class="fas fa-clock"></i> {{ m.date_uploaded_formatted }}</span>
+                                        {% if m.class_title %}
+                                            <span><i class="fas fa-users"></i> {{ m.class_title }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if m.description %}
+                                        <p class="material-description">{{ m.description|truncate(100) }}</p>
+                                    {% endif %}
+
+                                    {% if m.submission_end %}
+                                        <div class="submission-badge">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>Due: {{ m.submission_end_display }}</span>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="material-actions">
+                                        {% if m.stored_filename %}
+                                            <a href="{{ url_for('static', filename='uploads/materials/' ~ m.stored_filename) }}" download class="btn-icon download-btn" title="Download" data-filename="{{ m.original_filename|e }}">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn-icon preview-btn" title="Preview" data-material-id="{{ m.material_id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        {% endif %}
+                                        
+                                        <a href="{{ url_for('staff_materials.check_submissions', material_id=m.material_id) }}" class="btn-icon" title="Check Submissions">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>
+                                        
+                                        <button type="button" class="btn-icon edit-btn" title="Edit" data-material-id="{{ m.material_id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        
+                                        <button type="button" class="btn-icon text-danger delete-btn" title="Delete" data-material-id="{{ m.material_id }}" data-title="{{ m.title|e }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Preview Section -->
+                                    <div id="preview-{{ m.material_id }}" class="preview-section">
+                                        <div class="preview-header">
+                                            <span>Preview: {{ m.original_filename|e }}</span>
+                                            <button type="button" class="close-preview" data-material-id="{{ m.material_id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="preview-content">
+                                            {% if m.stored_filename and m.stored_filename.endswith('.pdf') %}
+                                                <iframe src="{{ url_for('staff_materials.preview_material', filename=m.stored_filename) }}" width="100%" height="300px"></iframe>
+                                            {% elif m.stored_filename and m.stored_filename.endswith(('.jpg', '.png', '.jpeg')) %}
+                                                <img src="{{ url_for('staff_materials.preview_material', filename=m.stored_filename) }}" alt="Preview">
+                                            {% elif m.stored_filename %}
+                                                <p>Preview not available for this file type. <a href="{{ url_for('static', filename='uploads/materials/' ~ m.stored_filename) }}" download>Download</a> to view.</p>
+                                            {% else %}
+                                                <p>No file attached</p>
                                             {% endif %}
                                         </div>
                                     </div>
-                                    <div class="material-meta">
-                                        <span><i class="fas fa-user"></i>{{ m.instructor_name }}</span>
-                                        <span><i class="fas fa-clock"></i>{{ m.date_uploaded.strftime('%Y-%m-%d %H:%M') if m.date_uploaded is string else m.date_uploaded }}</span>
-                                        {% if m.class_title %}
-                                            <span><i class="fas fa-users"></i>{{ m.class_title }}</span>
-                                        {% endif %}
-                                    </div>
                                 </div>
-
-                                {% if m.description %}
-                                    <div class="material-description">
-                                        <strong>Description:</strong> 
-                                        <p>{{ m.description }}</p>
-                                    </div>
-                                {% endif %}
-
-                                {% if m.submission_start_formatted and m.submission_end_formatted %}
-                                    <div class="submission-dates">
-                                        <strong><i class="fas fa-calendar-check"></i> Submission Period:</strong>
-                                        <div class="date-range">
-                                            <span class="badge bg-info">{{ m.submission_start_formatted.replace('T', ' ') }}</span>
-                                            <i class="fas fa-arrow-right"></i>
-                                            <span class="badge bg-warning">{{ m.submission_end_formatted.replace('T', ' ') }}</span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-
-                                <div class="file-actions">
-                                    <div class="btn-group">
-                                        {% if m.stored_filename %}
-                                            <a href="{{ url_for('static', filename='uploads/materials/' ~ m.stored_filename) }}" 
-                                               download 
-                                               class="btn btn-download">
-                                                <i class="fas fa-download"></i> Download
-                                            </a>
-                                            <button type="button" onclick="togglePreview('preview-{{ m.material_id }}')" 
-                                                    class="btn btn-preview">
-                                                <i class="fas fa-eye"></i> Preview
-                                            </button>
-                                        {% endif %}
-                                        
-                                        {% if m.type == "classwork" %}
-                                            <a href="{{ url_for('staff_materials.check_submissions', material_id=m.material_id) }}" 
-                                               class="btn btn-primary">
-                                                <i class="fas fa-check-circle"></i> Check Submissions
-                                            </a>
-                                        {% endif %}
-                                        
-                                        <button type="button" onclick="toggleEdit('edit-{{ m.material_id }}')" 
-                                                class="btn btn-edit">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        
-                                        <form method="POST" action="{{ url_for('staff_materials.delete_material', material_id=m.material_id) }}" 
-                                              class="d-inline" 
-                                              onsubmit="return confirm('Are you sure you want to delete this material?');">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-
-                                {% if m.stored_filename %}
-                                    <!-- Preview section -->
-                                    <div id="preview-{{ m.material_id }}" class="preview-section">
-                                        <div class="card">
-                                            <div class="card-header">
-                                                <h6>Preview: {{ m.original_filename }}</h6>
-                                                <button type="button" class="close-btn" onclick="togglePreview('preview-{{ m.material_id }}')">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </div>
-                                            <div class="card-body">
-                                                {% if m.stored_filename.endswith('.pdf') %}
-                                                    <iframe src="{{ url_for('staff_materials.preview_material', filename=m.stored_filename) }}"
-                                                            width="100%" height="500px"></iframe>
-                                                {% elif m.stored_filename.endswith(('.jpg', '.png', '.jpeg')) %}
-                                                    <div class="image-preview">
-                                                        <img src="{{ url_for('staff_materials.preview_material', filename=m.stored_filename) }}"
-                                                            alt="Preview" class="preview-image">
-                                                    </div>
-                                                {% else %}
-                                                    <div class="alert info-alert">
-                                                        <i class="fas fa-file"></i>
-                                                        <p>File preview not available for this format. Please download the file to view it.</p>
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endif %}
-
-                                <!-- Edit form -->
-                                <div id="edit-{{ m.material_id }}" class="edit-form">
-                                    <div class="card">
-                                        <div class="card-header warning-header">
-                                            <h6><i class="fas fa-edit"></i> Edit Material</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <form method="POST" action="{{ url_for('staff_materials.materials') }}" enctype="multipart/form-data" class="styled-form edit-material-form">
-                                                <input type="hidden" name="material_id" value="{{ m.material_id }}">
-                                                
-                                                <div class="form-group">
-                                                    <label class="form-label">Title</label>
-                                                    <input type="text" name="title" value="{{ m.title }}" required class="form-control">
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label class="form-label">Description</label>
-                                                    <textarea name="description" class="form-control" rows="3">{{ m.description }}</textarea>
-                                                </div>
-
-                                                <div class="form-row">
-                                                    <div class="form-group">
-                                                        <label class="form-label">Type</label>
-                                                        <select name="type" required class="form-select type-select-edit">
-                                                            <option value="classwork" {% if m.type == 'classwork' %}selected{% endif %}>Classwork</option>
-                                                            <option value="announcement" {% if m.type == 'announcement' %}selected{% endif %}>Announcement</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="form-label">Class</label>
-                                                        <select name="class_id" class="form-select">
-                                                            <option value="">-- All Classes --</option>
-                                                            {% for c in classes %}
-                                                                <option value="{{ c.class_id }}" {% if m.class_id == c.class_id %}selected{% endif %}>
-                                                                    {{ c.class_title }}
-                                                                    {% if c.instructor_name %} ({{ c.instructor_name }}){% endif %}
-                                                                </option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Submission Dates Section for Edit -->
-                                                <div class="submission-dates-section edit-submission-dates" 
-                                                     {% if m.type != 'classwork' %}style="display: none;"{% endif %}>
-                                                    <h6><i class="fas fa-calendar-alt"></i> Submission Period</h6>
-                                                    <div class="form-row">
-                                                        <div class="form-group">
-                                                            <label class="form-label">Start Date & Time</label>
-                                                            <input type="datetime-local" name="submission_start" class="form-control"
-                                                                value="{{ m.submission_start_formatted if m.submission_start_formatted else '' }}">
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label class="form-label">End Date & Time (Deadline)</label>
-                                                            <input type="datetime-local" name="submission_end" class="form-control"
-                                                                value="{{ m.submission_end_formatted if m.submission_end_formatted else '' }}">
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label class="form-label">Replace File (optional)</label>
-                                                    <input type="file" name="file" class="form-control">
-                                                    {% if m.stored_filename %}
-                                                        <div class="form-text">Current file: <strong>{{ m.original_filename }}</strong></div>
-                                                    {% endif %}
-                                                </div>
-
-                                                <div class="form-actions">
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-save"></i> Save Changes
-                                                    </button>
-                                                    <button type="button" onclick="toggleEdit('edit-{{ m.material_id }}')" class="btn btn-secondary">
-                                                        <i class="fas fa-times"></i> Cancel
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- No Results Message -->
-                    <div id="no-results" class="no-results">
-                        <i class="fas fa-search"></i>
-                        <h5>No materials found</h5>
-                        <p>Try adjusting your filters to see more results.</p>
-                    </div>
-                {% endif %}
-            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- No Results Message -->
+                        <div id="no-results" class="empty-state" style="display: none;">
+                            <i class="fas fa-search"></i>
+                            <h5>No matching classwork</h5>
+                            <p>Try adjusting your filter</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
     </main>
+
+    <!-- DATA CONTAINERS - NO JINJA INSIDE SCRIPT TAGS -->
+    <div id="app-data" 
+         data-logout-url="{{ url_for('login.logout') }}"
+         data-materials-url="{{ url_for('staff_materials.materials') }}"
+         data-has-classes="{{ 'true' if classes else 'false' }}"
+         data-has-materials="{{ 'true' if materials else 'false' }}"
+         style="display:none;"></div>
 
     <script src="{{ url_for('static', filename='js/staff/staff_material.js') }}"></script>
 </body>
