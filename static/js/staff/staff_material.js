@@ -556,10 +556,11 @@ function setupPreviewButtons() {
         e.preventDefault();
         
         const materialId = btn.getAttribute('data-material-id');
+        const type = btn.getAttribute('data-type') || 'classwork';
         const preview = document.getElementById('preview-' + materialId);
         
         if (preview) {
-            // Close other previews
+            // Close other previews (separate handling for announcements vs classwork)
             document.querySelectorAll('.preview-section').forEach(function(p) {
                 if (p.id !== 'preview-' + materialId) {
                     p.style.display = 'none';

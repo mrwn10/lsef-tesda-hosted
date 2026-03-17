@@ -167,7 +167,7 @@ def materials():
         """
         SELECT class_id, class_title, instructor_name
         FROM classes
-        WHERE status = 'active'
+        WHERE status IN ('open', 'ongoing')
         ORDER BY class_title ASC
         """
     )

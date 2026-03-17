@@ -131,8 +131,8 @@
     <main class="content">
         <div class="container">
             <div class="page-header">
-                <h1><i class="fas fa-tasks"></i> Classwork Management</h1>
-                <p class="subtitle">Create and manage classwork assignments for your classes</p>
+                <h1><i class="fas fa-tasks"></i> Materials & Announcements</h1>
+                <p class="subtitle">Create and manage classwork assignments and view admin announcements</p>
             </div>
 
             <!-- Flash Messages Container -->
@@ -145,6 +145,89 @@
                     {% endif %}
                 {% endwith %}
             </div>
+
+            <!-- ===== NEW: Announcements Section ===== -->
+            {% if announcements %}
+            <div class="form-section announcements-section">
+                <h2><i class="fas fa-bullhorn"></i> Admin Announcements</h2>
+                
+                <div class="announcements-grid">
+                    {% for a in announcements %}
+                    <div class="announcement-card">
+                        <div class="announcement-header">
+                            <div class="announcement-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="announcement-title-section">
+                                <h3>{{ a.title }}</h3>
+                                <div class="announcement-meta">
+                                    <span class="meta-item">
+                                        <i class="fas fa-user"></i> {{ a.instructor_name }} (Admin)
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-calendar"></i> {{ a.date_display }}
+                                    </span>
+                                    {% if a.class_id is none %}
+                                    <span class="badge global-badge">
+                                        <i class="fas fa-globe"></i> Global
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if a.description %}
+                        <div class="announcement-description">
+                            <p>{{ a.description }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if a.stored_filename %}
+                        <div class="announcement-attachment">
+                            <i class="fas fa-paperclip"></i>
+                            <span>Attachment: {{ a.original_filename }}</span>
+                            <div class="attachment-actions">
+                                <a href="{{ url_for('static', filename='uploads/materials/' ~ a.stored_filename) }}" 
+                                   download 
+                                   class="btn-icon download-btn" 
+                                   title="Download" 
+                                   data-filename="{{ a.original_filename|e }}">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <button type="button" 
+                                        class="btn-icon preview-btn" 
+                                        title="Preview" 
+                                        data-material-id="{{ a.material_id }}"
+                                        data-type="announcement">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Section for Announcement -->
+                        <div id="preview-{{ a.material_id }}" class="preview-section announcement-preview">
+                            <div class="preview-header">
+                                <span>Preview: {{ a.original_filename|e }}</span>
+                                <button type="button" class="close-preview" data-material-id="{{ a.material_id }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="preview-content">
+                                {% if a.stored_filename and a.stored_filename.endswith('.pdf') %}
+                                    <iframe src="{{ url_for('staff_materials.preview_material', filename=a.stored_filename) }}" width="100%" height="300px"></iframe>
+                                {% elif a.stored_filename and a.stored_filename.endswith(('.jpg', '.png', '.jpeg')) %}
+                                    <img src="{{ url_for('staff_materials.preview_material', filename=a.stored_filename) }}" alt="Preview">
+                                {% elif a.stored_filename %}
+                                    <p>Preview not available for this file type. <a href="{{ url_for('static', filename='uploads/materials/' ~ a.stored_filename) }}" download>Download</a> to view.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
             {% if not classes %}
                 <div class="alert no-classes-alert">
@@ -293,7 +376,7 @@
                                             <a href="{{ url_for('static', filename='uploads/materials/' ~ m.stored_filename) }}" download class="btn-icon download-btn" title="Download" data-filename="{{ m.original_filename|e }}">
                                                 <i class="fas fa-download"></i>
                                             </a>
-                                            <button type="button" class="btn-icon preview-btn" title="Preview" data-material-id="{{ m.material_id }}">
+                                            <button type="button" class="btn-icon preview-btn" title="Preview" data-material-id="{{ m.material_id }}" data-type="classwork">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         {% endif %}
@@ -353,6 +436,7 @@
          data-materials-url="{{ url_for('staff_materials.materials') }}"
          data-has-classes="{{ 'true' if classes else 'false' }}"
          data-has-materials="{{ 'true' if materials else 'false' }}"
+         data-has-announcements="{{ 'true' if announcements else 'false' }}"
          style="display:none;"></div>
 
     <script src="{{ url_for('static', filename='js/staff/staff_material.js') }}"></script>

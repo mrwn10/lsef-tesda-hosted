@@ -193,6 +193,19 @@ def materials():
         )
         materials = cursor.fetchall()
 
+        # ===== NEW: Get admin announcements (global materials with type='announcement' and class_id IS NULL) =====
+        cursor.execute(
+            """
+            SELECT m.*,
+                   DATE_FORMAT(m.date_uploaded, '%Y-%m-%d') as date_uploaded_formatted,
+                   DATE_FORMAT(m.date_uploaded, '%M %d, %Y') as date_display
+            FROM materials m
+            WHERE m.type = 'announcement' AND m.class_id IS NULL
+            ORDER BY m.date_uploaded DESC
+            """,
+        )
+        announcements = cursor.fetchall()
+
         # Get all active classes assigned to this staff
         cursor.execute(
             """
@@ -215,6 +228,7 @@ def materials():
         return render_template(
             "staffs/staff_materials.html",
             materials=materials,
+            announcements=announcements,  # NEW: Pass announcements to template
             classes=classes,
             profile_picture=profile_picture
         )
@@ -225,7 +239,7 @@ def materials():
             return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
         else:
             flash("An error occurred loading the page", "error")
-            return render_template("staffs/staff_materials.html", materials=[], classes=[], profile_picture="default.png")
+            return render_template("staffs/staff_materials.html", materials=[], announcements=[], classes=[], profile_picture="default.png")
     finally:
         if cursor:
             cursor.close()

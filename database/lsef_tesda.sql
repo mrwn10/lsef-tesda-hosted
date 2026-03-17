@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 14, 2026 at 06:08 AM
+-- Generation Time: Mar 17, 2026 at 05:33 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -52,7 +52,7 @@ CREATE TABLE `classes` (
   `school_year` varchar(20) NOT NULL,
   `batch` varchar(50) DEFAULT NULL,
   `schedule` varchar(100) NOT NULL COMMENT 'e.g. Mon-Fri 9AM-12PM',
-  `days_of_week` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`days_of_week`)),
+  `days_of_week` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `venue` varchar(100) NOT NULL,
   `max_students` int(11) NOT NULL,
   `available_slots` int(11) GENERATED ALWAYS AS (`max_students`) STORED COMMENT 'Calculated as max_students minus enrolled students (to be updated separately)',
@@ -65,7 +65,7 @@ CREATE TABLE `classes` (
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   `date_updated` datetime DEFAULT NULL ON UPDATE current_timestamp(),
   `edit_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -186,8 +186,8 @@ CREATE TABLE `personal_information` (
 --
 
 INSERT INTO `personal_information` (`info_id`, `user_id`, `province`, `municipality`, `baranggay`, `contact_number`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `gender`, `profile_picture`, `terms_accepted`, `date_registered`, `signature`) VALUES
-(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09172468147', 'Enrico Ariel', 'T.', 'Ting', '1990-06-03', 'male', '1_1ad7293dcd594a5eb423b0cac628e78c.jpg', 1, '2025-06-05 22:58:27', '1_881260fd21c64829b6458605ecb810db.png'),
-(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', NULL, 'Octavio', '2000-11-05', 'male', '2_ad6f4478904e46199b30c680096bfb2d.jpeg', 1, '2025-06-08 09:55:38', '2_70a2a5bc8de6481e8dd56e04197a418e.png');
+(1, 1, 'Metro Manila (NCR)', 'City of Taguig', 'New Lower Bicutan', '09172468147', 'Enrico Ariel', 'T.', 'Ting', '1990-06-03', 'male', '1_34727b82a53d43f2a7e0c615a29f9395.jpeg', 1, '2025-06-05 22:58:27', '1_48f5346a83954f41bed15b4e63aef5a0.png'),
+(2, 2, 'Leyte', 'City of Tacloban', 'Barangay 109-A', '09108735236', 'Vincent', '', 'Octavio', '2000-11-05', 'male', '2_fe82d0d489f74c7baae84c661b7cc1db.jpg', 1, '2025-06-08 09:55:38', '2_6de1378f08e740f39afe6e56a62ec782.png');
 
 -- --------------------------------------------------------
 
@@ -201,7 +201,7 @@ CREATE TABLE `student_grades` (
   `prelim_grade` decimal(5,2) DEFAULT NULL,
   `midterm_grade` decimal(5,2) DEFAULT NULL,
   `final_grade` decimal(5,2) DEFAULT NULL,
-  `status` varchar(50) GENERATED ALWAYS AS (case when `final_grade` >= 96 then 'Excellent (Competent)' when `final_grade` >= 91 then 'Very Satisfactory (Competent)' when `final_grade` >= 86 then 'Satisfactory (Competent)' when `final_grade` >= 81 then 'Fairly Satisfactory (Competent)' when `final_grade` >= 75 then 'Passed (Competent)' when `final_grade` < 75 then 'Failed (Not Yet Competent)' when `final_grade` is null then 'Incomplete' else 'Not Evaluated' end) STORED,
+  `status` varchar(50) GENERATED ALWAYS AS (case when `final_grade` >= 96 then _utf8mb4'Excellent (Competent)' when `final_grade` >= 91 then _utf8mb4'Very Satisfactory (Competent)' when `final_grade` >= 86 then _utf8mb4'Satisfactory (Competent)' when `final_grade` >= 81 then _utf8mb4'Fairly Satisfactory (Competent)' when `final_grade` >= 75 then _utf8mb4'Passed (Competent)' when `final_grade` < 75 then _utf8mb4'Failed (Not Yet Competent)' when `final_grade` is null then _utf8mb4'Incomplete' else _utf8mb4'Not Evaluated' end) STORED,
   `remarks` enum('Competent','Not yet competent','Dropped','Incomplete') DEFAULT NULL,
   `date_recorded` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
